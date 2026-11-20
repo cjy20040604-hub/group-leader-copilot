@@ -14,6 +14,14 @@ npm run dev      # 开发服务器，默认 http://localhost:3000
 
 打开 `/` 是产品落地页，`/app` 是 Demo 工作台（身份默认「组长林晓」，右上角可切换组员）。
 
+## 公网在线版（Render 免费档）
+
+**在线地址：https://group-leader-copilot.onrender.com**（手机/电脑浏览器直接打开，无需本机运行）
+
+- 代码仓库：github.com/cjy20040604-hub/group-leader-copilot，推送到 main 会自动重新部署（配置见 `render.yaml`）
+- 免费档特性：15 分钟无人访问会休眠，下次打开需等约 50 秒冷启动；休眠/重新部署后数据重置为种子剧情（演示数据 baked 进构建，`npm run seed` 在云端构建时执行）
+- 环境变量在 Render 控制台维护（MOCK_LLM=true 等），不依赖本机 `.env.local`
+
 > **macOS 注意事项**：如果是在 AI agent 的沙箱终端里启动，`npm run dev` 可能显示 Ready 但浏览器打不开（桌面目录的系统权限限制，不是代码问题）。两个办法：① 在系统自带终端里运行 `npm run dev`；② 直接用生产模式 `npm run build && npm start`，效果完全一样。端口被占用时 Next 会自动换到 3001 等空闲端口，看终端输出的实际地址。
 
 ## Mock 模式说明（默认，零成本离线）
