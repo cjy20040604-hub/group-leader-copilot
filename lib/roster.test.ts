@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { matchOwnerDetailed, speakerOfEvidence } from './roster';
+import { matchOwnerDetailed, speakerOfEvidence, parseAliases } from './roster';
 
 const ROSTER = [
   { id: 'linxiao', name: '林晓', aliases: ['晓姐', '组长', '晓晓'] },
@@ -29,5 +29,15 @@ describe('matchOwnerDetailed（人名匹配）', () => {
 describe('speakerOfEvidence（「我来」= 说话人）', () => {
   it('按原话找到说话人', () => {
     assert.equal(speakerOfEvidence('汇总这块我下周三之前搞定', '阿杰：好的。\n林晓：汇总这块我下周三之前搞定。'), '林晓');
+  });
+});
+
+describe('parseAliases', () => {
+  it('中英文分隔符混用都能拆', () => {
+    assert.deepEqual(parseAliases('杰哥,小杰，阿杰同学、Jie;杰仔  杰哥'), ['杰哥', '小杰', '阿杰同学', 'Jie', '杰仔']);
+  });
+  it('空串与纯空白 → 空数组', () => {
+    assert.deepEqual(parseAliases(''), []);
+    assert.deepEqual(parseAliases(' ，、 '), []);
   });
 });

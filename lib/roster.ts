@@ -4,6 +4,11 @@ export interface RosterMember {
   aliases: string[];
 }
 
+// 别名输入框 → 数组：中英文逗号/顿号/分号/空白分隔，去空去重
+export function parseAliases(input: string): string[] {
+  return [...new Set(input.split(/[,，、;；\s]+/).map((s) => s.trim()).filter(Boolean))];
+}
+
 export interface OwnerMatch {
   id: string | null;
   how: 'exact' | 'alias' | 'contains' | 'fuzzy' | 'ambiguous' | 'none';
