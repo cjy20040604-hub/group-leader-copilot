@@ -7,6 +7,7 @@ import { estimateTokens } from '@/lib/rag/tokenize';
 import { matchOwnerDetailed, speakerOfEvidence, type RosterMember } from '@/lib/roster';
 import { parseDueDate, inSemester } from '@/lib/dates';
 import { getDemoNow, toLocalISO, formatCN } from '@/lib/time';
+import { deriveTitle } from '@/lib/title';
 import { scanReminders } from '@/lib/reminders';
 
 export interface PipelineStep {
@@ -40,6 +41,7 @@ export interface Draft {
   courseId: string;
   date: string;
   title: string;
+  titleSource: 'manual' | 'ai' | 'template';
   transcript: string;
   extraction: Extraction;
   actions: ValidatedAction[];
@@ -169,11 +171,16 @@ export async function processMeeting(input: { courseId: string; date: string; tr
     return checks;
   });
 
+  const derived = input.title?.trim()
+    ? { title: input.title.trim(), source: 'manual' as const }
+    : deriveTitle(extraction.topics, `${course.name} ${formatCN(input.date)} 组会`);
+
   return {
     meetingId,
     courseId: input.courseId,
     date: input.date,
-    title: input.title || `${course.name} ${formatCN(input.date)} 组会`,
+    title: derived.title,
+    titleSource: derived.source,
     transcript: input.transcript,
     extraction,
     actions,

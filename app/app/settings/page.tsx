@@ -3,17 +3,24 @@ import { getDemoNowISO } from '@/lib/time';
 import { getCurrentUser } from '@/lib/auth';
 import { Card, Badge } from '@/components/ui';
 import { TimeTravel, ResetDemo } from '@/components/time-travel';
+import { CourseManager } from '@/components/course-manager';
 
 export const dynamic = 'force-dynamic';
 
 export default function SettingsPage() {
   const members = db.select().from(schema.members).all();
+  const courses = db.select().from(schema.courses).all();
   const user = getCurrentUser();
   const demoNow = getDemoNowISO();
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">设置</h1>
+
+      <section aria-label="课程与小组">
+        <h2 className="mb-2 text-sm font-semibold">📚 课程/小组（不限于演示的 3 门课，可自建）</h2>
+        <CourseManager courses={courses} isLeader={user.role === 'leader'} />
+      </section>
 
       <section aria-label="花名册">
         <h2 className="mb-2 text-sm font-semibold">👥 花名册（人名模糊匹配用）</h2>

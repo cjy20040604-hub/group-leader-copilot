@@ -22,6 +22,7 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
   const [date, setDate] = useState(defaultDate);
   const [title, setTitle] = useState('');
+  const [confirmTitle, setConfirmTitle] = useState('');
   const [agenda, setAgenda] = useState('');
   const [duplicates, setDuplicates] = useState<{ memoryId: string; text: string; meetingDate: string; similarity: number; matched: string }[]>([]);
   const [dupChecked, setDupChecked] = useState('');
@@ -67,6 +68,7 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '处理失败');
       setDraft(data);
+      setConfirmTitle(data.title);
       setEditDecisions(data.extraction.decisions.map((d: Draft['extraction']['decisions'][number]) => ({ ...d, checked: true })));
       setEditActions(data.actions);
       setEditQuestions(data.extraction.open_questions);
@@ -85,7 +87,7 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
       .map(({ checked: _checked, manual: _manual, ...d }) => d);
     const res = await fetch('/api/meetings/confirm', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ draft, edits: { actions: editActions, decisions, openQuestions: editQuestions, title: title || draft.title } }),
+      body: JSON.stringify({ draft, edits: { actions: editActions, decisions, openQuestions: editQuestions, title: confirmTitle.trim() || draft.title } }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? '落库失败'); return; }
@@ -192,6 +194,17 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
       {phase === 'confirm' && draft && (
         <Card className="space-y-4 p-4">
           <div className="flex items-center gap-2"><AiBadge /><span className="text-xs text-slate-500">逐条勾选 / 修改，确认后才写入任务表与记忆库</span></div>
+
+          <section>
+            <h2 className="mb-1 text-sm font-semibold">📝 会议标题</h2>
+            <div className="flex items-center gap-2">
+              <Input value={confirmTitle} onChange={(e) => setConfirmTitle(e.target.value)} className="text-xs" aria-label="会议标题" />
+              {draft.titleSource === 'ai' && <AiBadge />}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">
+              {draft.titleSource === 'ai' ? 'AI 根据抽出的议题起的标题，可改' : draft.titleSource === 'manual' ? '你在第一步填写的标题' : '没抽到议题，用了模板标题，可改'}
+            </p>
+          </section>
 
           {draft.extraction.repeated_topics.length > 0 && (
             <div className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">

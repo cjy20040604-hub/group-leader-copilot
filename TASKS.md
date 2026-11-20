@@ -55,3 +55,10 @@
 - [x] README（一键启动 / Mock 说明 / 演示脚本）
 - [x] lint + typecheck + test 全绿；浏览器实测三条演示路径
 - 验收：新机器 `npm i && npm run seed && npm run dev` 5 分钟跑通 ✅（README 含步骤与 macOS 沙箱终端注意事项；生产模式 `npm run build && npm start` 已全流程实测）
+## M7 轻量通用化（2026-11-20，用户确认后追加）
+- [x] 自建课程/小组：POST /api/courses（组长权限、同名/超长校验、确定性 CRUD 不调 LLM）+ 设置页 CourseManager
+- [x] 新课程全链路可用：新建会议下拉 / 课程页 / 问答选课 / 首页总览自动收录；记忆从零开始，拒答规则不变
+- [x] AI 默认会议标题：lib/title.ts deriveTitle（议题拼标题，≤30 字）+ Draft.titleSource；确认面板标题可改、AI 来源标「AI 生成 · 待确认」；无议题回退模板标题
+- [x] lib/title.test.ts 4 例并入 npm test（共 50 例）
+- [x] docs/flows.md 同步（§4 输入/确认、§6 选课、§8 设置与组员差异）
+- 验收：lint / typecheck / test（50 例）/ eval（Hit@8 100%、拒答 100%、串台 0）全绿 ✅；浏览器实测：设置页新建「摄影社」+ 同名报错 ✅ → 新课程跑示例转写流水线，确认面板 AI 标题「问卷回收进度、样本量目标」带「AI 生成 · 待确认」✅ → 落库后新课程看板 3 任务含 🔴/🟡 风险灯 ✅ → 新课问答无关问题正确拒答 ✅ → 重置后自建课程清除、种子 3 门课恢复 ✅
