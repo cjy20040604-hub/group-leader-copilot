@@ -1,0 +1,56 @@
+{
+  "meeting_id": "new-meeting",
+  "course_id": "mkt",
+  "date": "2026-11-19",
+  "title": "问卷进度与样本量",
+  "topics": ["问卷回收进度", "样本量目标", "PPT 风格重提", "访谈与竞品分工", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "问卷样本量定在 200 份",
+      "evidence": "问卷样本量就定在 200 份",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "清洗问卷数据",
+      "owner_raw": "小雨",
+      "due_raw": "下周三前",
+      "due_date": "2026-11-25",
+      "confidence": "high",
+      "evidence": "小雨下周三前把问卷数据清完"
+    },
+    {
+      "task": "做 PPT 竞品对比页",
+      "owner_raw": "那个谁",
+      "due_raw": null,
+      "due_date": null,
+      "confidence": "low",
+      "evidence": "那个谁，先把竞品对比那页弄一下"
+    },
+    {
+      "task": "约访谈对象",
+      "owner_raw": "思琪",
+      "due_raw": "周五前",
+      "due_date": "2026-11-20",
+      "confidence": "high",
+      "evidence": "思琪周五前把访谈对象约好"
+    }
+  ],
+  "disagreements": [
+    {
+      "topic": "报告要不要加问卷原始数据附录",
+      "positions": ["小雨认为附上原始数据显得严谨、工作量足，纸质更踏实", "浩然认为附录太厚没人翻、头重脚轻，放在线表格链接就行"]
+    }
+  ],
+  "open_questions": ["课堂展示十五分钟怎么分配还没定，下次会排时间表"],
+  "repeated_topics": [
+    {
+      "topic": "PPT 风格",
+      "memory_id": "mkt-1112-d1"
+    }
+  ],
+  "next_meeting": "2026-11-26"
+}

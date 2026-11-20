@@ -1,0 +1,58 @@
+{
+  "meeting_id": "db-1106",
+  "course_id": "db",
+  "date": "2026-11-06",
+  "title": "定 MySQL 与设计流程",
+  "topics": ["数据库选型", "设计流程", "任务分工", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "数据库用 MySQL 8",
+      "evidence": "数据库就用 MySQL 8，别纠结了",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    },
+    {
+      "text": "先画 ER 图再建表",
+      "evidence": "先画 ER 图再建表",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "画 ER 图初稿",
+      "owner_raw": "浩然",
+      "due_raw": "下周五之前",
+      "due_date": "2026-11-13",
+      "confidence": "high",
+      "evidence": "浩然你下周五之前把 ER 图初稿画出来"
+    },
+    {
+      "task": "写需求说明",
+      "owner_raw": "阿杰",
+      "due_raw": "下周三之前",
+      "due_date": "2026-11-11",
+      "confidence": "high",
+      "evidence": "阿杰下周三之前把需求说明写了"
+    },
+    {
+      "task": "整理测试数据",
+      "owner_raw": "那个谁",
+      "due_raw": null,
+      "due_date": null,
+      "confidence": "low",
+      "evidence": "那个谁，先把测试数据整理一份"
+    }
+  ],
+  "disagreements": [
+    {
+      "topic": "数据库选型",
+      "positions": ["阿杰想用 PostgreSQL，或图方便的 SQLite", "浩然坚持 MySQL 8：中文教程最全，且 SQLite 不符合课程的客户端服务器要求"]
+    }
+  ],
+  "open_questions": [],
+  "repeated_topics": [],
+  "next_meeting": "2026-11-13"
+}

@@ -1,0 +1,248 @@
+[
+  {
+    "id": "g1",
+    "course_id": "mkt",
+    "question": "我们PPT最后定的什么风格？",
+    "expect_answer_points": [
+      "学校模板",
+      "蓝白"
+    ],
+    "expect_memory_ids": [
+      "mkt-1112-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g2",
+    "course_id": "mkt",
+    "question": "营销调研怎么做的？",
+    "expect_answer_points": [
+      "问卷",
+      "访谈"
+    ],
+    "expect_memory_ids": [
+      "mkt-1105-d2"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g3",
+    "course_id": "mkt",
+    "question": "访谈提纲谁写？",
+    "expect_answer_points": [
+      "思琪"
+    ],
+    "expect_memory_ids": [
+      "mkt-1112-a1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g4",
+    "course_id": "db",
+    "question": "数据库用的什么？",
+    "expect_answer_points": [
+      "MySQL 8"
+    ],
+    "expect_memory_ids": [
+      "db-1106-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g5",
+    "course_id": "db",
+    "question": "ER图谁负责？什么时候交？",
+    "expect_answer_points": [
+      "浩然",
+      "11/21"
+    ],
+    "expect_memory_ids": [
+      "db-1113-a1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g6",
+    "course_id": "db",
+    "question": "主键用什么方案？",
+    "expect_answer_points": [
+      "自增"
+    ],
+    "expect_memory_ids": [
+      "db-1113-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g7",
+    "course_id": "startup",
+    "question": "路演谁上台定了吗？",
+    "expect_answer_points": [
+      "还没定",
+      "浩然",
+      "思琪"
+    ],
+    "expect_memory_ids": [
+      "startup-1114-q1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g8",
+    "course_id": "startup",
+    "question": "创新创业的选题是什么？",
+    "expect_answer_points": [
+      "二手书"
+    ],
+    "expect_memory_ids": [
+      "startup-1107-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "g9",
+    "course_id": "mkt",
+    "question": "我们组费预算是多少？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "g10",
+    "course_id": "db",
+    "question": "老师给这次作业打了多少分？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "p1",
+    "course_id": "mkt",
+    "question": "PPT 最终用的是哪个模板？",
+    "expect_answer_points": [
+      "学校"
+    ],
+    "expect_memory_ids": [
+      "mkt-1112-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "p2",
+    "course_id": "mkt",
+    "question": "幻灯片用什么风格？",
+    "expect_answer_points": [
+      "学校"
+    ],
+    "expect_memory_ids": [
+      "mkt-1112-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "p3",
+    "course_id": "db",
+    "question": "ER 图现在谁在画？",
+    "expect_answer_points": [
+      "浩然"
+    ],
+    "expect_memory_ids": [
+      "db-1113-a1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "p4",
+    "course_id": "db",
+    "question": "建表脚本谁写？什么时候交？",
+    "expect_answer_points": [
+      "思琪",
+      "11/24"
+    ],
+    "expect_memory_ids": [
+      "db-1113-a2"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "p5",
+    "course_id": "startup",
+    "question": "路演 PPT 做几页？",
+    "expect_answer_points": [
+      "10 页"
+    ],
+    "expect_memory_ids": [
+      "startup-1114-d1"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "p6",
+    "course_id": "db",
+    "question": "测试数据谁负责？",
+    "expect_answer_points": [
+      "待认领"
+    ],
+    "expect_memory_ids": [
+      "db-1106-a3"
+    ],
+    "expect_refusal": false
+  },
+  {
+    "id": "x1",
+    "course_id": "db",
+    "question": "我们PPT最后定的什么风格？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "x2",
+    "course_id": "startup",
+    "question": "我们PPT最后定的什么风格？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "x3",
+    "course_id": "mkt",
+    "question": "数据库用的什么？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "x4",
+    "course_id": "db",
+    "question": "路演谁上台定了吗？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "k1",
+    "course_id": "mkt",
+    "question": "PPT 字体用多大？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "k2",
+    "course_id": "db",
+    "question": "数据库课的报告字数要求是多少？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "k3",
+    "course_id": "startup",
+    "question": "路演要穿正装吗？",
+    "expect_answer_points": [],
+    "expect_memory_ids": [],
+    "expect_refusal": true
+  }
+]

@@ -1,0 +1,45 @@
+{
+  "meeting_id": "mkt-1105",
+  "course_id": "mkt",
+  "date": "2026-11-05",
+  "title": "营销作业启动与分工",
+  "topics": ["调研方式", "PPT 风格", "任务分工", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "PPT 统一用蓝白商务风",
+      "evidence": "那就定了，PPT 统一用蓝白商务风",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    },
+    {
+      "text": "调研采用问卷加访谈结合的方式",
+      "evidence": "调研就问卷加访谈两条腿走路",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "设计调研问卷",
+      "owner_raw": "小雨",
+      "due_raw": "下周二之前",
+      "due_date": "2026-11-10",
+      "confidence": "high",
+      "evidence": "小雨你下周二之前把问卷设计出来"
+    },
+    {
+      "task": "收集竞品资料",
+      "owner_raw": "阿杰",
+      "due_raw": "下周一之前",
+      "due_date": "2026-11-09",
+      "confidence": "high",
+      "evidence": "阿杰下周一之前把竞品资料找齐"
+    }
+  ],
+  "disagreements": [],
+  "open_questions": [],
+  "repeated_topics": [],
+  "next_meeting": "2026-11-12"
+}

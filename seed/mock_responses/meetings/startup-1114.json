@@ -1,0 +1,35 @@
+{
+  "meeting_id": "startup-1114",
+  "course_id": "startup",
+  "date": "2026-11-14",
+  "title": "路演分工起争执",
+  "topics": ["路演分工讨论", "路演 PPT 要求", "排练安排", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "路演 PPT 控制在 10 页以内",
+      "evidence": "路演 PPT 控制在 10 页以内",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "订路演排练教室",
+      "owner_raw": "我",
+      "due_raw": "下周五之前",
+      "due_date": "2026-11-20",
+      "confidence": "high",
+      "evidence": "我下周五之前把路演排练的教室订好"
+    }
+  ],
+  "disagreements": [
+    {
+      "topic": "路演谁上台",
+      "positions": ["浩然想上台：项目全程参与，技术部分只有他讲得明白", "思琪也想上台：商业模式和竞品分析是她做的，自己普通话好、不怯场", "阿杰觉得谁上都行，反正自己不上，上台就腿抖"]
+    }
+  ],
+  "open_questions": ["路演谁上台还没定，下次会必须拍板"],
+  "repeated_topics": [],
+  "next_meeting": "2026-11-21"
+}

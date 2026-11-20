@@ -1,0 +1,43 @@
+{
+  "meeting_id": "db-1113",
+  "course_id": "db",
+  "date": "2026-11-13",
+  "title": "催 ER 图与主键方案",
+  "topics": ["ER 图进度催办", "主键方案", "建表脚本分工", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "主键统一用自增 id",
+      "evidence": "主键统一用自增 id",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "完成 ER 图完整版",
+      "owner_raw": "浩然",
+      "due_raw": "下周六之前",
+      "due_date": "2026-11-21",
+      "confidence": "high",
+      "evidence": "下周六之前一定给，这次真的"
+    },
+    {
+      "task": "写建表脚本",
+      "owner_raw": "思琪",
+      "due_raw": "下下周二之前",
+      "due_date": "2026-11-24",
+      "confidence": "high",
+      "evidence": "思琪你下下周二之前把建表脚本写完"
+    }
+  ],
+  "disagreements": [],
+  "open_questions": [],
+  "repeated_topics": [
+    {
+      "topic": "ER 图进度",
+      "memory_id": "db-1106-a1"
+    }
+  ],
+  "next_meeting": "2026-11-20"
+}

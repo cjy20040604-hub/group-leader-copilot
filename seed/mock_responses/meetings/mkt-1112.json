@@ -1,0 +1,43 @@
+{
+  "meeting_id": "mkt-1112",
+  "course_id": "mkt",
+  "date": "2026-11-12",
+  "title": "改用学校模板与进度",
+  "topics": ["PPT 模板更换", "问卷回收进度", "访谈安排", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "PPT 改用学校官方模板",
+      "evidence": "蓝白那个不行，老师说要用学校模板",
+      "confidence": "high",
+      "supersedes_memory_id": "mkt-1105-d1",
+      "note": "推翻 11/05 定的蓝白商务风：老师要求必须用学校官方模板，评分标准里有明确规定"
+    }
+  ],
+  "action_items": [
+    {
+      "task": "整理访谈提纲",
+      "owner_raw": "思琪",
+      "due_raw": "下周二前",
+      "due_date": "2026-11-17",
+      "confidence": "high",
+      "evidence": "思琪下周二前把访谈提纲整理出来"
+    },
+    {
+      "task": "汇总问卷数据",
+      "owner_raw": "我",
+      "due_raw": "下周三之前",
+      "due_date": "2026-11-18",
+      "confidence": "high",
+      "evidence": "我下周三之前把问卷数据汇总好"
+    }
+  ],
+  "disagreements": [],
+  "open_questions": [],
+  "repeated_topics": [
+    {
+      "topic": "PPT 风格",
+      "memory_id": "mkt-1105-d1"
+    }
+  ],
+  "next_meeting": "2026-11-19"
+}

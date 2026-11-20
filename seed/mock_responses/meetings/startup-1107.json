@@ -1,0 +1,43 @@
+{
+  "meeting_id": "startup-1107",
+  "course_id": "startup",
+  "date": "2026-11-07",
+  "title": "选题定校园二手书平台",
+  "topics": ["项目选题", "任务分工", "盈利模式", "下次会议时间"],
+  "decisions": [
+    {
+      "text": "项目选题定校园二手书平台",
+      "evidence": "选题就定校园二手书平台",
+      "confidence": "high",
+      "supersedes_memory_id": null,
+      "note": null
+    }
+  ],
+  "action_items": [
+    {
+      "task": "写商业计划书初稿",
+      "owner_raw": "阿杰",
+      "due_raw": "下周四之前",
+      "due_date": "2026-11-12",
+      "confidence": "high",
+      "evidence": "阿杰下周四之前把商业计划书初稿写出来"
+    },
+    {
+      "task": "做竞品分析",
+      "owner_raw": "小雨",
+      "due_raw": "下周四之前",
+      "due_date": "2026-11-12",
+      "confidence": "high",
+      "evidence": "小雨你也下周四之前，把竞品分析做了"
+    }
+  ],
+  "disagreements": [
+    {
+      "topic": "项目选题",
+      "positions": ["阿杰提议校园跑腿平台，觉得是刚需", "小雨和思琪主张二手书平台：竞争少、好讲故事，还能蹭教材循环的政策风口"]
+    }
+  ],
+  "open_questions": [],
+  "repeated_topics": [],
+  "next_meeting": "2026-11-14"
+}

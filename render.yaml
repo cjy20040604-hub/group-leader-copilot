@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: group-leader-copilot
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run seed && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: MOCK_LLM
+        value: "true"
+      - key: LLM_BASE_URL
+        value: https://dashscope.aliyuncs.com/compatible-mode/v1
+      - key: LLM_MODEL_EXTRACT
+        value: qwen3.7-plus
+      - key: LLM_MODEL_CHAT
+        value: qwen-plus
+      - key: EMBEDDING_MODEL
+        value: text-embedding-v4
+      - key: NODE_VERSION
+        value: "22"
