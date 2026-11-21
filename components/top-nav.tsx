@@ -18,6 +18,7 @@ const NAV = [
   { href: '/app/tasks', label: '任务与回顾' },
   { href: '/app/ask', label: '问问上次' },
   { href: '/app/cost', label: '成本看板' },
+  { href: '/app/metrics', label: '成功指标' },
   { href: '/app/settings', label: '设置' },
 ];
 

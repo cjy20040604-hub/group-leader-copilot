@@ -21,7 +21,7 @@ type CourseReview = {
 
 type Props = {
   user: User; demoNow: string; members: Member[]; tasks: ReviewTask[];
-  nudges: Record<string, string>; reminderTaskIds: string[];
+  nudges: Record<string, string>; reminderTaskIds: string[]; reminderLinks?: Record<string, string>;
 } & (
   | { mode: 'leader'; inbox: Inbox; feed: FeedItem[]; reviews: CourseReview[] }
   | { mode: 'member'; mine: ReviewTask[]; doneMine: ReviewTask[]; unclaimed: ReviewTask[]; feed: FeedItem[] }
@@ -72,10 +72,10 @@ async function copyText(text: string) {
   }
 }
 
-function CopyButton({ text, label }: { text: string; label: string }) {
+function CopyButton({ text, label, reminderId }: { text: string; label: string; reminderId?: string }) {
   const [done, setDone] = useState(false);
   return (
-    <Button size="sm" variant="outline" onClick={async () => { await copyText(text); setDone(true); setTimeout(() => setDone(false), 1500); }}>
+    <Button size="sm" variant="outline" onClick={async () => { await copyText(reminderId ? `${text}\n点这里回复进度：${window.location.origin}/r/${reminderId}` : text); setDone(true); setTimeout(() => setDone(false), 1500); }}>
       {done ? '已复制' : label}
     </Button>
   );
@@ -99,7 +99,7 @@ function InlineForm({ placeholder, submitLabel, withDate, minDate, onSubmit, onC
   );
 }
 
-function TaskHead({ t, reminded }: { t: ReviewTask; reminded?: boolean }) {
+function TaskHead({ t, reminded, replyId }: { t: ReviewTask; reminded?: boolean; replyId?: string }) {
   return (
     <div className="flex flex-wrap items-start gap-2">
       <span aria-label={`风险 ${t.risk}`}>{RISK_LABEL[t.risk]}</span>
@@ -110,7 +110,7 @@ function TaskHead({ t, reminded }: { t: ReviewTask; reminded?: boolean }) {
           <span>{t.ownerName}</span>
           <span>{t.dueText}</span>
           <span>{STATUS_LABEL[t.status as TaskStatus] ?? t.status}</span>
-          {reminded && <Badge tone="red">🔔 有提醒</Badge>}
+          {reminded && (replyId ? <Link href={`/r/${replyId}`}><Badge tone="red">🔔 有提醒 · 点这里回复</Badge></Link> : <Badge tone="red">🔔 有提醒</Badge>)}
         </p>
       </div>
     </div>
@@ -119,12 +119,12 @@ function TaskHead({ t, reminded }: { t: ReviewTask; reminded?: boolean }) {
 
 // ───────────── 组员视图：把「更新一次」做到足够轻 ─────────────
 
-function MyTaskCard({ t, today, reminded, act, busy }: { t: ReviewTask; today: string; reminded: boolean; act: ReturnType<typeof useAct>['act']; busy: string }) {
+function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask; today: string; reminded: boolean; replyId?: string; act: ReturnType<typeof useAct>['act']; busy: string }) {
   const [form, setForm] = useState<'' | 'progress' | 'block' | 'extend' | 'submit'>('');
   const leaderSaid = t.lastUpdate?.byLeader && ['review_return', 'extension_rejected', 'extension_approved', 'unblocked'].includes(t.lastUpdate.kind) ? t.lastUpdate : null;
   return (
     <Card className={cx('p-3', t.risk === 'red' && 'border-red-200')}>
-      <TaskHead t={t} reminded={reminded} />
+      <TaskHead t={t} reminded={reminded} replyId={replyId} />
       {t.progressNote && <p className="mt-2 text-xs text-slate-600">我上次写的进度：「{t.progressNote}」</p>}
       {leaderSaid && (
         <p className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800">
@@ -282,7 +282,7 @@ export function TaskReview(props: Props) {
         </div>
         <section aria-label="我的待办" className="space-y-2">
           {mine.length === 0 ? <EmptyState title="手上没有未完成的任务" hint="下面有没人认领的，有空可以拿一个" /> :
-            mine.map((t) => <MyTaskCard key={t.id} t={t} today={today} reminded={reminded.has(t.id)} act={act} busy={busy} />)}
+            mine.map((t) => <MyTaskCard key={t.id} t={t} today={today} reminded={reminded.has(t.id)} replyId={props.reminderLinks?.[t.id]} act={act} busy={busy} />)}
         </section>
         <section aria-label="没人认领" className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">还没人认领（{unclaimed.length}）<span className="ml-2 text-xs font-normal text-slate-400">会上说了「那个谁」的事，谁有空谁拿</span></h2>
@@ -338,7 +338,7 @@ export function TaskReview(props: Props) {
             <>
               <TaskHead t={t} reminded={reminded.has(t.id)} />
               {t.progressNote && <p className="mt-2 text-xs text-slate-500">最后一次进度：「{t.progressNote}」{t.lastUpdateAt && ` · ${when(t.lastUpdateAt)}`}</p>}
-              <div className="mt-2"><CopyButton label="复制催办" text={nudges[t.id]} /></div>
+              <div className="mt-2 flex items-center gap-2"><CopyButton label={props.reminderLinks?.[t.id] ? '复制催办（带回复链接）' : '复制催办'} text={nudges[t.id]} reminderId={props.reminderLinks?.[t.id]} />{props.reminderLinks?.[t.id] && <span className="text-[11px] text-slate-400">组员点链接回复后，会出现在组员动态里</span>}</div>
             </>
           )}</InboxSection>
           <InboxSection title="没人认领" hint="组员也能自己认领" items={inbox.unclaimed}>{(t) => (

@@ -85,6 +85,13 @@ npm run typecheck  # tsc --noEmit
 - 自动结束：演示放完 5 秒、真实模式连续静音 2 分钟后 30 秒倒计时（可取消）。
 - 结束 → `live_draft` → `/app/meeting/new?from=live` 自动跑流水线，meetingId 沿用会话 id（`m-live-…`），ASR / 查重 / 抽取的计量挂在同一场会上。
 
+## 三门课并行、提醒闭环、成功指标、单位经济（确定性代码）
+
+- `lib/multi-course.ts`：`loadAgenda` 汇总未来 7 天各课程的 DDL 和组会（含已过期）；`memberLoads` / `assessLoad` 判定组员负载（≥ 3 件太满；≥ 2 件且跨 ≥ 2 门课为跨课撞车）。首页 `components/week-board.tsx` 展示。
+- 提醒闭环：`reminders.responded_at / response`；`/r/[id]` 回复页（`components/reminder-reply.tsx`）→ `POST /api/reminders/reply` 以负责人身份调 `recordTaskAction`，再标记提醒已回复。组长复制提醒时附 `/r/{id}` 链接（`components/reminder-card.tsx`）。
+- `lib/metrics.ts`：`replyRate`、`selfUpdateShare`、`onTimeRate` 纯函数 + `loadMetrics`；`metric_events` 表记录「重复讨论被拦下」（议程查重、会中查重命中时写，同一会 / 同一议程去重）。页面 `/app/metrics`。
+- `lib/unit-economics.ts`：每组变动成本、免费用户成本、边际贡献、盈亏平衡、规模毛利和敏感度表；成本看板的表和计算器（`components/unit-econ-calculator.tsx`）共用这一份代码。
+
 ## 钉钉会议转写导入（`lib/dingtalk/`）
 
 - `POST /api/dingtalk/import {conferenceId, unionId?}` → `fetchCloudTexts()`（`POST /v1.0/oauth2/accessToken` 取企业内部应用 token 并缓存；`GET /v1.0/conference/videoConferences/{conferenceId}/cloudRecords/getTexts` 正序翻页，`nextToken` / `nextTtoken` 都认）→ `paragraphsToTranscript()`（排序、5 分钟时间戳、昵称按花名册映射）→ 填进纪要页输入框。

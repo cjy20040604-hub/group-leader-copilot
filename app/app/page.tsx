@@ -5,8 +5,11 @@ import { getDemoNow, toLocalISO, dateOnly, formatCN } from '@/lib/time';
 import { visibleReminders } from '@/lib/reminders';
 import { riskLevel, dueText, STATUS_LABEL, RISK_LABEL, type TaskStatus } from '@/lib/risk';
 import { Card, Badge, EmptyState } from '@/components/ui';
-import { loadReviewTasks, leaderInbox } from '@/lib/review';
+import { loadReviewTasks, leaderInbox, courseReview } from '@/lib/review';
 import { NewCourseCard } from '@/components/new-course-card';
+import { loadAgenda, memberLoads } from '@/lib/multi-course';
+import { WeekBoard, MemberLoadPanel } from '@/components/week-board';
+import { ReminderCard } from '@/components/reminder-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +43,8 @@ export default function DashboardPage() {
     .filter(Boolean)
     .sort((a, b) => Number(a!.past) - Number(b!.past) || a!.date.localeCompare(b!.date)) as { course: (typeof courses)[number]; date: string; past: boolean }[];
 
+  const agenda = loadAgenda(now, { ownerId: user.role === 'leader' ? undefined : user.id });
+  const loads = user.role === 'leader' ? memberLoads(now) : [];
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '待认领';
   const courseOf = (id: string) => courses.find((c) => c.id === id);
 
@@ -48,7 +53,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-xl font-bold">本周我要盯的事</h1>
         <p className="mt-1 text-sm text-slate-500">
-          {user.role === 'leader' ? `${user.name}，3 门课并行，这一屏帮你装下所有进度。` : `${user.name}，这是你自己的任务。`}
+          {user.role === 'leader' ? `${user.name}，${courses.length} 门课并行，这一屏帮你装下所有进度。` : `${user.name}，这是你自己的任务。`}
         </p>
       </div>
 
@@ -97,6 +102,10 @@ export default function DashboardPage() {
         )}
       </section>
 
+      <WeekBoard overdue={agenda.overdue} days={agenda.days}
+        title={user.role === 'leader' ? `📅 未来 7 天 · ${agenda.courseCount} 门课一张表` : '📅 我未来 7 天要交的'} />
+      {user.role === 'leader' && <MemberLoadPanel loads={loads} />}
+
       <div className="grid gap-6 md:grid-cols-2">
         <section aria-label="即将到来的会议">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">🗓 即将到来的会议</h2>
@@ -121,16 +130,11 @@ export default function DashboardPage() {
 
         <section aria-label="最新提醒">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">🔔 最新提醒（{reminders.length}）</h2>
-          {reminders.length === 0 ? <EmptyState title="暂无提醒" hint="D-3 / D-1 / 过期第一天自动生成" /> : (
+          {reminders.length === 0 ? <EmptyState title="暂无提醒" hint="D-3 / D-1 / 过期第一天自动生成；组长复制时带回复链接，组员点一下就能回复" /> : (
             <div className="space-y-2">
               {reminders.slice(0, 5).map((r) => (
-                <Card key={r.id} className="p-3">
-                  <p className="text-xs text-slate-700">{r.message}</p>
-                  <p className="mt-1 flex items-center text-[11px] text-slate-400">
-                    <span className="flex-1">{r.kind === 'overdue' ? '过期提醒' : r.kind === 'd1' ? 'D-1 提醒' : 'D-3 提醒'} · {r.fireDate}</span>
-                    {user.role !== 'leader' && <Link href="/app/tasks" className="text-brand-600 hover:underline">回复进度 →</Link>}
-                  </p>
-                </Card>
+                <ReminderCard key={r.id} isLeader={user.role === 'leader'}
+                  r={{ id: r.id, message: r.message, kind: r.kind, fireDate: r.fireDate, respondedAt: r.respondedAt, response: r.response }} />
               ))}
             </div>
           )}
@@ -141,8 +145,12 @@ export default function DashboardPage() {
         <h2 className="mb-2 text-sm font-semibold text-slate-700">📚 我的课程</h2>
         <div className="grid gap-3 md:grid-cols-3">
           {courses.map((c) => {
-            const cOpen = allTasks.filter((t) => t.courseId === c.id && t.status !== 'done').length;
+            const cOpenTasks = allTasks.filter((t) => t.courseId === c.id && t.status !== 'done');
+            const cOpen = cOpenTasks.length;
             const cMeetings = meetings.filter((m) => m.courseId === c.id).length;
+            const cRisk = cOpenTasks.map((t) => riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt, blocked: Boolean(t.blocker) }, now));
+            const cReview = courseReview(c.id, now);
+            const cNext = upcoming.find((u) => u.course.id === c.id);
             return (
               <Link key={c.id} href={`/app/c/${c.id}`}>
                 <Card className="p-4 transition-shadow hover:shadow-md">
@@ -151,6 +159,12 @@ export default function DashboardPage() {
                     <p className="font-medium">{c.name}</p>
                   </div>
                   <p className="mt-2 text-xs text-slate-500">{cMeetings} 场纪要 · {cOpen} 个未完成任务</p>
+                  <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-slate-500">
+                    {cRisk.includes('red') && <span className="text-red-600">🔴 {cRisk.filter((r) => r === 'red').length}</span>}
+                    {cRisk.includes('yellow') && <span className="text-yellow-700">🟡 {cRisk.filter((r) => r === 'yellow').length}</span>}
+                    <span>带到下次会 {cReview.carry.length} 条</span>
+                    {cNext && <span>{cNext.past ? '上次约的会还没录纪要' : `下次会 ${formatCN(cNext.date)}`}</span>}
+                  </p>
                 </Card>
               </Link>
             );

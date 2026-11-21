@@ -14,7 +14,10 @@ export default function TasksPage() {
   const tasks = loadReviewTasks(now);
   const members = db.select().from(schema.members).all().map((m) => ({ id: m.id, name: m.name, role: m.role }));
   const courses = db.select().from(schema.courses).all();
-  const reminderTaskIds = [...new Set(visibleReminders(user).map((r) => r.taskId))];
+  const visible = visibleReminders(user);
+  const reminderTaskIds = [...new Set(visible.map((r) => r.taskId))];
+  // 每个任务最新一条提醒：催办文案带上它的回复链接
+  const reminderLinks = Object.fromEntries(visible.map((r) => [r.taskId, r.id]).reverse());
 
   // 催办文案：模板，不花钱（和提醒扫描用的是同一个模板）
   const nudges = Object.fromEntries(tasks.map((t) => [t.id, nudgeMessage({
@@ -34,6 +37,7 @@ export default function TasksPage() {
         reviews={courses.map((c) => ({ course: { id: c.id, name: c.name, color: c.color }, ...courseReview(c.id, now) }))}
         nudges={nudges}
         reminderTaskIds={reminderTaskIds}
+        reminderLinks={reminderLinks}
       />
     );
   }
@@ -52,6 +56,7 @@ export default function TasksPage() {
       feed={loadFeed({ limit: 10, ownerId: user.id })}
       nudges={nudges}
       reminderTaskIds={reminderTaskIds}
+      reminderLinks={reminderLinks}
     />
   );
 }

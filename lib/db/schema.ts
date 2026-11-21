@@ -82,6 +82,18 @@ export const reminders = sqliteTable('reminders', {
   fireDate: text('fire_date').notNull(),
   message: text('message').notNull(),
   createdAt: text('created_at').notNull(),
+  respondedAt: text('responded_at'), // 组员点提醒里的链接回复的时间（提醒闭环）
+  response: text('response'),
+});
+
+// 成功指标用的事件（确定性代码写入）：目前记录「重复讨论被拦下」
+export const metricEvents = sqliteTable('metric_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kind: text('kind').notNull(),
+  courseId: text('course_id'),
+  meetingId: text('meeting_id'),
+  detail: text('detail'),
+  createdAt: text('created_at').notNull(),
 });
 
 export const usageLog = sqliteTable('usage_log', {

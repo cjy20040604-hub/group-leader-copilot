@@ -2,6 +2,8 @@ import { db, schema } from '@/lib/db/client';
 import { isMock } from '@/lib/llm';
 import { llmCost, embeddingCost, asrCost, asrCostFor, asrPrice, STANDARD_MEETING } from '@/config/pricing';
 import { Card, Badge, EmptyState } from '@/components/ui';
+import { UnitEconCalculator } from '@/components/unit-econ-calculator';
+import { computeEconomics, BASELINE, SENSITIVITY } from '@/lib/unit-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,8 +119,39 @@ export default function CostPage() {
         <Card className="p-4 text-sm">
           <p>纯文字稿模型成本：24 × ¥{stdText.toFixed(3)} + 200 × ¥{stdQa.toFixed(4)} ≈ <strong>¥{semesterModel.toFixed(2)}</strong></p>
           <p className="mt-1">加服务器/数据库/推送摊销 ¥{STANDARD_MEETING.infraPerSemester} ≈ <strong>¥{semesterAll.toFixed(2)}</strong>；全部用录音再加 24 × ¥{stdAsr.toFixed(2)} ≈ ¥{(STANDARD_MEETING.meetingsPerSemester * stdAsr).toFixed(1)}</p>
-          <p className="mt-2 text-xs text-slate-500">组长 Pro 定价 {proPrice} 元/学期（含 10 小时录音 ≈ ¥{proAsr.toFixed(2)}）：成本 ≈ {semesterModel.toFixed(2)} + {proAsr.toFixed(2)} + {STANDARD_MEETING.infraPerSemester} ≈ {proCost.toFixed(2)} 元，毛利约 {(((proPrice - proCost) / proPrice) * 100).toFixed(0)}%。详见 docs/cost-model.md。</p>
+          <p className="mt-2 text-xs text-slate-500">组长 Pro 定价 {proPrice} 元/学期（含 10 小时录音 ≈ ¥{proAsr.toFixed(2)}）：成本 ≈ {semesterModel.toFixed(2)} + {proAsr.toFixed(2)} + {STANDARD_MEETING.infraPerSemester} ≈ {proCost.toFixed(2)} 元，毛利约 {(((proPrice - proCost) / proPrice) * 100).toFixed(0)}%。这是只算这个组自己的毛利（每组摊 2 元固定成本）；算上它带着的免费用户、支付通道费，并把固定成本按月单列，见下方「敏感度与盈亏平衡」。详见 docs/cost-model.md。</p>
         </Card>
+      </section>
+
+      <section aria-label="敏感度与盈亏平衡">
+        <h2 className="mb-2 text-sm font-semibold">敏感度与盈亏平衡（一次只动一个假设，其余按基线）</h2>
+        <Card className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead><tr className="border-b border-slate-200 text-left text-slate-500">
+              <th className="p-2">假设</th><th className="p-2">取值</th><th className="p-2">每组变动成本</th><th className="p-2">每组边际贡献</th><th className="p-2">单组贡献率</th><th className="p-2">盈亏平衡</th>
+            </tr></thead>
+            <tbody>
+              {SENSITIVITY.flatMap((g) => g.rows.map((row, i) => {
+                const r = computeEconomics({ ...BASELINE, ...row.patch });
+                const base = Object.keys(row.patch).length === 0;
+                return (
+                  <tr key={g.factor + row.value} className={`border-b border-slate-100 ${base ? 'bg-slate-50 text-slate-500' : ''}`}>
+                    <td className="p-2">{i === 0 ? g.factor : ''}</td><td className="p-2">{row.label}</td>
+                    <td className="p-2">¥{r.variableCost.toFixed(2)}</td><td className="p-2">¥{r.contribution.toFixed(2)}</td>
+                    <td className="p-2">{(r.unitMargin * 100).toFixed(1)}%</td>
+                    <td className={`p-2 ${Number.isFinite(r.breakEvenGroups) ? '' : 'text-red-600'}`}>{Number.isFinite(r.breakEvenGroups) ? `${r.breakEvenGroups} 组` : '亏损'}</td>
+                  </tr>
+                );
+              }))}
+            </tbody>
+          </table>
+        </Card>
+        <p className="mt-1 text-xs text-slate-500">基线：每组每学期 24 次 × 1 小时会、200 次问答、10 小时录音会后上传走录音文件识别（「上传音频」目前是 Demo 模拟；全走会议室实时转写见表中那一行）；Pro 19.9 元；免费用户 : 付费组 = 4 : 1；固定成本 100 元/月；支付通道费 0.6%。除单价外都是假设。最敏感的是录音走实时转写和免费用户比例。</p>
+      </section>
+
+      <section aria-label="单位经济计算器">
+        <h2 className="mb-2 text-sm font-semibold">单位经济计算器（改假设，结果立刻更新）</h2>
+        <UnitEconCalculator />
       </section>
 
       <section aria-label="最近调用">

@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS transcript_chunks;
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS task_updates;
 DROP TABLE IF EXISTS reminders;
+DROP TABLE IF EXISTS metric_events;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS settings;
 
@@ -89,6 +90,17 @@ CREATE TABLE reminders (
   kind TEXT NOT NULL,
   fire_date TEXT NOT NULL,
   message TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  responded_at TEXT,
+  response TEXT
+);
+
+CREATE TABLE metric_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  course_id TEXT,
+  meeting_id TEXT,
+  detail TEXT,
   created_at TEXT NOT NULL
 );
 
