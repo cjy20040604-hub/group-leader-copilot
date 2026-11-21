@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/risk.test.ts lib/dates.test.ts lib/roster.test.ts lib/rule-extract.test.ts lib/title.test.ts lib/rag/rrf.test.ts lib/rag/terms.test.ts lib/rag/match.test.ts lib/task-flow.test.ts lib/live/audio.test.ts lib/live/cues.test.ts lib/live/asr-request.test.ts lib/live/mic-permission.test.ts lib/dingtalk/cloud-texts.test.ts",
+    "test": "tsx --test lib/risk.test.ts lib/dates.test.ts lib/roster.test.ts lib/rule-extract.test.ts lib/title.test.ts lib/rag/rrf.test.ts lib/rag/terms.test.ts lib/rag/match.test.ts lib/task-flow.test.ts lib/live/audio.test.ts lib/live/cues.test.ts lib/live/asr-request.test.ts lib/live/mic-permission.test.ts lib/dingtalk/cloud-texts.test.ts lib/dingtalk/client.test.ts",
     "seed": "tsx seed/index.ts",
     "eval": "tsx eval/run.ts"
   },

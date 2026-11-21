@@ -113,7 +113,7 @@ npm run typecheck  # tsc --noEmit
 
 ## 测试策略
 
-node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 91 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
+node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 94 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）、钉钉 client 对本地模拟服务（`lib/dingtalk/client.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
 
 ## 边界
 

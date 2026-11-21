@@ -12,7 +12,7 @@ export const PRICING: Record<string, ModelPrice> = {
   'text-embedding-v4': { input: 0.5, output: 0 },
 };
 
-export const ASR_PRICE_PER_SECOND = 0.00008; // Paraformer ≈ 0.29 元/小时（待核对：来自需求 prompt，未在百炼价格页核实）
+export const ASR_PRICE_PER_SECOND = 0.00008; // paraformer-v2 ≈ 0.29 元/小时（百炼模型页华北2 原价，2026-11-21 复核）
 
 // 实时 / 准实时语音识别（元 / 秒）。会议室按静音切段，只有有人说话的部分计费
 export const ASR_PRICES: Record<string, { perSecond: number; verified: boolean; note: string }> = {

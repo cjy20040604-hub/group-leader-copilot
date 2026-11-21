@@ -33,7 +33,7 @@ const ERROR_HINT: Record<string, string> = {
   cloudRecordNotFound: '这场会没开云录制（闪记），或者还没人发言',
   orgAccessForbidden: '应用所在组织和这场会不是同一个组织',
   unknownUserError: 'unionId 不对，或这个人不在应用所在组织里',
-  permissionError: '应用没开通「视频会议信息读权限」',
+  permissionError: '权限受限（钉钉文档：群权限限制）：确认查询人是这场会的参会人，应用也开通了「视频会议信息读权限」',
   resourceClose: '会议已关闭',
 };
 

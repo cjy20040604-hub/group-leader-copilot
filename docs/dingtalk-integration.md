@@ -37,7 +37,7 @@
 - `lib/dingtalk/cloud-texts.ts`：钉钉段落 → 本产品转写格式。按时间排序，每 5 分钟打时间戳，钉钉昵称用花名册别名映射（「然哥」→ 浩然），对不上的保留原昵称。分页游标 `nextToken` / 文档示例里的拼写 `nextTtoken` 都认。
 - `POST /api/dingtalk/import`：输入 conferenceId（和可选的 unionId）。没配 `DINGTALK_APP_KEY` / `DINGTALK_APP_SECRET` 时，返回按官方响应字段构造的演示数据，页面标「演示模拟」。
 - 纪要页「📞 从钉钉会议导入」：填会议 ID，点导入，转写和发言人映射结果填进输入框，后面照常整理、确认。
-- 单测 4 例（排序、昵称映射、分页游标、演示数据）。用本地模拟的钉钉服务（`DINGTALK_API_BASE` 指过去）跑通了真实模式代码：取 token、带请求头、两页翻页、错误码提示。
+- 单测 4 例（排序、昵称映射、分页游标、演示数据）。另有 `lib/dingtalk/client.test.ts`：测试里起一个本地模拟的钉钉服务（`DINGTALK_API_BASE` 指过去），跑真实模式代码：取 token 并缓存、带请求头、两页翻页、错误码提示，`npm test` 可复现。
 
 ## 接实时事件（②）还差什么
 

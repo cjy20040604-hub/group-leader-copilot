@@ -217,7 +217,7 @@ export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
             </div>
             {dingOpen && (
               <div className="mt-2 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs text-slate-600">钉钉视频会议开了「云录制（闪记）」的，可以直接把转写拉过来（带发言人）。会议 ID 在钉钉会议详情里，或由创建会议接口返回。</p>
+                <p className="text-xs text-slate-600">钉钉视频会议开了「云录制（闪记）」的，可以直接把转写拉过来（带发言人）。会议 ID（conferenceId）由钉钉「创建视频会议」接口返回，会议相关的事件推送里也带着。</p>
                 <div className="flex flex-wrap gap-2">
                   <Input value={dingConf} onChange={(e) => setDingConf(e.target.value)} placeholder="会议 ID（conferenceId）" className="min-w-48 flex-1 py-1 text-xs" aria-label="钉钉会议 ID" />
                   <Input value={dingUnion} onChange={(e) => setDingUnion(e.target.value)} placeholder="查询人 unionId（选填）" className="w-48 py-1 text-xs" aria-label="钉钉 unionId" />
