@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Select, cx } from '@/components/ui';
 import { clock, type ScriptLine } from '@/lib/live/cues';
 import { VadSegmenter, downsample, encodeWav, toBase64, TARGET_RATE } from '@/lib/live/audio';
+import { describeMicError, detectBrowser, PERMISSION_LABEL, type MicHelp, type MicPermission } from '@/lib/live/mic-permission';
 import type { CarryItem } from '@/lib/review';
 
-type Line = { id: number; at: number; speaker: string; text: string; hint?: boolean };
+// local：Mock 模式下麦克风录到的语音段（没转文字，可回放）
+type Line = { id: number; at: number; speaker: string; text: string; hint?: boolean; local?: boolean; audioUrl?: string };
 type Hint = { memoryId: string; text: string; meetingDate: string; matched: string; clause: string; similarity: number; lineId: number };
 type Source = 'demo' | 'mic';
 // winding：演示录音放完 / 长时间没人说话 → 倒计时自动结束（可取消）
@@ -33,6 +35,7 @@ const COUNTDOWN = 3;
 const SILENCE_WIND_MS = 120_000; // 2 分钟没人说话 → 准备自动结束
 const WIND_DEMO = 5;
 const WIND_MIC = 30;
+const MAX_LOCAL_SECONDS = 1800; // Mock 录音最多在页面里留 30 分钟有声片段，免得占满内存
 
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
@@ -57,6 +60,12 @@ export function LiveMeeting(props: Props) {
   const [speaker, setSpeaker] = useState('');
   const [inflight, setInflight] = useState(0);
   const [error, setError] = useState('');
+  // 麦克风授权：先在页面里征得同意，再让浏览器弹系统授权框
+  const [micPerm, setMicPerm] = useState<MicPermission>('unknown');
+  const [consentOpen, setConsentOpen] = useState(false);
+  const [micHelp, setMicHelp] = useState<MicHelp | null>(null);
+  const [requesting, setRequesting] = useState(false);
+  const [recording, setRecording] = useState<{ url: string; seconds: number; voiced: number; segments: number } | null>(null);
 
   const phaseRef = useRef<Phase>(autoStart ? 'countdown' : 'idle');
   const speedRef = useRef(1);
@@ -72,6 +81,9 @@ export function LiveMeeting(props: Props) {
   const inflightRef = useRef(0);
   const audioRef = useRef<{ stream: MediaStream; ctx: AudioContext; proc: ScriptProcessorNode; vad: VadSegmenter; startedAt: number; pausedMs: number; pauseAt: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const micPermRef = useRef<MicPermission>('unknown');
+  const sourceRef = useRef<Source>(mock ? 'demo' : 'mic');
+  const localSegsRef = useRef<Float32Array[]>([]);
 
   const course = courses.find((c) => c.id === courseId);
   const demoMismatch = source === 'demo' && courseId !== demoCourse;
@@ -81,6 +93,8 @@ export function LiveMeeting(props: Props) {
   useEffect(() => { speedRef.current = speed; }, [speed]);
   useEffect(() => { speakerRef.current = speaker; }, [speaker]);
   useEffect(() => { hintCountRef.current = hints.length; }, [hints]);
+  useEffect(() => { micPermRef.current = micPerm; }, [micPerm]);
+  useEffect(() => { sourceRef.current = source; }, [source]);
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [lines, partial]);
 
   const clearTimers = () => {
@@ -138,8 +152,20 @@ export function LiveMeeting(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [script, appendLine]);
 
+  // Mock 模式：麦克风是真的在录，但不调语音模型；每段留在页面里，可回放，结束后可下载
+  const keepLocal = useCallback((seg: Float32Array, at: number) => {
+    const kept = localSegsRef.current.reduce((a, b) => a + b.length, 0) / TARGET_RATE;
+    if (kept < MAX_LOCAL_SECONDS) localSegsRef.current.push(seg);
+    const url = URL.createObjectURL(new Blob([encodeWav(seg, TARGET_RATE) as BlobPart], { type: 'audio/wav' }));
+    const n = linesRef.current.filter((l) => l.local).length + 1;
+    const line: Line = { id: ++lineIdRef.current, at, speaker: speakerRef.current || '发言人', text: `第 ${n} 段发言 · ${(seg.length / TARGET_RATE).toFixed(1)} 秒（Mock 模式不转文字）`, local: true, audioUrl: url };
+    linesRef.current = [...linesRef.current, line];
+    setLines(linesRef.current);
+  }, []);
+
   // ───── 麦克风：VAD 切段 → /api/asr/live（真实模式）─────
   const sendSegment = useCallback(async (seg: Float32Array, at: number) => {
+    if (mock) { keepLocal(seg, at); return; }
     inflightRef.current += 1; setInflight(inflightRef.current);
     try {
       const audio = toBase64(encodeWav(seg, TARGET_RATE));
@@ -155,15 +181,24 @@ export function LiveMeeting(props: Props) {
     } finally {
       inflightRef.current -= 1; setInflight(inflightRef.current);
     }
-  }, [courseId, appendLine]);
+  }, [courseId, appendLine, mock, keepLocal]);
 
   const micElapsed = () => {
     const a = audioRef.current;
     return a ? (performance.now() - a.startedAt - a.pausedMs) / 1000 : 0;
   };
 
-  async function startMic() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+  const getMicStream = () => navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+
+  async function startMic(granted?: MediaStream) {
+    const stream = granted ?? await getMicStream();
+    // 录到一半麦克风被拔掉、或权限被关掉
+    stream.getAudioTracks()[0]?.addEventListener('ended', () => {
+      if (phaseRef.current !== 'recording') return;
+      pause();
+      setMicHelp({ title: '麦克风断开了', steps: ['检查麦克风是否被拔掉，或权限是不是被关掉了', '恢复后点「继续」；也可以直接结束会议'], canRetry: false });
+      setConsentOpen(true);
+    });
     const ctx = new AudioContext();
     const src = ctx.createMediaStreamSource(stream);
     const proc = ctx.createScriptProcessor(4096, 1, 1);
@@ -196,21 +231,82 @@ export function LiveMeeting(props: Props) {
   }
 
   // ───── 生命周期：倒计时自动开录 → 录音 → 暂停/继续 → 自动或手动结束 ─────
-  async function start() {
+  async function start(granted?: MediaStream) {
+    // 麦克风没授权过：先停下来征得同意，不偷偷录
+    if (sourceRef.current === 'mic' && !granted && micPermRef.current !== 'granted') {
+      clearTimers();
+      go('idle');
+      openConsent();
+      return;
+    }
     setError('');
+    // 新的一次录音：清掉上一次留在页面上的转写、提醒和录音（释放回放用的内存）
+    if (recording) URL.revokeObjectURL(recording.url);
+    linesRef.current.forEach((l) => l.audioUrl && URL.revokeObjectURL(l.audioUrl));
+    linesRef.current = [];
+    setLines([]);
+    setHints([]);
+    setClockSec(0);
+    setRecording(null);
+    localSegsRef.current = [];
     sessionRef.current = `m-live-${Date.now()}`;
     go('recording');
-    if (source === 'demo') {
+    if (sourceRef.current === 'demo') {
       idxRef.current = 0; charRef.current = 0;
       timerRef.current = setTimeout(demoTick, 300);
     } else {
       try {
-        await startMic();
+        await startMic(granted);
       } catch (e) {
         go('idle');
-        setError(`打不开麦克风：${(e as Error).message}。请在浏览器地址栏允许麦克风权限。`);
+        showMicError(e as Error);
       }
     }
+  }
+
+  // ───── 麦克风授权 ─────
+  const helpCtx = () => ({
+    secure: window.isSecureContext,
+    hasMediaDevices: Boolean(navigator.mediaDevices?.getUserMedia),
+    browser: detectBrowser(navigator.userAgent),
+    host: location.host,
+    isMac: /Mac/i.test(navigator.userAgent),
+  });
+
+  function openConsent() {
+    const ctx = helpCtx();
+    if (!ctx.secure || !ctx.hasMediaDevices) setMicHelp(describeMicError(null, ctx));
+    else if (micPermRef.current === 'denied') setMicHelp(describeMicError({ name: 'NotAllowedError' }, ctx));
+    else setMicHelp(null);
+    setConsentOpen(true);
+  }
+
+  function showMicError(e: { name?: string; message?: string }) {
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') setMicPerm('denied');
+    setMicHelp(describeMicError(e, helpCtx()));
+    setConsentOpen(true);
+  }
+
+  // 组长在页面里点了「允许」→ 浏览器弹系统授权框 → 允许后直接开录
+  async function requestMic() {
+    setRequesting(true);
+    setMicHelp(null);
+    try {
+      const stream = await getMicStream();
+      setMicPerm('granted');
+      micPermRef.current = 'granted';
+      setConsentOpen(false);
+      await start(stream);
+    } catch (e) {
+      showMicError(e as Error);
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  function startRecording() {
+    if (source === 'mic' && micPerm !== 'granted') { openConsent(); return; }
+    startCountdown();
   }
 
   function startCountdown() {
@@ -295,9 +391,23 @@ export function LiveMeeting(props: Props) {
       const t0 = Date.now();
       while (inflightRef.current > 0 && Date.now() - t0 < 15000) await new Promise((r) => setTimeout(r, 300));
     }
-    const all = linesRef.current;
+    const all = linesRef.current.filter((l) => !l.local);
     if (all.length === 0) {
-      setError('还没有转写内容，没法整理纪要');
+      const segs = localSegsRef.current;
+      if (segs.length) {
+        // Mock 麦克风：没有文字可整理，给出录音（有人说话的部分拼起来），可回放、下载
+        const total = segs.reduce((a, b) => a + b.length, 0);
+        const joined = new Float32Array(total);
+        let o = 0;
+        for (const seg of segs) { joined.set(seg, o); o += seg.length; }
+        const url = URL.createObjectURL(new Blob([encodeWav(joined, TARGET_RATE) as BlobPart], { type: 'audio/wav' }));
+        setRecording({ url, seconds: Math.floor(micElapsed()), voiced: Math.floor(total / TARGET_RATE), segments: linesRef.current.filter((l) => l.local).length });
+        audioRef.current = null;
+        go('idle');
+        return;
+      }
+      setError(source === 'mic' ? '没录到有人说话的声音：检查麦克风有没有选对、音量条动不动' : '还没有转写内容，没法整理纪要');
+      audioRef.current = null;
       go('idle');
       return;
     }
@@ -317,6 +427,33 @@ export function LiveMeeting(props: Props) {
     router.push('/app/meeting/new?from=live');
   }
 
+  // 读浏览器里麦克风权限的当前状态（已允许 / 没问过 / 已拒绝），并跟着变化
+  useEffect(() => {
+    let status: PermissionStatus | null = null;
+    const apply = (state: MicPermission) => {
+      setMicPerm(state);
+      micPermRef.current = state;
+      // 自动开录倒计时中，但麦克风还没授权：停下倒计时，先征得同意
+      if (state !== 'granted' && phaseRef.current === 'countdown' && sourceRef.current === 'mic') {
+        clearTimers();
+        go('idle');
+        openConsent();
+      }
+    };
+    const onChange = () => { if (status) apply(status.state as MicPermission); };
+    void (async () => {
+      await Promise.resolve();
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { apply('unsupported'); return; }
+      try {
+        status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        apply(status.state as MicPermission);
+        status.addEventListener('change', onChange);
+      } catch { /* 有的浏览器不支持查询麦克风权限：保持「还没问过」，点开始时再问 */ }
+    })();
+    return () => status?.removeEventListener('change', onChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 进会议室就自动开录（3 秒倒计时，可取消）
   useEffect(() => {
     if (autoStart) runCountdown();
@@ -334,7 +471,8 @@ export function LiveMeeting(props: Props) {
   }
 
   const live = phase === 'recording' || phase === 'paused' || phase === 'winding' || phase === 'saving';
-  const statusText = phase === 'countdown' ? `${count} 秒后自动开录` : phase === 'recording' ? (speaking ? '有人在说话 · 正在转写' : '静音中 · 不上传') :
+  const localMic = source === 'mic' && mock;
+  const statusText = phase === 'countdown' ? `${count} 秒后自动开录` : phase === 'recording' ? (speaking ? (localMic ? '有人在说话 · 录音中' : '有人在说话 · 正在转写') : (localMic ? '静音中' : '静音中 · 不上传')) :
     phase === 'paused' ? '已暂停' : phase === 'winding' ? `没人说话了，${wind} 秒后自动结束` : phase === 'saving' ? '正在整理…' : '未开始';
 
   return (
@@ -354,17 +492,24 @@ export function LiveMeeting(props: Props) {
             </Select>
           </label>
           <div role="radiogroup" aria-label="录音来源" className="flex overflow-hidden rounded-lg border border-slate-300 text-xs">
-            <button role="radio" aria-checked={source === 'mic'} disabled={live || mock} onClick={() => setSource('mic')}
-              title={mock ? 'Mock 模式不调语音模型；配置 DASHSCOPE_API_KEY 和 ASR_MODEL 后可用' : ''}
-              className={cx('px-3 py-1.5', source === 'mic' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600', (live || mock) && 'cursor-not-allowed opacity-50')}>🎤 麦克风</button>
+            <button role="radio" aria-checked={source === 'mic'} disabled={live} onClick={() => { setSource('mic'); setRecording(null); }}
+              title={mock ? 'Mock 模式：真的录音，可回放、下载，但不转成文字' : ''}
+              className={cx('px-3 py-1.5', source === 'mic' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600', live && 'cursor-not-allowed opacity-50')}>🎤 麦克风</button>
             <button role="radio" aria-checked={source === 'demo'} disabled={live} onClick={() => setSource('demo')}
               className={cx('px-3 py-1.5', source === 'demo' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600', live && 'cursor-not-allowed opacity-50')}>▶︎ 演示录音</button>
           </div>
           <label className="flex items-center gap-1.5 text-xs text-slate-600">
             <input type="checkbox" checked={autoRecord} onChange={(e) => toggleAuto(e.target.checked)} />进会议室自动开录
           </label>
+          {source === 'mic' && (
+            <span className="flex items-center gap-1 text-xs text-slate-600">
+              麦克风权限
+              <Badge tone={micPerm === 'granted' ? 'green' : micPerm === 'denied' || micPerm === 'unsupported' ? 'red' : 'slate'}>{PERMISSION_LABEL[micPerm]}</Badge>
+              {micPerm !== 'granted' && !live && <button className="text-brand-600 hover:underline" onClick={openConsent}>{micPerm === 'denied' ? '怎么打开' : '去授权'}</button>}
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
-            {phase === 'idle' && <Button onClick={startCountdown} disabled={demoMismatch}>● 开始录音</Button>}
+            {phase === 'idle' && <Button onClick={startRecording} disabled={demoMismatch}>● 开始录音</Button>}
             {phase === 'countdown' && <Button variant="outline" onClick={cancelCountdown}>先别录</Button>}
             {phase === 'recording' && <Button variant="outline" onClick={pause}>⏸ 暂停</Button>}
             {phase === 'paused' && <Button variant="outline" onClick={resume}>▶︎ 继续</Button>}
@@ -376,7 +521,7 @@ export function LiveMeeting(props: Props) {
           </div>
         </div>
 
-        {mock && <p className="text-xs text-slate-500">Mock 模式（没配百炼 Key）：用「演示录音」逐句模拟实时转写；配上 Key 和 <code>ASR_MODEL</code> 后可以用真麦克风{props.asrModel ? `（当前 ${props.asrModel}）` : ''}。</p>}
+        {mock && <p className="text-xs text-slate-500">Mock 模式（没配百炼 Key）：「演示录音」逐句模拟实时转写；「麦克风」会真的录音（先征得你同意），但不转文字，录完可以回放、下载。配上 Key 和 <code>ASR_MODEL</code> 后麦克风会实时转写{props.asrModel ? `（当前 ${props.asrModel}）` : ''}。</p>}
         {demoMismatch && (
           <p className="flex flex-wrap items-center gap-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
             演示录音是「市场营销学」的一场会。{mock ? '其他课程要用真麦克风（需要百炼 Key）。' : '其他课程请切到麦克风。'}
@@ -405,6 +550,17 @@ export function LiveMeeting(props: Props) {
           </p>
         )}
         {phase === 'winding' && source === 'demo' && <p className="rounded-lg bg-slate-100 p-2 text-xs text-slate-600">演示录音放完了，{wind} 秒后自动结束会议并进入纪要整理。</p>}
+        {recording && (
+          <div className="space-y-2 rounded-lg bg-green-50 p-3 text-xs text-green-900">
+            <p className="text-sm font-medium">录音已结束：时长 {clock(recording.seconds)}，有人说话 {recording.voiced} 秒（{recording.segments} 段）</p>
+            <p>Mock 模式没有调用语音模型，所以没有转成文字。配上百炼 Key 和 <code>ASR_MODEL</code> 后，这些语音段会实时转成文字，散会后自动整理纪要。下面只拼接了有人说话的部分。</p>
+            <audio controls src={recording.url} className="w-full" />
+            <div className="flex flex-wrap gap-2">
+              <a href={recording.url} download={`会议录音-${props.today}.wav`} className="rounded-lg border border-green-300 bg-white px-2.5 py-1 font-medium text-green-800 hover:bg-green-100">⬇ 下载录音（WAV）</a>
+              <Button size="sm" variant="outline" onClick={() => { setRecording(null); setSource('demo'); setCourseId(demoCourse); }}>换演示录音，体验整理纪要</Button>
+            </div>
+          </div>
+        )}
         {error && <p className="rounded-lg bg-red-50 p-2 text-xs text-red-600">{error}</p>}
       </Card>
 
@@ -429,10 +585,11 @@ export function LiveMeeting(props: Props) {
               </p>
             )}
             {lines.map((l) => (
-              <p key={l.id} className={cx('text-sm leading-relaxed', l.hint && 'rounded bg-yellow-50 px-1')}>
+              <p key={l.id} className={cx('text-sm leading-relaxed', l.hint && 'rounded bg-yellow-50 px-1', l.local && 'text-slate-500')}>
                 <span className="mr-2 font-mono text-[11px] text-slate-400">{clock(l.at)}</span>
                 <span className="font-medium text-slate-700">{l.speaker}：</span>{l.text}
                 {l.hint && <span className="ml-1 text-xs text-yellow-700">⚠️ 定过了</span>}
+                {l.audioUrl && <button className="ml-2 text-xs text-brand-600 hover:underline" onClick={() => void new Audio(l.audioUrl).play()}>▶ 回放</button>}
               </p>
             ))}
             {partial && (
@@ -483,6 +640,7 @@ export function LiveMeeting(props: Props) {
           <Card className="p-4 text-xs text-slate-600">
             <p className="mb-1 text-sm font-semibold text-slate-800">这一页哪里用了 AI</p>
             <ul className="space-y-1">
+              <li><Badge tone="slate">规则</Badge> 麦克风先征得你同意，再由浏览器弹授权框</li>
               <li><Badge tone="slate">规则</Badge> 开录、静音暂停上传、没人说话自动结束</li>
               <li><Badge tone="purple">AI</Badge> 语音 → 文字（{props.asrModel || 'ASR_MODEL 未配置'}）</li>
               <li><Badge tone="blue">embedding</Badge> 「这事定过了」：只比相似度，不调大模型</li>
@@ -491,6 +649,41 @@ export function LiveMeeting(props: Props) {
           </Card>
         </div>
       </div>
+      {consentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onKeyDown={(e) => { if (e.key === 'Escape' && !requesting) setConsentOpen(false); }}>
+          <Card role="dialog" aria-modal="true" aria-labelledby="mic-consent-title" className="w-full max-w-md space-y-3 p-5">
+            <h2 id="mic-consent-title" className="text-base font-semibold">🎤 会议室要使用你电脑的麦克风</h2>
+            {!micHelp ? (
+              <>
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  <li><b className="text-slate-800">用来做什么：</b>{mock ? '把会上说的话录下来，可以回放和下载' : '把会上说的话实时转成文字，散会后整理成纪要'}</li>
+                  <li><b className="text-slate-800">录什么：</b>只处理有人说话的片段，静音部分不{mock ? '保存' : '上传'}</li>
+                  <li><b className="text-slate-800">存到哪里：</b>{mock ? 'Mock 模式下录音只留在这个浏览器页面，不上传任何服务器' : '语音片段发给阿里云百炼识别，转出的文字只在本组可见'}</li>
+                  <li><b className="text-slate-800">随时可停：</b>可以暂停或结束；也请告诉参会的同学正在录音</li>
+                </ul>
+                <p className="rounded-lg bg-slate-50 p-2 text-xs text-slate-500">点「允许使用麦克风」后，浏览器会再弹一个授权框，请在那里选「允许」。</p>
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" disabled={requesting} onClick={() => setConsentOpen(false)}>先不用</Button>
+                  <Button autoFocus disabled={requesting} onClick={() => void requestMic()}>{requesting ? '请在浏览器弹框里点「允许」…' : '允许使用麦克风'}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-red-700">{micHelp.title}</p>
+                <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-600">
+                  {micHelp.steps.map((step) => <li key={step}>{step}</li>)}
+                </ol>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button variant="ghost" onClick={() => setConsentOpen(false)}>关闭</Button>
+                  {source === 'mic' && phase === 'idle' && <Button variant="outline" onClick={() => { setConsentOpen(false); setSource('demo'); setCourseId(demoCourse); }}>先用演示录音</Button>}
+                  {micHelp.canRetry && phase === 'idle' && <Button autoFocus disabled={requesting} onClick={() => void requestMic()}>{requesting ? '请求中…' : '我改好了，重试'}</Button>}
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
