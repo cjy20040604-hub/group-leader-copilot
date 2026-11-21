@@ -2,7 +2,8 @@ name: keep-alive
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # 错峰：避开整点 GitHub Actions 拥堵（*/5 含第 0 分钟，新 workflow 曾 110 分钟未触发）
+    - cron: '3-58/5 * * * *'
   workflow_dispatch:
 
 jobs:
