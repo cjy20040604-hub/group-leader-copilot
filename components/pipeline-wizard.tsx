@@ -34,6 +34,10 @@ export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
   const [dupChecked, setDupChecked] = useState('');
   const [transcript, setTranscript] = useState(live?.transcript ?? '');
   const [asrNote, setAsrNote] = useState('');
+  const [dingOpen, setDingOpen] = useState(false);
+  const [dingConf, setDingConf] = useState('');
+  const [dingUnion, setDingUnion] = useState('');
+  const [dingBusy, setDingBusy] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState('');
   const [editDecisions, setEditDecisions] = useState<EditDecision[]>([]);
@@ -64,6 +68,27 @@ export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
     setTranscript(data.transcript);
     setCourseId('mkt');
     setAsrNote(`Demo 模拟：已把「${file.name}」当作 1 小时录音，按 Paraformer 计量 ${data.costCny.toFixed(2)} 元，返回预置转写。`);
+  }
+
+  // 从钉钉视频会议的云录制（闪记）导入转写：发言人按花名册对上名字
+  async function importDingTalk() {
+    setDingBusy(true);
+    setError('');
+    try {
+      const res = await fetch('/api/dingtalk/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conferenceId: dingConf, unionId: dingUnion }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? '导入失败');
+      setTranscript(data.transcript);
+      if (data.suggestedCourse) setCourseId(data.suggestedCourse);
+      const mapped = (data.speakers as { nickName: string; mappedTo: string | null }[])
+        .map((sp) => (sp.mappedTo && sp.mappedTo !== sp.nickName ? `${sp.nickName}→${sp.mappedTo}` : sp.mappedTo ? sp.nickName : `${sp.nickName}（不在花名册）`)).join('、');
+      setAsrNote(`${data.simulated ? '演示模拟（没配 DINGTALK_APP_KEY，返回按钉钉官方响应格式构造的示例）：' : ''}已从钉钉会议导入 ${data.paragraphs} 段，约 ${Math.max(1, Math.round(data.seconds / 60))} 分钟。发言人：${mapped}。`);
+      setDingOpen(false);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDingBusy(false);
+    }
   }
 
   function process() {
@@ -183,12 +208,23 @@ export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
               <label className="text-xs text-slate-500">会议转写（粘贴腾讯会议 / 飞书妙记导出的文字稿）</label>
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={loadSample}>📋 粘贴示例转写</Button>
+                <Button size="sm" variant="ghost" onClick={() => setDingOpen(!dingOpen)}>📞 从钉钉会议导入</Button>
                 <label className="inline-flex cursor-pointer items-center rounded-lg px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100">
                   🎤 上传音频（Demo 模拟）
                   <input type="file" accept="audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && mockAsr(e.target.files[0])} />
                 </label>
               </div>
             </div>
+            {dingOpen && (
+              <div className="mt-2 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs text-slate-600">钉钉视频会议开了「云录制（闪记）」的，可以直接把转写拉过来（带发言人）。会议 ID 在钉钉会议详情里，或由创建会议接口返回。</p>
+                <div className="flex flex-wrap gap-2">
+                  <Input value={dingConf} onChange={(e) => setDingConf(e.target.value)} placeholder="会议 ID（conferenceId）" className="min-w-48 flex-1 py-1 text-xs" aria-label="钉钉会议 ID" />
+                  <Input value={dingUnion} onChange={(e) => setDingUnion(e.target.value)} placeholder="查询人 unionId（选填）" className="w-48 py-1 text-xs" aria-label="钉钉 unionId" />
+                  <Button size="sm" disabled={!dingConf.trim() || dingBusy} onClick={importDingTalk}>{dingBusy ? '导入中…' : '导入转写'}</Button>
+                </div>
+              </div>
+            )}
             <Textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={12} className="mt-1 font-mono text-xs" placeholder="林晓：人到齐了，我们开始……" />
             {asrNote && <p className="mt-1 text-xs text-yellow-700">{asrNote}</p>}
           </div>

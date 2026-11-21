@@ -40,6 +40,10 @@ Mock 模式下会议室用「演示录音」逐句播放 `seed/new_meeting.txt` 
 
 演示路径（约 1 分钟）：顶部「🎙 开会」→ 自动开录 → 点「4 倍速」→ 阿杰提「PPT 换回蓝白」时右侧弹出「11/12 已经定了」→ 放完 5 秒自动结束 → 纪要自动整理好，组长确认 → 「任务与回顾」里切到思琪身份认领「做 PPT 竞品对比页」→ 切回林晓看「待我处理」。
 
+### 钉钉会议转写导入（2026-11-21）
+
+纪要页「📞 从钉钉会议导入」：填钉钉视频会议的 conferenceId，拉取「云录制（闪记）」转写（带发言人，钉钉昵称按花名册别名对上名字），然后照常整理、确认。需要钉钉企业内部应用（`DINGTALK_APP_KEY` / `DINGTALK_APP_SECRET`，权限「视频会议信息读权限」）；不配就用按官方响应格式构造的演示数据。独立的 AI 听记 App 目前没有公开接口。对比和调研见 `docs/dingtalk-integration.md`。**未用真实钉钉应用联调**（用本地模拟服务验证了取 token、翻页、错误码）。
+
 ## Mock 模式说明（默认，零成本离线）
 
 `.env.local` 默认 `MOCK_LLM=true`：**不需要任何 API Key，全流程可离线演示**，每次「调用」照常写 `usage_log`（按真实会发出的 prompt 字数估算 tokens）。各环节在 Mock 下怎么跑：
@@ -92,7 +96,7 @@ EMBEDDING_MODEL=text-embedding-v4
 | `npm run build && npm start` | 生产构建 + 启动（沙箱终端里更稳） |
 | `npm run seed` | 重置数据库与全部剧情数据 |
 | `npm run eval` | RAG 评估（先 `npm run seed`）：23 题 = 14 道能答（含换说法）+ 9 道应拒答（含跨课程、关键词沾边），输出 Hit@8 / 答对率 / 引用准确率 / 拒答正确率 / 串台数 |
-| `npm test` | 单元测试（node:test：风险灯、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转、VAD/WAV、会中查重挑句、ASR 请求体、麦克风授权引导，87 例） |
+| `npm test` | 单元测试（node:test：风险灯、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转、VAD/WAV、会中查重挑句、ASR 请求体、麦克风授权引导、钉钉转写转换，91 例） |
 | `npm run lint` / `npm run typecheck` | ESLint / tsc 检查 |
 
 ## 硬性边界（详见 AGENTS.md 与 docs/architecture.md）

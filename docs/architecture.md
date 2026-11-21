@@ -85,6 +85,12 @@ npm run typecheck  # tsc --noEmit
 - 自动结束：演示放完 5 秒、真实模式连续静音 2 分钟后 30 秒倒计时（可取消）。
 - 结束 → `live_draft` → `/app/meeting/new?from=live` 自动跑流水线，meetingId 沿用会话 id（`m-live-…`），ASR / 查重 / 抽取的计量挂在同一场会上。
 
+## 钉钉会议转写导入（`lib/dingtalk/`）
+
+- `POST /api/dingtalk/import {conferenceId, unionId?}` → `fetchCloudTexts()`（`POST /v1.0/oauth2/accessToken` 取企业内部应用 token 并缓存；`GET /v1.0/conference/videoConferences/{conferenceId}/cloudRecords/getTexts` 正序翻页，`nextToken` / `nextTtoken` 都认）→ `paragraphsToTranscript()`（排序、5 分钟时间戳、昵称按花名册映射）→ 填进纪要页输入框。
+- 没配 `DINGTALK_APP_KEY` / `DINGTALK_APP_SECRET`：演示数据（演示录音按官方响应字段包装）。`DINGTALK_API_BASE` 只给本地模拟服务测试用。
+- 不调模型，不写 usage_log。实时事件 `meeting_asr_result_event` 需要常驻 Stream 进程，未做（见 `docs/dingtalk-integration.md`）。
+
 ## 任务与回顾（v2，`/app/tasks`，确定性代码）
 
 - 组员视图：我的待办（按风险排序）+ 一键操作（`POST /api/tasks/action`）+ 没人认领的任务（可认领）+ 我的任务动态。
@@ -107,7 +113,7 @@ npm run typecheck  # tsc --noEmit
 
 ## 测试策略
 
-node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 87 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
+node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 91 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
 
 ## 边界
 
