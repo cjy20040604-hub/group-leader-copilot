@@ -2,6 +2,16 @@
 
 把会议转写变成「纪要 + 任务 + 提醒 + 可检索的集体记忆」，让 5 人小组的组长不用再整理纪要、记旧决议、追 DDL。
 
+## 交付物索引
+
+| 题目要的 | 在哪 |
+|---|---|
+| Demo | 在线版 https://group-leader-copilot.onrender.com/ （免费档，休眠后第一次打开约等 50 秒；首页「交付物一览」能找到下面所有入口）· 本地运行见下方「一键启动」 |
+| 为什么是这个组合（一段话） | [`docs/why-this-combo.md`](docs/why-this-combo.md)：一段话 + 和 5 种其他组合的对比表 |
+| 成本与商业模式测算 | [`docs/cost-model.md`](docs/cost-model.md)（单价、单次服务成本、学期成本、定价、单位经济与盈亏平衡、谁用谁付钱）· 在线版「成本看板」有敏感度表和计算器 · 真实接口实测：[`docs/real-run-report.md`](docs/real-run-report.md) |
+| 产品流程拆解、哪些环节用 AI | [`docs/product-v2.md`](docs/product-v2.md)（定位、用户需求、每个环节用 AI 还是规则及理由）· [`docs/flows.md`](docs/flows.md) |
+| 3 分钟讲解 | [`docs/pitch-3min.md`](docs/pitch-3min.md) |
+
 需求来源：`qoder-quest-prompt.md` · 规格：`docs/PRD.md` / `docs/architecture.md` · 进度：`TASKS.md`
 
 ## 一键启动（约 5 分钟）
