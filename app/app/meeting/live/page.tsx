@@ -6,6 +6,7 @@ import { isMock, asrModelName } from '@/lib/llm';
 import { courseReview } from '@/lib/review';
 import { parseScript } from '@/lib/live/cues';
 import { LiveMeeting } from '@/components/live-meeting';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default async function LiveMeetingPage({ searchParams }: { searchParams: 
       autoRecord={getSetting('auto_record') !== 'false'}
       demoCourse={DEMO_COURSE}
       script={script}
+      canCreateCourse={getCurrentUser().role === 'leader'}
       carry={Object.fromEntries(courses.map((c) => {
         const r = courseReview(c.id, now);
         return [c.id, { lastMeeting: r.lastMeeting?.date ?? null, items: r.carry }];

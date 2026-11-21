@@ -7,6 +7,7 @@ import { clock, type ScriptLine } from '@/lib/live/cues';
 import { VadSegmenter, downsample, encodeWav, toBase64, TARGET_RATE } from '@/lib/live/audio';
 import { describeMicError, detectBrowser, PERMISSION_LABEL, type MicHelp, type MicPermission } from '@/lib/live/mic-permission';
 import type { CarryItem } from '@/lib/review';
+import { CoursePicker } from '@/components/course-picker';
 
 // local：Mock 模式下麦克风录到的语音段（没转文字，可回放）
 type Line = { id: number; at: number; speaker: string; text: string; hint?: boolean; local?: boolean; audioUrl?: string };
@@ -26,6 +27,7 @@ interface Props {
   demoCourse: string;
   script: ScriptLine[];
   carry: Record<string, { lastMeeting: string | null; items: CarryItem[] }>;
+  canCreateCourse?: boolean;
 }
 
 const CARRY_LABEL: Record<CarryItem['kind'], string> = {
@@ -40,7 +42,8 @@ const MAX_LOCAL_SECONDS = 1800; // Mock 录音最多在页面里留 30 分钟有
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
 export function LiveMeeting(props: Props) {
-  const { courses, members, mock, script, demoCourse } = props;
+  const { members, mock, script, demoCourse } = props;
+  const [courses, setCourses] = useState(props.courses);
   const router = useRouter();
   const [courseId, setCourseId] = useState(props.initialCourse);
   const [source, setSource] = useState<Source>(mock ? 'demo' : 'mic');
@@ -486,11 +489,11 @@ export function LiveMeeting(props: Props) {
       {/* 控制条 */}
       <Card className="space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs text-slate-500">课程
-            <Select value={courseId} disabled={live} onChange={(e) => setCourseId(e.target.value)} className="ml-1 py-1 text-xs">
-              {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </Select>
-          </label>
+          <div className="flex items-start gap-1 text-xs text-slate-500">
+            <span className="pt-1.5">课程</span>
+            <CoursePicker courses={courses} value={courseId} onChange={setCourseId} disabled={live} canCreate={Boolean(props.canCreateCourse)} className="py-1 text-xs"
+              onCourseCreated={(c) => setCourses((prev) => [...prev, { id: c.id, name: c.name, color: c.color ?? '#64748b' }])} />
+          </div>
           <div role="radiogroup" aria-label="录音来源" className="flex overflow-hidden rounded-lg border border-slate-300 text-xs">
             <button role="radio" aria-checked={source === 'mic'} disabled={live} onClick={() => { setSource('mic'); setRecording(null); }}
               title={mock ? 'Mock 模式：真的录音，可回放、下载，但不转成文字' : ''}

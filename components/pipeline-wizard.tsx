@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx } from '@/components/ui';
 import type { Draft, ValidatedAction } from '@/lib/pipeline';
+import { CoursePicker } from '@/components/course-picker';
 
 type EditDecision = Draft['extraction']['decisions'][number] & { checked: boolean; manual?: boolean };
 
@@ -19,11 +20,13 @@ interface Props {
   members: { id: string; name: string }[];
   defaultDate: string;
   live?: LiveDraft | null; // 会议室结束后带过来的转写：自动开始整理，组长只需确认
+  canCreateCourse?: boolean;
 }
 
 type Phase = 'input' | 'processing' | 'confirm' | 'done';
 
-export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
+export function PipelineWizard({ courses: initialCourses, members, defaultDate, live, canCreateCourse = false }: Props) {
+  const [courses, setCourses] = useState(initialCourses);
   const [phase, setPhase] = useState<Phase>(live ? 'processing' : 'input');
   const [courseId, setCourseId] = useState(live?.courseId ?? courses[0]?.id ?? '');
   const [date, setDate] = useState(live?.date ?? defaultDate);
@@ -175,11 +178,12 @@ export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
       {phase === 'input' && (
         <Card className="space-y-3 p-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <label className="text-xs text-slate-500">课程
-              <Select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="mt-1 w-full">
-                {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            </label>
+            <div className="text-xs text-slate-500">课程
+              <div className="mt-1">
+                <CoursePicker courses={courses} value={courseId} onChange={setCourseId} canCreate={canCreateCourse} className="w-full"
+                  onCourseCreated={(c) => setCourses((prev) => [...prev, c])} />
+              </div>
+            </div>
             <label className="text-xs text-slate-500">会议日期
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
             </label>

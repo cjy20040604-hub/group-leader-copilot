@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
   const all = db.select().from(schema.courses).all();
   if (all.some((c) => c.name === name)) return NextResponse.json({ error: '已有同名的课程/小组' }, { status: 400 });
   const id = `c-${Date.now()}`;
-  db.insert(schema.courses).values({ id, name, color: COLORS[all.length % COLORS.length] }).run();
-  return NextResponse.json({ ok: true, id });
+  const color = COLORS[all.length % COLORS.length];
+  db.insert(schema.courses).values({ id, name, color }).run();
+  return NextResponse.json({ ok: true, id, name, color });
 }

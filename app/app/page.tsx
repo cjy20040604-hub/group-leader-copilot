@@ -6,6 +6,7 @@ import { visibleReminders } from '@/lib/reminders';
 import { riskLevel, dueText, STATUS_LABEL, RISK_LABEL, type TaskStatus } from '@/lib/risk';
 import { Card, Badge, EmptyState } from '@/components/ui';
 import { loadReviewTasks, leaderInbox } from '@/lib/review';
+import { NewCourseCard } from '@/components/new-course-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -154,6 +155,7 @@ export default function DashboardPage() {
               </Link>
             );
           })}
+          {user.role === 'leader' && <NewCourseCard />}
         </div>
       </section>
     </div>

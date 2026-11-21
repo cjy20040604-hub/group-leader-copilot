@@ -7,7 +7,7 @@ const FAQS = [
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。RAG 回答必须带 [日期·类型] 出处，相似度不够且关键词无命中时直接回答「记录里没找到」。' },
   { q: '三门课的决议会串台吗？', a: '不会。检索按 course_id 硬过滤，被新决议推翻的旧决议默认排除。' },
-  { q: '一学期要花多少钱？', a: '按每学期 3 门课 × 8 次会 × 200 次问答推算，纯文字稿模型成本约 2.3 元。组长 Pro 19.9 元/学期。' },
+  { q: '一学期要花多少钱？', a: '按每学期 3 门课 × 8 次会 × 200 次问答推算，纯文字稿模型成本约 2.2 元；录音转写才是大头，所以默认用导入文字稿或钉钉闪记。组长 Pro 19.9 元/学期。' },
 ];
 
 const jsonLd = {
@@ -86,7 +86,7 @@ export default function LandingPage() {
                 <h3 className="font-semibold">免费版</h3>
                 <p className="mt-2 text-2xl font-bold">¥0</p>
                 <ul className="mt-3 space-y-1 text-sm text-slate-600">
-                  <li>每月 4 次纪要（仅粘贴文字稿）</li><li>1 门课</li><li>基础问答</li>
+                  <li>每月 4 次纪要（粘贴文字稿或钉钉导入）</li><li>1 门课</li><li>基础问答</li>
                 </ul>
               </article>
               <article className="rounded-xl border-2 border-brand-600 bg-white p-5 shadow-md">

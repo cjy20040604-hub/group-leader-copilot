@@ -19,14 +19,14 @@ export default function SettingsPage() {
       <h1 className="text-xl font-bold">设置</h1>
 
       <section aria-label="课程与小组">
-        <h2 className="mb-2 text-sm font-semibold">📚 课程/小组（不限于演示的 3 门课，可自建）</h2>
+        <h2 className="mb-2 text-sm font-semibold">📚 课程/小组（不限于演示的 3 门课；首页、纪要页、会议室的课程下拉里也能直接新建）</h2>
         <CourseManager courses={courses} isLeader={user.role === 'leader'} />
       </section>
 
       <section aria-label="花名册">
         <h2 className="mb-2 text-sm font-semibold">👥 花名册（人名模糊匹配用，可加人 / 改名 / 重分配组长组员）</h2>
         <RosterManager members={members} currentUserId={user.id} isLeader={user.role === 'leader'} />
-        <p className="mt-1 text-xs text-slate-400">身份切换在顶部导航栏下拉框。组员只能看自己的任务、改状态、填一句进度（确定性权限代码，无账号体系）。改名后任务记忆与催办文案里的名字会同步更新。</p>
+        <p className="mt-1 text-xs text-slate-400">身份切换在顶部导航栏下拉框。组员在「任务与回顾」里一键更新自己的任务：做完了交组长确认、写进度、卡住了、申请延期，也能认领没人负责的任务（确定性权限代码，无账号体系）。改名后任务记忆与催办文案里的名字会同步更新。</p>
       </section>
 
       <section aria-label="提醒与风险规则">
@@ -34,8 +34,8 @@ export default function SettingsPage() {
         <Card className="p-4 text-xs leading-relaxed text-slate-600">
           <p>提醒：D-3、D-1、过期第一天各生成一条站内通知 + 可复制催办文案，文案按触发那天写；改 DDL 会重建提醒。Demo 用页面每 60 秒轮询一次代替服务端定时任务，时间快进、确认纪要、改任务后立即补扫。</p>
           <p className="mt-1">催办模板：「@负责人 课程 的「任务」{`{due_text}`}截止，目前状态：{`{status}`}，需要帮忙吗？」</p>
-          <p className="mt-2">🔴 红：已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是 待审核/已完成</p>
-          <p>🟡 黄：距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领</p>
+          <p className="mt-2">🔴 红：已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是 待审核/已完成；或组员标了「卡住了」且距 DDL ≤ 3 天</p>
+          <p>🟡 黄：距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领；或组员标了「卡住了」</p>
           <p>🟢 绿：其他</p>
         </Card>
       </section>

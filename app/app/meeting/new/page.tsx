@@ -1,6 +1,7 @@
 import { db, schema } from '@/lib/db/client';
 import { getDemoNow, dateOnly, toLocalISO, getSetting } from '@/lib/time';
 import { PipelineWizard, type LiveDraft } from '@/components/pipeline-wizard';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export default async function NewMeetingPage({ searchParams }: { searchParams: P
       members={members.map((m) => ({ id: m.id, name: m.name }))}
       defaultDate={dateOnly(toLocalISO(getDemoNow()))}
       live={live}
+      canCreateCourse={getCurrentUser().role === 'leader'}
     />
   );
 }
