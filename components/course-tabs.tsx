@@ -10,7 +10,7 @@ import { riskLevel, taskDueText, RISK_LABEL, type TaskStatus } from '@/lib/risk'
 
 export interface TaskRow {
   id: string; courseId: string; meetingId: string; title: string; ownerId: string | null;
-  dueDate: string | null; status: string; lastUpdateAt: string | null; progressNote: string | null;
+  dueDate: string | null; status: string; lastUpdateAt: string | null; progressNote: string | null; blocker?: string | null;
 }
 export interface MeetingRow { id: string; date: string; title: string; }
 export interface MemberRow { id: string; name: string; role: string; }
@@ -34,7 +34,8 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
   const [tab, setTab] = useState<'minutes' | 'kanban' | 'ask'>('kanban');
   const router = useRouter();
   const now = new Date(demoNow);
-  const visible = isLeader ? tasks : tasks.filter((t) => t.ownerId === currentUserId);
+  // 组员：自己的任务 + 没人认领的（可以自己认领）
+  const visible = isLeader ? tasks : tasks.filter((t) => t.ownerId === currentUserId || (!t.ownerId && t.status !== 'done'));
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '待认领';
 
   async function callTasks(method: 'POST' | 'PATCH' | 'DELETE', body: Record<string, unknown>) {
@@ -47,6 +48,11 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
     return res.ok;
   }
   const updateTask = (id: string, patch: Record<string, unknown>) => callTasks('PATCH', { id, ...patch });
+  async function claim(id: string) {
+    const res = await fetch('/api/tasks/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: id, action: { type: 'claim' } }) });
+    if (!res.ok) alert((await res.json()).error ?? '认领失败');
+    router.refresh();
+  }
   async function deleteTask(id: string, title: string) {
     if (!confirm(`删除任务「${title}」？它的提醒也会一起删掉，不能撤销。`)) return;
     await callTasks('DELETE', { id });
@@ -88,7 +94,7 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
 
       {tab === 'kanban' && (
         <div>
-          {!isLeader && <p className="mb-2 text-xs text-slate-500">组员视图：只显示你的任务，可拖拽改状态、填一句进度。</p>}
+          {!isLeader && <p className="mb-2 text-xs text-slate-500">组员视图：显示你的任务和没人认领的任务；做完了拖到「待审核」，组长确认后算完成。卡住了、要延期去 <Link href="/app/tasks" className="text-brand-600 hover:underline">任务与回顾</Link>。</p>}
           {isLeader && <NewTaskForm members={members} onCreate={(t) => callTasks('POST', { courseId: course.id, ...t })} />}
           <div className="grid gap-3 md:grid-cols-4">
             {COLUMNS.map((col) => {
@@ -105,20 +111,24 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
                   <p className="mb-2 px-1 text-xs font-semibold text-slate-600">{col.label}（{colTasks.length}）</p>
                   <div className="space-y-2">
                     {colTasks.map((t) => {
-                      const risk = riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt }, now);
+                      const risk = riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt, blocked: Boolean(t.blocker) }, now);
+                      const mine = isLeader || t.ownerId === currentUserId;
                       return (
-                        <Card key={t.id} draggable
+                        <Card key={t.id} draggable={mine}
                           onDragStart={(e) => e.dataTransfer.setData('text/task-id', t.id)}
-                          className="cursor-grab p-2.5 active:cursor-grabbing">
+                          className={cx('p-2.5', mine && 'cursor-grab active:cursor-grabbing')}>
                           <div className="flex items-start gap-1.5">
                             <span aria-label={`风险 ${risk}`}>{RISK_LABEL[risk]}</span>
                             <p className="text-xs font-medium leading-snug">{t.title}</p>
                           </div>
                           <p className="mt-1 text-[11px] text-slate-500">{nameOf(t.ownerId)} · {taskDueText(t, now)}</p>
                           {t.progressNote && <p className="mt-1 text-[11px] text-slate-400">「{t.progressNote}」</p>}
-                          <div className="mt-2 flex gap-1">
+                          {t.blocker && <p className="mt-1 rounded bg-red-50 px-1.5 py-0.5 text-[11px] text-red-700">🆘 卡住：{t.blocker}</p>}
+                          {!mine && <Button size="sm" className="mt-2 w-full" onClick={() => claim(t.id)}>我来认领</Button>}
+                          {mine && <div className="mt-2 flex gap-1">
                             <Select value={t.status} onChange={(e) => updateTask(t.id, { status: e.target.value })} className="flex-1 px-1 py-0.5 text-[11px]" aria-label="改状态">
-                              {COLUMNS.map((c) => <option key={c.status} value={c.status}>{c.label}</option>)}
+                              {COLUMNS.filter((c) => isLeader || c.status === t.status || c.status === 'in_progress' || c.status === 'awaiting_review')
+                                .map((c) => <option key={c.status} value={c.status}>{c.label}</option>)}
                             </Select>
                             {isLeader && t.status === 'unclaimed' && (
                               <Select value="" onChange={(e) => e.target.value && updateTask(t.id, { ownerId: e.target.value, status: 'in_progress' })} className="px-1 py-0.5 text-[11px]" aria-label="认领">
@@ -126,8 +136,8 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
                                 {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                               </Select>
                             )}
-                          </div>
-                          <ProgressNote taskId={t.id} initial={t.progressNote ?? ''} onSave={(note) => updateTask(t.id, { progressNote: note })} />
+                          </div>}
+                          {mine && <ProgressNote taskId={t.id} initial={t.progressNote ?? ''} onSave={(note) => updateTask(t.id, { progressNote: note })} />}
                           {isLeader && (
                             <div className="mt-1 flex items-center gap-1">
                               <Input type="date" value={t.dueDate ?? ''} onChange={(e) => updateTask(t.id, { dueDate: e.target.value || null })}

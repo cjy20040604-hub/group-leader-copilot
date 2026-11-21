@@ -9,7 +9,9 @@
 | pipeline | 9 步会议流水线（预处理→召回→抽取→校验→确认→落库→索引→分发） | llm-gateway, rag |
 | rag | mock/真实 embedding、MiniSearch BM25、RRF、问答、拒答、重复检测、简报 | llm-gateway, db-seed |
 | tasks-risk | 任务 CRUD、风险灯、提醒扫描、催办模板、时间快进 | db-seed |
-| ui | 8 个路由页面、身份切换、成本看板、落地页 | 全部 |
+| tasks-flow（v2） | 组员认领/提交/进度/卡住/申请延期，组长确认/打回/批延期（`lib/task-flow.ts` 纯函数）；动态留痕 `task_updates`（`lib/task-updates.ts`）；待我处理 / 回顾 / 带到下次会（`lib/review.ts`） | db-seed, tasks-risk |
+| live（v2） | 会议室：自动开录、VAD 切段、WAV 编码（`lib/live/audio.ts`）、百炼 ASR 请求（`lib/live/asr-request.ts`）、会中「这事定过了」（`lib/live/cues.ts` + `findSameTopicDecisions`） | llm-gateway, rag |
+| ui | 10 个路由页面、身份切换、成本看板、落地页 | 全部 |
 
 构建顺序：db-seed → llm-gateway → rag / tasks-risk → pipeline → ui。
 
@@ -37,11 +39,16 @@ npm run typecheck  # tsc --noEmit
   - type: `decision | action | open_question | topic_summary`；status: `active | superseded | done`
   - id 约定：`{meeting_id}-d1/-a1/-q1/-t1`；embedding 为 Float32Array(1024) BLOB
 - `transcript_chunks(id, meeting_id, course_id, start_offset, text, embedding)` — 按说话人轮次聚合 ≈400 tokens/块，重叠 50
-- `tasks(id, course_id, meeting_id, title, owner_id, due_date, status, last_update_at, progress_note, created_at)`
-  - status: `unclaimed → in_progress → awaiting_review → done`；owner_id 为 NULL = 待认领
+- `tasks(id, course_id, meeting_id, title, owner_id, due_date, status, last_update_at, progress_note, blocker, created_at)`
+  - status: `unclaimed → in_progress → awaiting_review → done`；owner_id 为 NULL = 待认领；blocker 非空 = 组员标了「卡住了」
+  - 组员只能把自己的任务改成「进行中 / 待审核」，「已完成」由组长确认；组长自己的任务提交即完成
+- `task_updates(id, task_id, course_id, actor_id, kind, from_status, to_status, note, proposed_due, resolved, created_at)` — v2
+  - kind: `created | claim | status | submit | progress | blocked | unblocked | extension_request | extension_approved | extension_rejected | review_pass | review_return`
+  - 延期申请 resolved=0 表示等组长回复；批准后改 DDL 并重建提醒
+  - 老库由 `lib/db/client.ts` 启动时就地升级（加列、建表，不删数据）
 - `reminders(id, task_id, kind, fire_date, message, created_at)` — kind: `d3 | d1 | overdue`；按 (task_id, kind) 幂等
 - `usage_log(id, ts, model, input_tokens, output_tokens, audio_seconds, cost_cny, feature, meeting_id)`
-- `settings(key, value)` — `demo_now`（默认 `2026-11-19T09:00:00`）、`current_user`
+- `settings(key, value)` — `demo_now`（默认 `2026-11-19T09:00:00`）、`current_user`、`auto_record`（会议室自动开录开关）、`live_draft`（会议室结束后待整理的转写，整理后清除）
 
 ## LLM 网关（lib/llm.ts）
 
@@ -67,22 +74,38 @@ npm run typecheck  # tsc --noEmit
 - 简报：上次决议 + 未完成待办(按 DDL) + 待定问题 → qwen-plus ≤200 字；Mock 降级模板拼接。
 - 评估：`eval/golden.json` 23 条（14 能答 + 9 应拒答，含跨课程与关键词沾边）；`eval/run.ts` 输出 Hit@8 / 答对率 / 引用准确率 / 拒答正确率 / 串台数。
 
+## 会议室（v2，`/app/meeting/live`）
+
+- 开录：进页面 3 秒倒计时自动开录（`settings.auto_record`，可关），倒计时期间显示录音告知；Mock 下非演示课程不自动开。
+- 真实模式（有 Key + `ASR_MODEL`）：浏览器 `getUserMedia` → ScriptProcessor → 降采样 16 kHz → `VadSegmenter`（RMS 阈值 0.015、静音 800 ms 判一句说完、单段 ≤ 20 s、开口前留 200 ms、短于 300 ms 丢弃）→ WAV Base64 → `POST /api/asr/live` → `transcribeSegment()`（百炼 OpenAI 兼容接口，`input_audio` Data URL，system 消息放课程名 + 花名册做识别上下文，`asr_options.enable_itn=true`）→ usage_log(feature=asr, meeting_id=会话 id)。**未联调**。
+- Mock：「演示录音」按 `seed/new_meeting.txt` 逐句打字式播放，结束时 `POST /api/live/finish` 按会议时长记一条 ASR 估算。
+- 会中查重：每句话先用规则挑出「在提议 / 翻旧账」的半句（要不要、换回、改成…），再 `POST /api/live/check` → `findSameTopicDecisions`（embedding + 关键词规则，不调大模型）。
+- 自动结束：演示放完 5 秒、真实模式连续静音 2 分钟后 30 秒倒计时（可取消）。
+- 结束 → `live_draft` → `/app/meeting/new?from=live` 自动跑流水线，meetingId 沿用会话 id（`m-live-…`），ASR / 查重 / 抽取的计量挂在同一场会上。
+
+## 任务与回顾（v2，`/app/tasks`，确定性代码）
+
+- 组员视图：我的待办（按风险排序）+ 一键操作（`POST /api/tasks/action`）+ 没人认领的任务（可认领）+ 我的任务动态。
+- 组长视图：待我处理 = 等确认完成 / 延期申请 / 卡住了 / 48 小时没动静 / 没人认领；组员动态；每门课「上次会到现在」（完成 / 进行中 / 卡住 / 待确认）与「带到下次会」。
+- 带到下次会：卡住、过期、延期申请、没人认领、没动静、待确认、待定问题；卡住和延期各列一条，其余同一任务只列最急的。
+- 会前简报的素材加了「上次会后进展」（完成了什么、卡在哪、谁申请延期）。
+
 ## 任务与提醒（确定性代码）
 
-- 风险灯 `lib/risk.ts`：🔴 过期未完成 或 d≤1 且状态∉{待审核,已完成}（红灯规则先判，待认领的任务过期也是红）；🟡 待认领 或 d≤3 且 48h 未更新；🟢 其他。所有计算基于 `DEMO_NOW`（settings.demo_now）。
+- 风险灯 `lib/risk.ts`：🔴 过期未完成 或 d≤1 且状态∉{待审核,已完成} 或 卡住且 d≤3（红灯规则先判，待认领的任务过期也是红）；🟡 待认领 或 卡住 或 d≤3 且 48h 未更新；🟢 其他。所有计算基于 `DEMO_NOW`（settings.demo_now）。
 - 任务 CRUD：`/api/tasks` POST / PATCH / DELETE，新建、改内容/DDL/负责人、删除只有组长能做；改 DDL 会删掉旧提醒按新日期重建。
 - 提醒扫描：POST /api/reminders/scan（页面每 60s 轮询代替服务端定时任务 + 时间快进/确认纪要/改任务后立即触发），D-3 / D-1 / 过期第一天各一条，文案按触发那天写；任务创建之前的触发日不补。页面只显示未完成任务的提醒，组员只看自己的。模板：「@{owner} {course} 的「{task}」{due_text}截止，目前状态：{status}，需要帮忙吗？」
 - 时间快进：/app/settings「+1 天 / +3 天 / 重置」改 demo_now。
 
 ## 页面
 
-`/`（落地页，语义化 + FAQPage/SoftwareApplication JSON-LD + llms.txt + sitemap）· `/app`（本周我要盯的事 top5）· `/app/c/[courseId]`（纪要/看板拖拽/问问上次 Tab）· `/app/meeting/new`（流水线）· `/app/meeting/[id]`（evidence 高亮）· `/app/ask`（先选课程）· `/app/cost` · `/app/settings`。
+`/`（落地页，语义化 + FAQPage/SoftwareApplication JSON-LD + llms.txt + sitemap）· `/app`（本周我要盯的事 top5 + 待我处理入口）· `/app/tasks`（任务与回顾）· `/app/meeting/live`（会议室）· `/app/c/[courseId]`（纪要/看板拖拽/问问上次 Tab）· `/app/meeting/new`（流水线）· `/app/meeting/[id]`（evidence 高亮）· `/app/ask`（先选课程）· `/app/cost` · `/app/settings`。
 
 身份切换：顶部下拉（组长/组员），组员只见自己的任务、可改状态填进度；无账号体系，存 settings.current_user。
 
 ## 测试策略
 
-node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖）：`lib/risk.test.ts`（红黄绿全分支 + 催办模板）、`lib/rag/rrf.test.ts`（RRF 融合）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
+node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 82 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
 
 ## 边界
 

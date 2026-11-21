@@ -11,6 +11,7 @@ import { normalizeText, type Term } from './terms';
 const GENERIC = new Set([
   '方案', '问题', '事情', '情况', '东西', '还是', '继续', '重新', '讨论', '统一', '要不',
   '换成', '改成', '改用', '换用', '改为', '换为', '定为', '定在', '就用', '采用', '确定', '决定', '同意',
+  '换回', '改回', '换个', '那版', '这版',
 ]);
 
 const CONCEPT_WORDS = CONCEPTS.map((ws) => ws.map((w) => w.toLowerCase().replace(/\s+/g, '')));

@@ -15,6 +15,7 @@ interface Props {
 
 const NAV = [
   { href: '/app', label: '本周我要盯的事' },
+  { href: '/app/tasks', label: '任务与回顾' },
   { href: '/app/ask', label: '问问上次' },
   { href: '/app/cost', label: '成本看板' },
   { href: '/app/settings', label: '设置' },
@@ -50,7 +51,8 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
             </Link>
           ))}
         </nav>
-        <Link href="/app/meeting/new" className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">+ 新建会议</Link>
+        <Link href="/app/meeting/live" className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">🎙 开会</Link>
+        <Link href="/app/meeting/new" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">+ 粘贴转写</Link>
         <div className="ml-auto flex items-center gap-2">
           {reminderCount > 0 && <Badge tone="red">🔔 {reminderCount} 条提醒</Badge>}
           <Badge tone="slate" className="font-mono">🕐 {demoNow.slice(0, 16).replace('T', ' ')}</Badge>

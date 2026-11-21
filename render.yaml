@@ -16,5 +16,7 @@ services:
         value: qwen-plus
       - key: EMBEDDING_MODEL
         value: text-embedding-v4
+      - key: ASR_MODEL
+        value: qwen3-asr-flash
       - key: NODE_VERSION
         value: "22"

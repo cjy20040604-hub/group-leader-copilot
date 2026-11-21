@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS meetings;
 DROP TABLE IF EXISTS memory_items;
 DROP TABLE IF EXISTS transcript_chunks;
 DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS task_updates;
 DROP TABLE IF EXISTS reminders;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS settings;
@@ -64,6 +65,21 @@ CREATE TABLE tasks (
   status TEXT NOT NULL DEFAULT 'unclaimed',
   last_update_at TEXT,
   progress_note TEXT,
+  blocker TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE task_updates (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  course_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  from_status TEXT,
+  to_status TEXT,
+  note TEXT,
+  proposed_due TEXT,
+  resolved INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
 
@@ -96,3 +112,4 @@ CREATE TABLE settings (
 CREATE INDEX idx_memory_course ON memory_items(course_id, status);
 CREATE INDEX idx_tasks_course ON tasks(course_id, status);
 CREATE INDEX idx_chunks_course ON transcript_chunks(course_id);
+CREATE INDEX idx_updates_task ON task_updates(task_id, created_at);

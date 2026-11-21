@@ -16,7 +16,8 @@ import { preprocessTranscript, disagreementText } from '@/lib/pipeline';
 import { renderExtractPrompt } from '@/lib/prompts/extract';
 import { estimateTokens } from '@/lib/rag/tokenize';
 import { scanReminders } from '@/lib/reminders';
-import { DEFAULT_DEMO_NOW } from '@/lib/time';
+import { DEFAULT_DEMO_NOW, toLocalISO } from '@/lib/time';
+import { insertUpdate } from '@/lib/task-updates';
 
 const MEETING_IDS = ['mkt-1105', 'mkt-1112', 'db-1106', 'db-1113', 'startup-1107', 'startup-1114'];
 
@@ -135,6 +136,28 @@ export async function runSeed() {
     if (t.status === 'done') {
       db.update(schema.memoryItems).set({ status: 'done' }).where(eq(schema.memoryItems.id, t.id)).run();
     }
+  }
+
+  // 任务动态：历史进度各记一条；完成的再记一条组长确认。另加思琪「卡住了 + 申请延期」，演示组员主动更新
+  const minus1 = (iso: string) => toLocalISO(new Date(new Date(iso).getTime() - 60000));
+  for (const t of seedTasks) {
+    if (!t.owner_id || !t.progress_note || !t.last_update_at) continue;
+    const done = t.status === 'done';
+    insertUpdate(t.id, t.course_id, t.owner_id, {
+      kind: t.status === 'awaiting_review' ? 'submit' : 'progress', fromStatus: 'in_progress',
+      toStatus: done ? 'in_progress' : t.status, note: t.progress_note, proposedDue: null,
+    }, done ? minus1(t.last_update_at) : t.last_update_at);
+    if (done) insertUpdate(t.id, t.course_id, 'linxiao', { kind: 'review_pass', fromStatus: 'awaiting_review', toStatus: 'done', note: null, proposedDue: null }, t.last_update_at);
+  }
+  const seedUpdates = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'seed/mock_responses/task_updates.json'), 'utf8')) as {
+    task_id: string; actor_id: string; kind: 'blocked' | 'extension_request'; note: string; proposed_due: string | null; created_at: string;
+  }[];
+  for (const u of seedUpdates) {
+    const t = seedTasks.find((x) => x.id === u.task_id)!;
+    insertUpdate(u.task_id, t.course_id, u.actor_id, { kind: u.kind, fromStatus: t.status, toStatus: t.status, note: u.note, proposedDue: u.proposed_due }, u.created_at);
+    const patch: { lastUpdateAt: string; blocker?: string } = { lastUpdateAt: u.created_at };
+    if (u.kind === 'blocked') patch.blocker = u.note;
+    db.update(schema.tasks).set(patch).where(eq(schema.tasks.id, u.task_id)).run();
   }
 
   db.insert(schema.settings).values({ key: 'demo_now', value: DEFAULT_DEMO_NOW }).run();

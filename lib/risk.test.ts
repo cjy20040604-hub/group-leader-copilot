@@ -77,3 +77,14 @@ describe('dueText', () => {
     assert.equal(dueText(null, NOW), '日期待定');
   });
 });
+describe('riskLevel · 卡住了', () => {
+  it('卡住但离 DDL 还远 → 黄', () => {
+    assert.equal(riskLevel({ dueDate: '2026-11-24', status: 'in_progress', lastUpdateAt: '2026-11-19T08:00:00', blocked: true }, NOW), 'yellow');
+  });
+  it('卡住且 3 天内到期 → 红', () => {
+    assert.equal(riskLevel({ dueDate: '2026-11-22', status: 'in_progress', lastUpdateAt: '2026-11-19T08:00:00', blocked: true }, NOW), 'red');
+  });
+  it('已经交给组长确认的，不算卡住', () => {
+    assert.equal(riskLevel({ dueDate: '2026-11-22', status: 'awaiting_review', lastUpdateAt: '2026-11-19T08:00:00', blocked: true }, NOW), 'green');
+  });
+});

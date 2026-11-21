@@ -1,12 +1,12 @@
 import { db, schema } from '@/lib/db/client';
 import { isMock } from '@/lib/llm';
-import { llmCost, embeddingCost, asrCost, STANDARD_MEETING } from '@/config/pricing';
+import { llmCost, embeddingCost, asrCost, asrCostFor, asrPrice, STANDARD_MEETING } from '@/config/pricing';
 import { Card, Badge, EmptyState } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 const FEATURE_LABEL: Record<string, string> = {
-  extract: '纪要抽取', index: '建索引(embedding)', qa: '问答', briefing: '会前简报', asr: '录音转写(ASR)', search: '检索 embedding', duplicate_check: '重复检测 embedding',
+  extract: '纪要抽取', index: '建索引(embedding)', qa: '问答', briefing: '会前简报', asr: '录音转写(ASR)', search: '检索 embedding', duplicate_check: '重复检测 embedding', live_check: '会中查重 embedding', conflict_check: '冲突检测 embedding',
 };
 
 export default function CostPage() {
@@ -23,11 +23,11 @@ export default function CostPage() {
     byFeature.set(l.feature, f);
   }
 
-  // 单次会议成本 = 这场会的召回 + 抽取 + 建索引 + ASR；只算已确认落库的会议（处理了但没确认的草稿不进均值）
+  // 单次会议成本 = 这场会的召回 + 抽取 + 冲突检测 + 建索引 + ASR（含会议室实时转写、会中查重）；只算已确认落库的会议（处理了但没确认的草稿不进均值）
   const confirmed = new Set(db.select({ id: schema.meetings.id }).from(schema.meetings).all().map((m) => m.id));
   const meetingCosts = new Map<string, number>();
   for (const l of logs) {
-    if (l.meetingId && confirmed.has(l.meetingId) && ['search', 'extract', 'index', 'asr'].includes(l.feature)) {
+    if (l.meetingId && confirmed.has(l.meetingId) && ['search', 'extract', 'index', 'asr', 'live_check', 'conflict_check'].includes(l.feature)) {
       meetingCosts.set(l.meetingId, (meetingCosts.get(l.meetingId) ?? 0) + l.costCny);
     }
   }
@@ -41,6 +41,9 @@ export default function CostPage() {
   const stdBriefing = llmCost(chatModel, STANDARD_MEETING.briefing.input, STANDARD_MEETING.briefing.output);
   const stdText = stdExtract + stdIndex + stdBriefing;
   const stdAsr = asrCost(STANDARD_MEETING.asrSeconds);
+  const liveAsrModel = process.env.ASR_MODEL || 'qwen3-asr-flash';
+  const liveAsr = asrPrice(liveAsrModel);
+  const stdLiveAsr = asrCostFor(liveAsrModel, STANDARD_MEETING.asrSeconds);
   const stdQa = llmCost(chatModel, STANDARD_MEETING.qa.input, STANDARD_MEETING.qa.output);
   const semesterModel = STANDARD_MEETING.meetingsPerSemester * stdText + STANDARD_MEETING.qaPerSemester * stdQa;
   const semesterAll = semesterModel + STANDARD_MEETING.infraPerSemester;
@@ -101,6 +104,7 @@ export default function CostPage() {
               <tr className="border-b border-slate-100"><td className="p-2">会前简报</td><td className="p-2">{chatModel}</td><td className="p-2">输入 4k / 输出 0.8k</td><td className="p-2">{fmt(stdBriefing)}</td></tr>
               <tr className="border-b border-slate-100 font-semibold"><td className="p-2">小计（粘贴文字稿）</td><td className="p-2"></td><td className="p-2"></td><td className="p-2">≈ ¥{stdText.toFixed(3)}</td></tr>
               <tr className="border-b border-slate-100"><td className="p-2">ASR（可选）</td><td className="p-2">Paraformer</td><td className="p-2">3600 秒 × ¥0.00008/秒</td><td className="p-2">{fmt(stdAsr)}</td></tr>
+              <tr className="border-b border-slate-100"><td className="p-2">会议室实时转写（可选）</td><td className="p-2">{liveAsrModel}</td><td className="p-2">3600 秒 × ¥{liveAsr.perSecond}/秒{liveAsr.verified ? '' : '（单价是假设，待核对）'}；静音不上传，实际按有人说话的时长计</td><td className="p-2">{fmt(stdLiveAsr)}</td></tr>
               <tr className="border-b border-slate-100 font-semibold"><td className="p-2">小计（上传录音）</td><td className="p-2"></td><td className="p-2"></td><td className="p-2">≈ ¥{(stdText + stdAsr).toFixed(3)}</td></tr>
               <tr><td className="p-2">单次问答</td><td className="p-2">{chatModel}</td><td className="p-2">输入 3k / 输出 0.4k</td><td className="p-2">{fmt(stdQa)}</td></tr>
             </tbody>

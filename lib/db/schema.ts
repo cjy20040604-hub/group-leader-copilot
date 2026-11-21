@@ -56,6 +56,22 @@ export const tasks = sqliteTable('tasks', {
   status: text('status').notNull().default('unclaimed'),
   lastUpdateAt: text('last_update_at'),
   progressNote: text('progress_note'),
+  blocker: text('blocker'), // 组员标「卡住了」时填原因；null = 没卡住
+  createdAt: text('created_at').notNull(),
+});
+
+// 任务动态：组员认领/更新/卡住/申请延期，组长确认/打回/批延期，全部留痕（确定性代码写入，不调 LLM）
+export const taskUpdates = sqliteTable('task_updates', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull(),
+  courseId: text('course_id').notNull(),
+  actorId: text('actor_id').notNull(),
+  kind: text('kind').notNull(),
+  fromStatus: text('from_status'),
+  toStatus: text('to_status'),
+  note: text('note'),
+  proposedDue: text('proposed_due'),
+  resolved: integer('resolved').notNull().default(0),
   createdAt: text('created_at').notNull(),
 });
 

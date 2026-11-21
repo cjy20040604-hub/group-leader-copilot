@@ -7,11 +7,13 @@ export interface RiskInput {
   dueDate: string | null;
   status: TaskStatus;
   lastUpdateAt: string | null;
+  blocked?: boolean; // 组员标了「卡住了」
 }
 
 // 风险灯规则（确定性代码，禁止 LLM）：
 // 🔴 已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是 待审核/已完成
 // 🟡 距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领
+// 卡住的任务：至少 🟡；距 DDL ≤ 3 天还卡着 → 🔴（组员主动求助，组长该出手了）
 // 🟢 其他
 export function riskLevel(task: RiskInput, now: Date): RiskLevel {
   if (task.status === 'done') return 'green';
@@ -19,7 +21,9 @@ export function riskLevel(task: RiskInput, now: Date): RiskLevel {
   const d = task.dueDate ? daysUntilDue(task.dueDate, now) : null;
   if (d !== null && d < 0) return 'red';
   if (d !== null && d <= 1 && task.status !== 'awaiting_review') return 'red';
+  if (task.blocked && task.status !== 'awaiting_review' && d !== null && d <= 3) return 'red';
   if (task.status === 'unclaimed') return 'yellow';
+  if (task.blocked && task.status !== 'awaiting_review') return 'yellow';
   if (d !== null && d <= 3 && hoursSince(task.lastUpdateAt, now) > 48) return 'yellow';
   return 'green';
 }

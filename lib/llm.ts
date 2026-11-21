@@ -6,7 +6,8 @@ import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { mockEmbed } from '@/lib/rag/embed';
 import { estimateTokens } from '@/lib/rag/tokenize';
-import { llmCost, embeddingCost } from '@/config/pricing';
+import { llmCost, embeddingCost, asrCostFor } from '@/config/pricing';
+import { buildAsrRequest } from '@/lib/live/asr-request';
 import { getDemoNowISO } from '@/lib/time';
 import { renderExtractPrompt } from '@/lib/prompts/extract';
 import { renderAnswerPrompt, BRIEFING_PROMPT } from '@/lib/prompts/answer';
@@ -54,7 +55,12 @@ function modelNames() {
     extract: process.env.LLM_MODEL_EXTRACT ?? '',
     chat: process.env.LLM_MODEL_CHAT ?? '',
     embed: process.env.EMBEDDING_MODEL ?? '',
+    asr: process.env.ASR_MODEL ?? '',
   };
+}
+
+export function asrModelName(): string {
+  return modelNames().asr;
 }
 
 // 百炼 Qwen3 系列：显式关掉思考模式，输出 token 可预测（按非思考价计费）
@@ -353,4 +359,21 @@ export async function chatBriefing(material: string, mockText: () => string): Pr
   });
   logUsage({ model, inputTokens: res.usage?.prompt_tokens ?? 0, outputTokens: res.usage?.completion_tokens ?? 0, feature: 'briefing', meetingId: null });
   return { text: (res.choices[0]?.message?.content ?? '').slice(0, 200), aiGenerated: true };
+}
+
+// ── 语音识别（会议室实时转写）：一段语音（≤ 20 秒，VAD 切好的）→ 文字 ──
+// 只在真实模式调用；Mock 模式会议室用「演示录音」，不走这里
+export async function transcribeSegment(wavBase64: string, seconds: number, opts: { context: string; meetingId?: string | null }):
+  Promise<{ text: string; seconds: number; cost: number }> {
+  const model = modelNames().asr;
+  if (!model) throw new Error('没配置 ASR_MODEL（比如 qwen3-asr-flash）');
+  const res = await client().chat.completions.create(buildAsrRequest(model, wavBase64, opts.context) as never) as unknown as {
+    choices: { message?: { content?: string | null } }[];
+    usage?: { seconds?: number };
+  };
+  const text = (res.choices?.[0]?.message?.content ?? '').trim();
+  const billed = res.usage?.seconds ?? Math.ceil(seconds);
+  const cost = asrCostFor(model, billed);
+  logUsage({ model, audioSeconds: billed, feature: 'asr', cost, meetingId: opts.meetingId });
+  return { text, seconds: billed, cost };
 }

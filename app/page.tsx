@@ -2,6 +2,8 @@ import Link from 'next/link';
 
 const FAQS = [
   { q: '没有 API Key 能演示吗？', a: '能。MOCK_LLM=true 模式用种子数据对应的预置输出跑通全流程，讲解现场不翻车。' },
+  { q: '开会要自己按录音吗？', a: '不用。进会议室 3 秒后自动开录（可取消），说的话实时转成文字；没人说话时不上传，长时间静音自动结束并进入纪要整理。开录前会提示参会人。' },
+  { q: '组员要怎么更新进度？', a: '在「任务与回顾」里一键点：做完了、写一句进度、卡住了、申请延期，或者自己认领没人管的任务。组长只看需要拍板的例外。' },
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。RAG 回答必须带 [日期·类型] 出处，相似度不够且关键词无命中时直接回答「记录里没找到」。' },
   { q: '三门课的决议会串台吗？', a: '不会。检索按 course_id 硬过滤，被新决议推翻的旧决议默认排除。' },
@@ -16,7 +18,7 @@ const jsonLd = {
       name: '组长减负',
       applicationCategory: 'EducationalApplication',
       operatingSystem: 'Web',
-      description: '把小组会议转写变成纪要、任务和提醒的协作工具，让组长不用再整理纪要、记旧决议、追 DDL。',
+      description: '帮组长把会上说的话，变成确认过的决定、有人负责跟进的任务，以及下次会接着推进的记录。',
       offers: [
         { '@type': 'Offer', name: '免费版', price: '0', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '组长 Pro（每学期）', price: '19.9', priceCurrency: 'CNY' },
@@ -47,8 +49,8 @@ export default function LandingPage() {
         <section className="mx-auto max-w-5xl px-4 py-16 text-center">
           <h1 className="text-3xl font-bold leading-tight md:text-4xl">开完会就散会，<br className="md:hidden" />纪要、旧决议、DDL 全压组长一个人？</h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-            把会议转写粘贴进来，1 分钟变成「结构化纪要 + 任务 + 提醒 + 可检索的集体记忆」。
-            5 人小组的组长，不用再整理纪要、记旧决议、追 DDL。
+            帮组长把会上说的话，变成确认过的决定、有人负责跟进的任务，以及下次会接着推进的记录。
+            进会议室自动开录、实时转写；组员自己更新进度；下次开会，遗留事项自动排好。
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Link href="/app" className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white hover:bg-brand-700">免费试用 Demo</Link>
@@ -62,15 +64,15 @@ export default function LandingPage() {
             <div className="mt-8 grid gap-6 md:grid-cols-3">
               <article className="rounded-xl border border-slate-200 p-5">
                 <h3 className="font-semibold">📋 没人整理纪要</h3>
-                <p className="mt-2 text-sm text-slate-600">粘贴转写 → AI 抽取决议/待办/分歧/待定 → 组长确认 → 一键复制成群消息。从粘贴到可发群 ≤ 3 次点击。</p>
+                <p className="mt-2 text-sm text-slate-600">进会议室自动开录、实时转写（也能粘贴文字稿）→ AI 抽取决议/待办/分歧/待定 → 组长确认才生效 → 一键复制成群消息。</p>
               </article>
               <article className="rounded-xl border border-slate-200 p-5">
                 <h3 className="font-semibold">🧠 没人记得上次定了啥</h3>
                 <p className="mt-2 text-sm text-slate-600">会前简报 + 「问问上次」带出处问答 + 议程撞旧决议自动提示。答案必须引用到具体会议，找不到就直说。</p>
               </article>
               <article className="rounded-xl border border-slate-200 p-5">
-                <h3 className="font-semibold">⏰ DDL 临近没人催</h3>
-                <p className="mt-2 text-sm text-slate-600">任务看板 + 风险灯 + D-3/D-1/过期自动提醒 + 催办文案。全部确定性代码，提醒不漏发、不错发。</p>
+                <h3 className="font-semibold">⏰ 进度全靠组长追</h3>
+                <p className="mt-2 text-sm text-slate-600">组员一键更新：做完了、卡住了、申请延期、自己认领。组长只看「待我处理」，D-3/D-1/过期提醒和风险灯全是确定性代码。</p>
               </article>
             </div>
           </div>

@@ -1,0 +1,18 @@
+[
+  {
+    "task_id": "db-1113-a2",
+    "actor_id": "siqi",
+    "kind": "blocked",
+    "note": "字段要等浩然的 ER 图定稿才能填",
+    "proposed_due": null,
+    "created_at": "2026-11-18T22:00:00"
+  },
+  {
+    "task_id": "db-1113-a2",
+    "actor_id": "siqi",
+    "kind": "extension_request",
+    "note": "ER 图周六才定稿，填字段加自测要两天",
+    "proposed_due": "2026-11-26",
+    "created_at": "2026-11-18T22:05:00"
+  }
+]

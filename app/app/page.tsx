@@ -5,6 +5,7 @@ import { getDemoNow, toLocalISO, dateOnly, formatCN } from '@/lib/time';
 import { visibleReminders } from '@/lib/reminders';
 import { riskLevel, dueText, STATUS_LABEL, RISK_LABEL, type TaskStatus } from '@/lib/risk';
 import { Card, Badge, EmptyState } from '@/components/ui';
+import { loadReviewTasks, leaderInbox } from '@/lib/review';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,8 +21,9 @@ export default function DashboardPage() {
 
   const visible = user.role === 'leader' ? allTasks : allTasks.filter((t) => t.ownerId === user.id);
   const open = visible.filter((t) => t.status !== 'done');
+  const inbox = user.role === 'leader' ? leaderInbox(loadReviewTasks(now)) : null;
   const ranked = open
-    .map((t) => ({ ...t, risk: riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt }, now) }))
+    .map((t) => ({ ...t, risk: riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt, blocked: Boolean(t.blocker) }, now) }))
     .sort((a, b) => {
       const order = { red: 0, yellow: 1, green: 2 };
       return order[a.risk] - order[b.risk] || (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999');
@@ -48,6 +50,27 @@ export default function DashboardPage() {
           {user.role === 'leader' ? `${user.name}，3 门课并行，这一屏帮你装下所有进度。` : `${user.name}，这是你自己的任务。`}
         </p>
       </div>
+
+      {inbox && inbox.total > 0 && (
+        <Link href="/app/tasks" className="block">
+          <Card className="flex flex-wrap items-center gap-2 border-brand-200 bg-brand-50 p-3 hover:border-brand-500">
+            <p className="text-sm font-medium text-brand-800">📥 待我处理 {inbox.total} 件</p>
+            <p className="flex-1 text-xs text-brand-700">
+              {[['等确认完成', inbox.review.length], ['延期申请', inbox.extensions.length], ['卡住了', inbox.blocked.length], ['48 小时没动静', inbox.silent.length], ['没人认领', inbox.unclaimed.length]]
+                .filter(([, n]) => Number(n) > 0).map(([l, n]) => `${l} ${n}`).join(' · ')}
+            </p>
+            <span className="text-xs text-brand-700">去处理 →</span>
+          </Card>
+        </Link>
+      )}
+      {!inbox && open.length > 0 && (
+        <Link href="/app/tasks" className="block">
+          <Card className="flex items-center gap-2 border-brand-200 bg-brand-50 p-3 hover:border-brand-500">
+            <p className="flex-1 text-sm text-brand-800">你手上有 {open.length} 件待办：做完、卡住、要延期，点一下就同步给组长</p>
+            <span className="text-xs text-brand-700">去更新 →</span>
+          </Card>
+        </Link>
+      )}
 
       <section aria-label="风险任务 top 5">
         <h2 className="mb-2 text-sm font-semibold text-slate-700">🚨 最紧急的 {ranked.length} 件事</h2>
@@ -88,7 +111,7 @@ export default function DashboardPage() {
                   </div>
                   {u.past
                     ? <Link href="/app/meeting/new" className="text-xs text-brand-600 hover:underline">去录纪要 →</Link>
-                    : <Link href={`/app/c/${u.course.id}`} className="text-xs text-brand-600 hover:underline">生成会前简报 →</Link>}
+                    : <Link href={`/app/meeting/live?course=${u.course.id}`} className="text-xs text-brand-600 hover:underline">{u.date === today ? '进会议室（自动开录）→' : '会前准备 →'}</Link>}
                 </Card>
               ))}
             </div>
@@ -102,7 +125,10 @@ export default function DashboardPage() {
               {reminders.slice(0, 5).map((r) => (
                 <Card key={r.id} className="p-3">
                   <p className="text-xs text-slate-700">{r.message}</p>
-                  <p className="mt-1 text-[11px] text-slate-400">{r.kind === 'overdue' ? '过期提醒' : r.kind === 'd1' ? 'D-1 提醒' : 'D-3 提醒'} · {r.fireDate}</p>
+                  <p className="mt-1 flex items-center text-[11px] text-slate-400">
+                    <span className="flex-1">{r.kind === 'overdue' ? '过期提醒' : r.kind === 'd1' ? 'D-1 提醒' : 'D-3 提醒'} · {r.fireDate}</span>
+                    {user.role !== 'leader' && <Link href="/app/tasks" className="text-brand-600 hover:underline">回复进度 →</Link>}
+                  </p>
                 </Card>
               ))}
             </div>

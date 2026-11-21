@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx } from '@/components/ui';
 import type { Draft, ValidatedAction } from '@/lib/pipeline';
@@ -9,24 +9,30 @@ type EditDecision = Draft['extraction']['decisions'][number] & { checked: boolea
 
 const blankAction = (): ValidatedAction => ({ task: '', ownerRaw: '', ownerId: null, dueRaw: null, dueDate: null, confidence: 'high', evidence: '', flags: [], manual: true });
 
+export interface LiveDraft {
+  courseId: string; date: string; transcript: string; sessionId: string;
+  source: 'demo' | 'mic'; seconds: number; lines: number; hints: number;
+}
+
 interface Props {
   courses: { id: string; name: string }[];
   members: { id: string; name: string }[];
   defaultDate: string;
+  live?: LiveDraft | null; // 会议室结束后带过来的转写：自动开始整理，组长只需确认
 }
 
 type Phase = 'input' | 'processing' | 'confirm' | 'done';
 
-export function PipelineWizard({ courses, members, defaultDate }: Props) {
-  const [phase, setPhase] = useState<Phase>('input');
-  const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
-  const [date, setDate] = useState(defaultDate);
+export function PipelineWizard({ courses, members, defaultDate, live }: Props) {
+  const [phase, setPhase] = useState<Phase>(live ? 'processing' : 'input');
+  const [courseId, setCourseId] = useState(live?.courseId ?? courses[0]?.id ?? '');
+  const [date, setDate] = useState(live?.date ?? defaultDate);
   const [title, setTitle] = useState('');
   const [confirmTitle, setConfirmTitle] = useState('');
   const [agenda, setAgenda] = useState('');
   const [duplicates, setDuplicates] = useState<{ memoryId: string; text: string; meetingDate: string; similarity: number; matched: string }[]>([]);
   const [dupChecked, setDupChecked] = useState('');
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState(live?.transcript ?? '');
   const [asrNote, setAsrNote] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState('');
@@ -60,11 +66,15 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
     setAsrNote(`Demo 模拟：已把「${file.name}」当作 1 小时录音，按 Paraformer 计量 ${data.costCny.toFixed(2)} 元，返回预置转写。`);
   }
 
-  async function process() {
+  function process() {
     setError('');
     setPhase('processing');
+    void runProcess({ courseId, date, transcript, title });
+  }
+
+  async function runProcess(input: { courseId: string; date: string; transcript: string; title: string; meetingId?: string }) {
     try {
-      const res = await fetch('/api/meetings/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId, date, transcript, title }) });
+      const res = await fetch('/api/meetings/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '处理失败');
       setDraft(data);
@@ -78,6 +88,15 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
       setPhase('input');
     }
   }
+
+  // 会议室来的转写：进页面就自动整理（只跑一次）
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (!live || autoRan.current) return;
+    autoRan.current = true;
+    void runProcess({ courseId: live.courseId, date: live.date, transcript: live.transcript, title: '', meetingId: live.sessionId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function confirm() {
     if (!draft) return;
@@ -121,6 +140,12 @@ export function PipelineWizard({ courses, members, defaultDate }: Props) {
       </ol>
 
       {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>}
+      {live && phase !== 'input' && (
+        <p className="rounded-lg bg-brand-50 p-2 text-xs text-brand-800">
+          🎙 来自会议室：实时转写 {live.lines} 句（{live.source === 'demo' ? '演示录音 · 模拟' : '麦克风'}，约 {Math.max(1, Math.round(live.seconds / 60))} 分钟）
+          {live.hints > 0 ? `，会中提醒了 ${live.hints} 次「这事定过了」` : ''}。已自动开始整理，你只需要逐条确认。
+        </p>
+      )}
 
       {phase === 'input' && (
         <Card className="space-y-3 p-4">

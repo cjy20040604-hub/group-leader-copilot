@@ -106,7 +106,7 @@ export function validateAction(
   return { task: a.task, ownerRaw: a.owner_raw, ownerId: owner.id, dueRaw: a.due_raw, dueDate, confidence: a.confidence, evidence: a.evidence, flags };
 }
 
-export async function processMeeting(input: { courseId: string; date: string; transcript: string; title?: string }): Promise<Draft> {
+export async function processMeeting(input: { courseId: string; date: string; transcript: string; title?: string; meetingId?: string }): Promise<Draft> {
   const steps: PipelineStep[] = [];
   const mark = <T>(name: string, ai: boolean, detail: string, fn: () => T | Promise<T>, tokens?: (r: T) => number): Promise<T> => {
     const t0 = performance.now();
@@ -119,7 +119,10 @@ export async function processMeeting(input: { courseId: string; date: string; tr
   const course = db.select().from(schema.courses).where(eq(schema.courses.id, input.courseId)).get();
   if (!course) throw new Error('课程不存在');
   if (!input.transcript.trim()) throw new Error('转写为空');
-  const meetingId = `m-${Date.now()}`;
+  // 会议室来的：沿用会议室的会话 id，实时转写 / 会中查重的计量就挂在这场会上
+  const liveId = input.meetingId && /^m-live-\d+$/.test(input.meetingId)
+    && !db.select().from(schema.meetings).where(eq(schema.meetings.id, input.meetingId)).get() ? input.meetingId : null;
+  const meetingId = liveId ?? `m-${Date.now()}`;
 
   const pre = await mark('2 预处理 · 代码', false, '清洗口头禅/时间戳，按说话人切分', () => preprocessTranscript(input.transcript), (r) => r.tokens);
   if (pre.tokens > 12000) {

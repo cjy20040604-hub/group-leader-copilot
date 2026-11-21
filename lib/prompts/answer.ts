@@ -12,5 +12,5 @@ export function renderAnswerPrompt(question: string, records: string): string {
   return ANSWER_PROMPT.replace('{{question}}', question).replace('{{chunks_with_ids_and_dates}}', records);
 }
 
-export const BRIEFING_PROMPT = `你是小组会前简报助手。把下面的记录写成一段 ≤ 200 字的口语化简报，帮组长快速想起上次定了什么、谁还欠着什么、还有什么没拍板。不要编造。
+export const BRIEFING_PROMPT = `你是小组会前简报助手。把下面的记录写成一段 ≤ 200 字的口语化简报，帮组长快速想起上次定了什么、之后组员做完了什么、谁卡住了或要延期、谁还欠着什么、还有什么没拍板。不要编造。
 {{material}}`;

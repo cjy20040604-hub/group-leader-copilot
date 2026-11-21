@@ -10,5 +10,7 @@ export async function POST(req: NextRequest) {
     if (!m) return NextResponse.json({ error: '成员不存在' }, { status: 400 });
     setSetting('current_user', body.current_user);
   }
+  // 会议室「进来就自动开录」开关
+  if (typeof body.auto_record === 'boolean') setSetting('auto_record', body.auto_record ? 'true' : 'false');
   return NextResponse.json({ ok: true });
 }

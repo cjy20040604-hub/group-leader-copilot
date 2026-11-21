@@ -14,6 +14,21 @@ export const PRICING: Record<string, ModelPrice> = {
 
 export const ASR_PRICE_PER_SECOND = 0.00008; // Paraformer ≈ 0.29 元/小时（待核对：来自需求 prompt，未在百炼价格页核实）
 
+// 实时 / 准实时语音识别（元 / 秒）。会议室按静音切段，只有有人说话的部分计费
+export const ASR_PRICES: Record<string, { perSecond: number; verified: boolean; note: string }> = {
+  'paraformer-realtime-v2': { perSecond: 0.00024, verified: true, note: '百炼模型页 华北2 原价（2026-11-21 检索）' },
+  'fun-asr-realtime': { perSecond: 0.00033, verified: true, note: '百炼模型页 华北2 原价（2026-11-21 检索）' },
+  'qwen3-asr-flash': { perSecond: 0.00024, verified: false, note: '假设：百炼文档没写单价，暂按 paraformer-realtime-v2 估算，上线前到控制台核对' },
+};
+
+export function asrPrice(model: string) {
+  return ASR_PRICES[model] ?? { perSecond: 0.00024, verified: false, note: `假设：${model || '未配置 ASR_MODEL'} 单价未知，按 paraformer-realtime-v2 估算` };
+}
+
+export function asrCostFor(model: string, seconds: number): number {
+  return seconds * asrPrice(model).perSecond;
+}
+
 export function getPrice(model: string): ModelPrice {
   return PRICING[model] ?? { input: 0.8, output: 2 };
 }
