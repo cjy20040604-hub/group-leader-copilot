@@ -7,7 +7,7 @@ export interface EconInputs {
   meetingHours: number;        // 每次会多长（小时）
   qaPerSemester: number;       // 每组每学期问几次「问问上次」
   recordedHours: number;       // 每组每学期有多少小时录音要我们转写（Pro 含 10 小时）
-  asrPerSecond: number;        // 转写单价：录音文件识别 0.00008 / 实时识别 0.00024
+  asrPerSecond: number;        // 转写单价：录音文件识别 0.00008 / 会议室实时转写（qwen3-asr-flash）0.00022
   pricePerSemester: number;    // Pro 定价
   freeToPaid: number;          // 每 1 个付费组带着几个免费用户（免费用户也会产生模型成本）
   freeMeetingsPerMonth: number;// 免费版每月几次纪要
@@ -17,7 +17,7 @@ export interface EconInputs {
 }
 
 export const ASR_FILE = ASR_PRICE_PER_SECOND;                       // paraformer-v2，已核对
-export const ASR_REALTIME = ASR_PRICES['paraformer-realtime-v2'].perSecond; // 已核对
+export const ASR_REALTIME = ASR_PRICES['qwen3-asr-flash'].perSecond; // 会议室实际用的模型，2026-11-21 官方文档 + 控制台核实
 
 export const BASELINE: EconInputs = {
   meetingsPerSemester: 24,

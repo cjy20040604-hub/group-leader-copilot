@@ -21,10 +21,10 @@ describe('unit economics', () => {
     assert.equal(r.breakEvenGroups, 38);
   });
 
-  it('录音全走实时转写：盈亏平衡升到 84 组', () => {
+  it('录音全走会议室实时转写（qwen3-asr-flash 0.00022 元/秒）：盈亏平衡升到 73 组', () => {
     const r = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
-    near(r.asrCost, 8.64);
-    assert.equal(r.breakEvenGroups, 84);
+    near(r.asrCost, 7.92);
+    assert.equal(r.breakEvenGroups, 73);
   });
 
   it('贡献为负时盈亏平衡为无穷大', () => {
