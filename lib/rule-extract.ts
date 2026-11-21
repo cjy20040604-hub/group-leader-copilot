@@ -6,7 +6,7 @@ import type { RosterMember } from '@/lib/roster';
 import { parseDueDate } from '@/lib/dates';
 
 const DUE_RE = /((下下|下|本|这)?(周|星期|礼拜)[一二三四五六日天]|\d{1,2}\s*月\s*\d{1,2}\s*[日号]|今天|今晚|明天|明晚|后天|[\d一两二三四五六七八九十]+\s*天(后|内)|月底|(下下|下|这)?周末)(早上|上午|中午|下午|晚上)?(\d{1,2}\s*点)?(之前|以前|前)?/;
-const DECISION_RE = /(就这么定|那就定|定了|决定|就定|定在|定为|就用|统一用|改用|改成|确定用|敲定)/;
+const DECISION_RE = /(就这么定|那就定|定了|决定|就定|定在|定为|就用|统一用|改用|改成|确定用|敲定|就按|按这个来|就这么办|拍板|先按[^，。]{1,12}(算|来))/;
 const OPEN_RE = /(还没定|没想好|再看看|再议|下次再|待定|再讨论|没结论)/;
 const ACTION_HINT_RE = /(负责|来做|来弄|来写|来画|来吧|交给|包了)/;
 const FILLER_RE = /^(嗯+|呃+|啊+|那|好|好的|行|OK|ok|对|然后|就是)[，,、\s]*/;
@@ -14,13 +14,22 @@ const NEXT_MEETING_RE = /下次(开会|会议|组会|碰头)?[^。！？]*?((下
 
 interface Sentence { speaker: string | null; text: string; line: number }
 
+const TIME_RE = /\[?\d{1,2}:\d{2}(?::\d{2})?\]?/g;
+
+// 兼容几种常见导出格式：
+// 「林晓：内容」（粘贴 / 腾讯会议）、「林晓(00:01:12)：内容」（时间戳在括号里）、
+// 「林晓 00:01:12」单独一行、下一行才是内容（飞书妙记 / 钉钉听记一类）
 function splitSentences(transcript: string): Sentence[] {
   const out: Sentence[] = [];
+  let current: string | null = null; // 「名字 + 时间」单独一行时，后面的内容都算这个人说的
   transcript.split('\n').forEach((raw, line) => {
-    const l = raw.replace(/\[?\d{1,2}:\d{2}(?::\d{2})?\]?/g, '').trim();
+    const hadTime = TIME_RE.test(raw);
+    TIME_RE.lastIndex = 0;
+    const l = raw.replace(TIME_RE, '').replace(/[(（]\s*[)）]/g, '').trim();
     if (!l) return;
+    if (hadTime && /^[\u4e00-\u9fa5A-Za-z0-9·]{1,8}$/.test(l)) { current = l; return; }
     const m = l.match(/^([^：:]{1,8})[：:]\s*(.+)$/);
-    const speaker = m ? m[1].trim() : null;
+    const speaker = m ? m[1].trim() : current;
     const body = m ? m[2] : l;
     for (const s of body.split(/(?<=[。！？!?；;])/)) {
       const text = s.trim();
@@ -31,11 +40,12 @@ function splitSentences(transcript: string): Sentence[] {
 }
 
 function findOwner(s: Sentence, roster: RosterMember[]): string | null {
+  const text = s.text.replace(FILLER_RE, '');
   const names = roster.flatMap((m) => [m.name, ...m.aliases]).sort((a, b) => b.length - a.length);
-  const hit = names.find((n) => s.text.includes(n));
+  const hit = names.find((n) => text.includes(n));
   if (hit) return hit;
-  if (/那个谁|谁有空/.test(s.text)) return '那个谁';
-  if (/^我|我(来|负责|去|把|先|周|下周|明天|今天)/.test(s.text) && s.speaker) return s.speaker;
+  if (/那个谁|谁有空/.test(text)) return '那个谁';
+  if (/^我|我(来|负责|去|把|先|周|下周|明天|今天|包|做|写|弄|画|上)|交给我/.test(text) && s.speaker) return s.speaker;
   return null;
 }
 
@@ -43,7 +53,9 @@ function stripClause(text: string, owner: string | null, due: string | null): st
   let t = text.replace(/[。！？!?；;]$/, '');
   if (owner) t = t.split(owner).join('');
   if (due) t = t.split(due).join('');
+  t = t.replace(/(我|你)来(写|做|弄|画|搞)/g, ''); // 「财务部分我来写」→「财务部分」
   t = t.replace(/那个谁|你来吧|我来吧|来吧|你来|我来|负责|交给|包了|我(?!们)|你(?!们)|一定|真的|这次/g, '');
+  t = t.replace(/(发|给|交)$/, '').replace(/(发|给)(，|,)/g, '$2'); // 「问卷弄完发我」去掉「我」后剩下的半截
   // 多个分句时取最长的那句当任务内容（「写建表 SQL，给大家」→「写建表 SQL」）
   const clauses = t.split(/[，,、]/).map((c) => c.replace(FILLER_RE, '').replace(/^把/, '').replace(/(吧|啊|哈|呀|了)$/, '').trim()).filter(Boolean);
   return clauses.sort((a, b) => b.length - a.length)[0] ?? '';
@@ -95,8 +107,9 @@ export function ruleExtract(transcript: string, roster: RosterMember[], meetingD
     }
 
     if (isQuestion && text.length >= 4) pendingQuestions.push({ idx, text });
-    else if (/^(这个|这事|那个|这块)/.test(text) && OPEN_RE.test(text) && pendingQuestions.some((q) => idx - q.idx <= 2)) {
-      // 「这个再看看」指的是上一句问题，那句问题本身会进待定，这句不重复记
+    else if (OPEN_RE.test(text) && pendingQuestions.some((q) => idx - q.idx <= 2)
+      && (/^(这个|这事|那个|这块)/.test(text) || text.replace(OPEN_RE, '').replace(/[，,。！；;\s]|说|吧|啊|大家|想想|回头/g, '').length <= 4)) {
+      // 「这个再看看」「大家想想，下次再议」指的是上一句问题，那句问题本身会进待定，这句不重复记
     }
     else if (OPEN_RE.test(text) && text.replace(OPEN_RE, '').replace(/[，,。！；;\s]|说|吧|啊/g, '').length >= 4) {
       result.open_questions.push(text.replace(/[。！；;]$/, '').slice(0, 50));

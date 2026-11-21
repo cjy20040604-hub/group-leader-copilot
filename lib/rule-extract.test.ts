@@ -46,3 +46,25 @@ describe('ruleExtract（Mock 非示例转写兜底）', () => {
     assert.equal(empty.decisions.length + empty.action_items.length, 0);
   });
 });
+
+describe('ruleExtract · 不同导出格式', () => {
+  it('飞书 / 钉钉听记式：「名字 时间」单独一行，内容在下一行', () => {
+    const r = ruleExtract(`林晓 00:00:05\n人齐了，今天定一下分工。\n\n浩然 00:00:20\nER 图我来吧，周三之前发群里。\n\n阿杰 00:01:30\n测试数据谁来弄？\n\n小雨 00:01:41\n我来，周日晚上之前。`, ROSTER, '2026-11-19');
+    assert.deepEqual(r.action_items.map((a) => [a.owner_raw, a.task]), [['浩然', 'ER 图'], ['小雨', '测试数据']]);
+    assert.deepEqual(r.open_questions, []);
+  });
+
+  it('腾讯会议式：「名字(时间)：内容」；「交给我」「我包了」「就按…来」', () => {
+    const r = ruleExtract(`林晓(00:00:05)：大家好。\n阿杰(00:01:10)：竞品分析交给我，下周二交。\n林晓(00:01:40)：行，那报告框架就按老师给的模板来。\n浩然(00:02:50)：PPT 我包了，12月3日前做完初稿。`, ROSTER, '2026-11-19');
+    assert.deepEqual(r.action_items.map((a) => a.owner_raw), ['阿杰', '浩然']);
+    assert.equal(r.action_items[0].task, '竞品分析');
+    assert.deepEqual(r.decisions.map((d) => d.text), ['报告框架就按老师给的模板来']);
+  });
+
+  it('口语：「那我做…」「拍板了」；「大家想想，下次再议」不和上一句问题重复记', () => {
+    const r = ruleExtract(`浩然：那我做市场规模测算，后天交。\n思琪：财务部分我来写，明天晚上之前给初稿。\n林晓：经费预算先按 500 块算，拍板了。\n林晓：海报要不要做？大家想想，下次再议。`, ROSTER, '2026-11-19');
+    assert.deepEqual(r.action_items.map((a) => [a.owner_raw, a.task]), [['浩然', '做市场规模测算'], ['思琪', '财务部分']]);
+    assert.deepEqual(r.decisions.map((d) => d.text), ['经费预算先按 500 块算']);
+    assert.deepEqual(r.open_questions, ['海报要不要做？']);
+  });
+});

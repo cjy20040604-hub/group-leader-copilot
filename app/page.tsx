@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { computeEconomics, textCostPerMeeting, BASELINE, ASR_REALTIME } from '@/lib/unit-economics';
+
+const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
 const FAQS = [
   { q: '没有 API Key 能演示吗？', a: '能。MOCK_LLM=true 模式用种子数据对应的预置输出跑通全流程，讲解现场不翻车。' },
@@ -33,6 +36,9 @@ const jsonLd = {
 };
 
 export default function LandingPage() {
+  // 交付物里的成本数字直接从成本模型算，和成本看板同一份代码，不会说岔
+  const base = computeEconomics(BASELINE);
+  const rt = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
   return (
     <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -55,6 +61,47 @@ export default function LandingPage() {
           <div className="mt-6 flex justify-center gap-3">
             <Link href="/app" className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white hover:bg-brand-700">免费试用 Demo</Link>
             <Link href="/app/cost" className="rounded-lg border border-slate-300 px-6 py-3 text-sm text-slate-700 hover:bg-slate-100">看成本看板</Link>
+          </div>
+        </section>
+
+        <section className="border-y border-slate-200 bg-slate-50 py-12" aria-label="交付物一览">
+          <div className="mx-auto max-w-5xl px-4">
+            <h2 className="text-xl font-bold">交付物一览</h2>
+            <p className="mt-1 text-sm text-slate-500">Demo、为什么是这个组合、成本与商业模式，都在这一屏能找到入口。</p>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <article className="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 className="font-semibold">Demo</h3>
+                <p className="mt-2 text-sm text-slate-600">不用注册、不用 Key，离线 Mock 模式全流程可用。建议路径：顶部「🎙 开会」看自动开录和实时转写 → 确认纪要 → 「任务与回顾」→「问问上次」→「成本看板」。</p>
+                <Link href="/app" className="mt-3 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">进入 Demo</Link>
+              </article>
+              <article className="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 className="font-semibold">为什么是这个组合</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">三个痛点是同一条链断在三处：会上说的话 → 确认过的决定 → 有人跟进的任务 → 下次会接着推进，所以做一条闭环而不是三个单点工具。AI 只用在需要理解声音和语言的地方（转写、整理成决定和待办、按意思回忆旧决议）；开录、认领、延期、提醒、风险灯都用规则，因为必须可预测、几乎零边际成本。AI 产出要组长确认才生效。只做纪要没人执行，只做看板要手抄，全交给 Agent 不可控也越用越贵。</p>
+                <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">和 5 种其他组合的对比表</a>
+              </article>
+              <article className="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 className="font-semibold">成本与商业模式</h3>
+                <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                  <li>按阿里云百炼原价：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}，一个组长一学期模型成本约 ¥{base.modelCost.toFixed(2)}</li>
+                  <li>组长 Pro ¥19.9 / 学期；每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组覆盖固定成本（录音会后上传；全走实时转写约 {rt.breakEvenGroups} 组）</li>
+                  <li>谁用：组长（核心）、组员（自己更新进度）、老师（看过程数据）；谁付钱：早期组长，规模化后老师 / 学院（课程版 ¥5 / 学生 / 学期）</li>
+                  <li className="text-xs text-slate-400">付费率、固定成本、会议次数等是假设 · 待验证，敏感度见成本看板</li>
+                </ul>
+                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  <Link href="/app/cost" className="text-brand-600 hover:underline">成本看板（含计算器）</Link>
+                  <a href={`${REPO}/blob/main/docs/cost-model.md`} className="text-brand-600 hover:underline">成本与商业模式测算文档</a>
+                </div>
+              </article>
+              <article className="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 className="font-semibold">怎么判断它有用、代码在哪</h3>
+                <p className="mt-2 text-sm text-slate-600">北极星指标是每周确认的决定数，配套看提醒回复率、组员自主更新占比、按时完成率。源码、产品定位、架构和测试都在 GitHub 仓库里。</p>
+                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  <Link href="/app/metrics" className="text-brand-600 hover:underline">成功指标</Link>
+                  <a href={REPO} className="text-brand-600 hover:underline">GitHub 仓库</a>
+                  <a href={`${REPO}/blob/main/docs/product-v2.md`} className="text-brand-600 hover:underline">产品定位与 AI 分工</a>
+                </div>
+              </article>
+            </div>
           </div>
         </section>
 
