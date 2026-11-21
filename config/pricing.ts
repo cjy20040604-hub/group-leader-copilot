@@ -18,7 +18,7 @@ export const ASR_PRICE_PER_SECOND = 0.00008; // paraformer-v2 ≈ 0.29 元/小�
 export const ASR_PRICES: Record<string, { perSecond: number; verified: boolean; note: string }> = {
   'paraformer-realtime-v2': { perSecond: 0.00024, verified: true, note: '百炼模型页 华北2 原价（2026-11-21 检索）' },
   'fun-asr-realtime': { perSecond: 0.00033, verified: true, note: '百炼模型页 华北2 原价（2026-11-21 检索）' },
-  'qwen3-asr-flash': { perSecond: 0.00024, verified: false, note: '假设：百炼文档没写单价，暂按 paraformer-realtime-v2 估算，上线前到控制台核对' },
+  'qwen3-asr-flash': { perSecond: 0.00022, verified: true, note: '官方价格文档 华北2（北京）原价，2026-11-21 查价；输出不计费，免费额度 36000 秒/90 天；控制台活动优惠未核对' },
 };
 
 export function asrPrice(model: string) {

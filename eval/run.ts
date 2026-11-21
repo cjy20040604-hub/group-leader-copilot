@@ -44,7 +44,9 @@ async function main() {
     if (hit) hits++;
     const citeOk = !res.refused && leaked.length === 0 && g.expect_memory_ids.every((id) => res.citations.includes(id));
     if (citeOk) citeCorrect++;
-    const pointsOk = !res.refused && g.expect_answer_points.every((p) => res.answer.includes(p));
+    // 要点匹配忽略空白差异（「10页」=「10 页」，2026-11-21 真实 eval 校准）
+    const flat = res.answer.replace(/\s+/g, '');
+    const pointsOk = !res.refused && g.expect_answer_points.every((p) => flat.includes(p.replace(/\s+/g, '')));
     if (pointsOk) answered++;
     if (res.refused) falseRefusals++;
     console.log(`${hit && pointsOk && citeOk ? '✅' : '❌'} ${g.id} [${g.course_id}] ${g.question}`);

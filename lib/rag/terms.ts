@@ -20,6 +20,9 @@ export interface Term {
 
 const segmenter = new Intl.Segmenter('zh', { granularity: 'word' });
 
+// 记录里用 PPT，问题里常说「幻灯片」：证据闸门只认原词，这里先归一（2026-11-21 真实 eval p2 误拒后加）
+const SYNONYMS: Record<string, string> = { '幻灯片': 'ppt', '幻灯': 'ppt' };
+
 export function questionTerms(question: string): Term[] {
   const segs = [...segmenter.segment(question.toLowerCase())]
     .filter((s) => s.isWordLike)
@@ -28,6 +31,8 @@ export function questionTerms(question: string): Term[] {
   const terms: Term[] = [];
   let run = ''; // 连续的单字（分词器把「路演」切成「路|演」时拼回来）
   const pushWord = (w: string) => {
+    const syn = SYNONYMS[w];
+    if (syn) { terms.push({ t: syn, w: 1 }); return; }
     if (w.length >= 4) {
       // 「营销调研」这类复合词：拆成两字一组，各占一部分权重，免得整词在记录里对不上
       const parts = w.match(/.{1,2}/g) ?? [w];

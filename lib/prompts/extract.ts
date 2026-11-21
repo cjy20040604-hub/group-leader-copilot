@@ -13,6 +13,17 @@ export const EXTRACT_PROMPT = `你是大学小组作业的会议秘书。根据�
 7. 如果某议题在【历史上下文】中已有决议且本次只是重复讨论，在 repeated_topics 标出。
 8. 输出中文，简洁，每条 ≤ 50 字。只输出 JSON。
 
+输出格式（字段名必须与下面完全一致，不得增删或改名；所有数组没有内容时输出 []）：
+{
+  "topics": ["议题1", "议题2"],
+  "decisions": [{"text": "结论", "evidence": "转写原话≤40字", "confidence": "high 或 low", "supersedes_memory_id": null, "note": null}],
+  "action_items": [{"task": "做什么", "owner_raw": "转写中的称呼原样", "due_raw": "原话如「下周三前」或 null", "due_date": "YYYY-MM-DD 或 null", "confidence": "high 或 low", "evidence": "转写原话"}],
+  "disagreements": [{"topic": "议题", "positions": ["甲方观点", "乙方观点"]}],
+  "open_questions": ["没解决、下次要讨论的问题"],
+  "repeated_topics": [{"topic": "议题", "memory_id": "历史上下文里的条目 id"}],
+  "next_meeting": "YYYY-MM-DD 或 null"
+}
+
 【花名册】{{roster}}
 【历史上下文】{{retrieved_memory}}
 【会议转写】{{transcript}}`;

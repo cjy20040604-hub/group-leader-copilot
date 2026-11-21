@@ -44,9 +44,10 @@ export interface SearchResult {
 
 export const REFUSE_VEC_THRESHOLD = 0.35;
 export const REFUSE_COVERAGE_THRESHOLD = 0.3;
-// 真实向量：余弦 ≥ 0.8 才算同一件事；Mock 向量不讲语义（「方案」被归进营销组就能把余弦拉到 0.69），
+// 真实向量：余弦 ≥ 0.7 才算同一件事（2026-11-21 实测校准：「PPT 要不要换回蓝白那版」对 11/12 决议 0.7312，
+// 「PPT 要不要加动画」最高 0.6088；原 0.8 会漏掉真重复）。Mock 向量不讲语义（「方案」被归进营销组就能把余弦拉到 0.69），
 // 所以 Mock 下放宽到 0.5，真正把关的是关键词规则（lib/rag/match.ts）
-export const DUPLICATE_THRESHOLD = Number(process.env.DUPLICATE_THRESHOLD ?? 0.8);
+export const DUPLICATE_THRESHOLD = Number(process.env.DUPLICATE_THRESHOLD ?? 0.7);
 export const MOCK_DUPLICATE_THRESHOLD = 0.5;
 
 // RRF 融合（k=60），导出供单测
