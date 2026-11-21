@@ -6,11 +6,11 @@ export interface EconInputs {
   meetingsPerSemester: number; // 每组每学期开几次会（3 门课 × 8 次 = 24）
   meetingHours: number;        // 每次会多长（小时）
   qaPerSemester: number;       // 每组每学期问几次「问问上次」
-  recordedHours: number;       // 每组每学期有多少小时录音要我们转写（Pro 含 10 小时）
+  recordedHours: number;       // 每组每学期有多少小时录音要我们转写（专业版含 10 小时）
   asrPerSecond: number;        // 转写单价：录音文件识别 0.00008 / 会议室实时转写（qwen3-asr-flash）0.00022
-  pricePerSemester: number;    // Pro 定价
-  freeToPaid: number;          // 每 1 个付费组带着几个免费用户（免费用户也会产生模型成本）
-  freeMeetingsPerMonth: number;// 免费版每月几次纪要
+  pricePerSemester: number;    // 专业版定价（每组每学期）
+  freeToPaid: number;          // 每 1 个付费组带着几个体验版用户（体验版用户也会产生模型成本）
+  freeMeetingsPerMonth: number;// 体验版每月几次纪要
   semesterMonths: number;      // 一学期几个月
   fixedPerMonth: number;       // 服务器、数据库、域名等固定成本（元/月）
   paymentFeeRate: number;      // 支付通道费率
@@ -56,9 +56,9 @@ export interface EconResult {
   modelCost: number;        // 会议文字处理 + 问答
   asrCost: number;
   variableCost: number;     // 每个付费组每学期的变动成本
-  freeCostPerUser: number;  // 每个免费用户每学期的模型成本
+  freeCostPerUser: number;  // 每个体验版用户每学期的模型成本
   netRevenue: number;       // 扣支付通道费后的收入
-  contribution: number;     // 每个付费组的边际贡献（扣变动成本和它带着的免费用户成本）
+  contribution: number;     // 每个付费组的边际贡献（扣变动成本和它带着的体验版用户成本）
   unitMargin: number;       // contribution / netRevenue
   fixedPerSemester: number;
   breakEvenGroups: number;  // 覆盖固定成本需要的付费组数（向上取整；贡献 ≤ 0 时为 Infinity）
@@ -107,12 +107,12 @@ export const SENSITIVITY: { factor: string; rows: SensitivityRow[] }[] = [
     { label: '10 小时 · 录音文件识别（基线）', value: '10f', patch: {} },
     { label: '10 小时 · 会议室实时转写', value: '10r', patch: { asrPerSecond: ASR_REALTIME } },
   ] },
-  { factor: '免费用户 : 付费组', rows: [
+  { factor: '体验版用户 : 付费组', rows: [
     { label: '0 : 1', value: '0', patch: { freeToPaid: 0 } },
     { label: '4 : 1（基线，20% 付费）', value: '4', patch: {} },
     { label: '9 : 1（10% 付费）', value: '9', patch: { freeToPaid: 9 } },
   ] },
-  { factor: 'Pro 定价', rows: [
+  { factor: '专业版定价', rows: [
     { label: '9.9 元', value: '9.9', patch: { pricePerSemester: 9.9 } },
     { label: '19.9 元（基线）', value: '19.9', patch: {} },
     { label: '29.9 元', value: '29.9', patch: { pricePerSemester: 29.9 } },

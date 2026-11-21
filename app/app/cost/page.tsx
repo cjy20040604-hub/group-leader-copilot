@@ -50,7 +50,7 @@ export default function CostPage() {
   const semesterModel = STANDARD_MEETING.meetingsPerSemester * stdText + STANDARD_MEETING.qaPerSemester * stdQa;
   const semesterAll = semesterModel + STANDARD_MEETING.infraPerSemester;
   const proPrice = 19.9;
-  const proAsr = asrCost(10 * 3600); // 组长 Pro 含 10 小时录音
+  const proAsr = asrCost(10 * 3600); // 专业版含 10 小时录音
   const proCost = semesterAll + proAsr;
   const measuredLabel = mock ? 'Mock 估算' : '实测';
 
@@ -119,7 +119,7 @@ export default function CostPage() {
         <Card className="p-4 text-sm">
           <p>纯文字稿模型成本：24 × ¥{stdText.toFixed(3)} + 200 × ¥{stdQa.toFixed(4)} ≈ <strong>¥{semesterModel.toFixed(2)}</strong></p>
           <p className="mt-1">加服务器/数据库/推送摊销 ¥{STANDARD_MEETING.infraPerSemester} ≈ <strong>¥{semesterAll.toFixed(2)}</strong>；全部用录音再加 24 × ¥{stdAsr.toFixed(2)} ≈ ¥{(STANDARD_MEETING.meetingsPerSemester * stdAsr).toFixed(1)}</p>
-          <p className="mt-2 text-xs text-slate-500">组长 Pro 定价 {proPrice} 元/学期（含 10 小时录音 ≈ ¥{proAsr.toFixed(2)}）：成本 ≈ {semesterModel.toFixed(2)} + {proAsr.toFixed(2)} + {STANDARD_MEETING.infraPerSemester} ≈ {proCost.toFixed(2)} 元，毛利约 {(((proPrice - proCost) / proPrice) * 100).toFixed(0)}%。这是只算这个组自己的毛利（每组摊 2 元固定成本）；算上它带着的免费用户、支付通道费，并把固定成本按月单列，见下方「敏感度与盈亏平衡」。详见 docs/cost-model.md。</p>
+          <p className="mt-2 text-xs text-slate-500">专业版定价 {proPrice} 元/组/学期（含 10 小时录音 ≈ ¥{proAsr.toFixed(2)}）：成本 ≈ {semesterModel.toFixed(2)} + {proAsr.toFixed(2)} + {STANDARD_MEETING.infraPerSemester} ≈ {proCost.toFixed(2)} 元，毛利约 {(((proPrice - proCost) / proPrice) * 100).toFixed(0)}%。这是只算这个组自己的毛利（每组摊 2 元固定成本）；算上它带着的体验版用户、支付通道费，并把固定成本按月单列，见下方「敏感度与盈亏平衡」。详见 docs/cost-model.md。</p>
         </Card>
       </section>
 
@@ -146,7 +146,7 @@ export default function CostPage() {
             </tbody>
           </table>
         </Card>
-        <p className="mt-1 text-xs text-slate-500">基线：每组每学期 24 次 × 1 小时会、200 次问答、10 小时录音会后上传走录音文件识别（「上传音频」目前是 Demo 模拟；全走会议室实时转写见表中那一行）；Pro 19.9 元；免费用户 : 付费组 = 4 : 1；固定成本 100 元/月；支付通道费 0.6%。除单价外都是假设。最敏感的是录音走实时转写和免费用户比例。</p>
+        <p className="mt-1 text-xs text-slate-500">基线：每组每学期 24 次 × 1 小时会、200 次问答、10 小时录音会后上传走录音文件识别（「上传音频」目前是 Demo 模拟；全走会议室实时转写见表中那一行）；专业版 19.9 元；体验版用户 : 付费组 = 4 : 1；固定成本 100 元/月；支付通道费 0.6%。除单价外都是假设。最敏感的是录音走实时转写和体验版用户比例。</p>
       </section>
 
       <section aria-label="单位经济计算器">

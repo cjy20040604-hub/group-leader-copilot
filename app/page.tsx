@@ -10,7 +10,8 @@ const FAQS = [
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。RAG 回答必须带 [日期·类型] 出处，相似度不够且关键词无命中时直接回答「记录里没找到」。' },
   { q: '三门课的决议会串台吗？', a: '不会。检索按 course_id 硬过滤，被新决议推翻的旧决议默认排除。' },
-  { q: '一学期要花多少钱？', a: '按每学期 3 门课 × 8 次会 × 200 次问答推算，纯文字稿模型成本约 2.2 元；录音转写才是大头，所以默认用导入文字稿或钉钉闪记。组长 Pro 19.9 元/学期。' },
+  { q: '一学期要花多少钱？', a: '按每学期 3 门课 × 8 次会 × 200 次问答推算，纯文字稿模型成本约 2.2 元；录音转写才是大头，所以默认用导入文字稿或钉钉闪记。专业版 19.9 元/组/学期，一人买全组用，也可以 AA。' },
+  { q: '必须组长来买吗？', a: '不用。按小组计价，组里谁买都行，也可以 AA；付钱的人和拍板的人分开，确认决定的仍是组长或小组指定的人。学校、学院、社团等机构可以走团体购入版，按人数阶梯优惠。' },
 ];
 
 const jsonLd = {
@@ -23,9 +24,9 @@ const jsonLd = {
       operatingSystem: 'Web',
       description: '帮组长把会上说的话，变成确认过的决定、有人负责跟进的任务，以及下次会接着推进的记录。',
       offers: [
-        { '@type': 'Offer', name: '免费版', price: '0', priceCurrency: 'CNY' },
-        { '@type': 'Offer', name: '组长 Pro（每学期）', price: '19.9', priceCurrency: 'CNY' },
-        { '@type': 'Offer', name: '课程版（每学生每学期）', price: '5', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '体验版', price: '0', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '专业版（每组每学期，可 AA）', price: '19.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '团体购入版（每人每学期，30–99 人档）', price: '5', priceCurrency: 'CNY' },
       ],
     },
     {
@@ -83,8 +84,8 @@ export default function LandingPage() {
                 <h3 className="font-semibold">成本与商业模式</h3>
                 <ul className="mt-2 space-y-1 text-sm text-slate-600">
                   <li>按阿里云百炼原价：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}，一个组长一学期模型成本约 ¥{base.modelCost.toFixed(2)}</li>
-                  <li>组长 Pro ¥19.9 / 学期；每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组覆盖固定成本（录音会后上传；全走实时转写约 {rt.breakEvenGroups} 组）</li>
-                  <li>谁用：组长（核心）、组员（自己更新进度）、老师（看过程数据）；谁付钱：早期组长，规模化后老师 / 学院（课程版 ¥5 / 学生 / 学期）</li>
+                  <li>专业版 ¥19.9 / 组 / 学期（一人买全组用，可 AA）；每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组覆盖固定成本（录音会后上传；全走实时转写约 {rt.breakEvenGroups} 组）</li>
+                  <li>谁用：组长（核心）、组员（自己更新进度）、老师（看过程数据，规划中）；谁付钱：小组里任何一个人或 AA（付钱的人和拍板的人分开），规模化后学校、学院等机构走团体购入版（¥5 / ¥4 / ¥3 每人每学期，按人数阶梯）</li>
                   <li className="text-xs text-slate-400">付费率、固定成本、会议次数等是假设 · 待验证，敏感度见成本看板</li>
                 </ul>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
@@ -130,24 +131,24 @@ export default function LandingPage() {
             <h2 className="text-center text-xl font-bold">定价：一杯奶茶钱，管一学期</h2>
             <div className="mt-8 grid gap-6 md:grid-cols-3">
               <article className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="font-semibold">免费版</h3>
+                <h3 className="font-semibold">体验版</h3>
                 <p className="mt-2 text-2xl font-bold">¥0</p>
                 <ul className="mt-3 space-y-1 text-sm text-slate-600">
-                  <li>每月 4 次纪要（粘贴文字稿或钉钉导入）</li><li>1 门课</li><li>基础问答</li>
+                  <li>每月 4 次纪要（粘贴文字稿或钉钉导入）</li><li>1 门课</li><li>基础问答，不开录音</li>
                 </ul>
               </article>
               <article className="rounded-xl border-2 border-brand-600 bg-white p-5 shadow-md">
-                <h3 className="font-semibold text-brand-700">组长 Pro</h3>
-                <p className="mt-2 text-2xl font-bold">¥19.9<span className="text-sm font-normal text-slate-500"> / 学期</span></p>
+                <h3 className="font-semibold text-brand-700">专业版</h3>
+                <p className="mt-2 text-2xl font-bold">¥19.9<span className="text-sm font-normal text-slate-500"> / 组 / 学期</span></p>
                 <ul className="mt-3 space-y-1 text-sm text-slate-600">
-                  <li>3 门课不限次纪要</li><li>含 10 小时录音转写</li><li>风险提醒 + 会前简报</li>
+                  <li>一人购买，全组使用；也可以 AA（5 人每人约 ¥3.98）</li><li>谁付钱都行，确认决定的仍是组长</li><li>3 门课不限次纪要，含 10 小时录音转写</li><li>任务与回顾、提醒、会前简报</li>
                 </ul>
               </article>
               <article className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="font-semibold">课程版（B 端）</h3>
-                <p className="mt-2 text-2xl font-bold">¥5<span className="text-sm font-normal text-slate-500"> / 学生 / 学期</span></p>
+                <h3 className="font-semibold">团体购入版（机构）</h3>
+                <p className="mt-2 text-2xl font-bold">¥5 起<span className="text-sm font-normal text-slate-500"> / 人 / 学期</span></p>
                 <ul className="mt-3 space-y-1 text-sm text-slate-600">
-                  <li>老师看各组贡献度看板</li><li>过程性评价证据</li><li>解决搭便车与互评不公</li>
+                  <li>按人数阶梯：30–99 人 ¥5，100–499 人 ¥4，500 人以上 ¥3</li><li>学校、学院、社团统一采购，每个小组都有专业版功能</li><li>管理者看各组过程数据（规划中）</li>
                 </ul>
               </article>
             </div>
