@@ -99,24 +99,10 @@ export default function LandingPage() {
           </figure>
         </section>
 
-        <section className="border-t border-paper-line bg-white py-20" aria-label="痛点与功能">
-          <div className="mx-auto max-w-6xl px-4">
-            <h2 className="max-w-xl text-2xl font-medium tracking-tight text-slate-900">三个痛点是同一条链断在三处</h2>
-            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600">会上说的话 → 确认过的决定 → 有人跟进的任务 → 下次会接着推进。所以做一条闭环，而不是三个单点工具。</p>
-            <div className="mt-10 grid gap-10 md:grid-cols-3">
-              {[
-                ['没人整理纪要', '进会议室自动开录、实时转写，也能导入腾讯会议、钉钉的文字稿。AI 抽出决定、待办和待定，组长确认才生效，一键复制成群消息。'],
-                ['没人记得上次定了啥', '有人提议改已经定过的事，会上当场提醒。「问问上次」带出处回答，找不到就直说「记录里没找到」，课程之间不串。'],
-                ['进度全靠组长追', '组员自己点：做完了、卡住了、申请延期、认领。组长只看「待我处理」；提醒和风险灯全是规则，可预测、不花模型钱。'],
-              ].map(([t, d], i) => (
-                <article key={t} className="border-t-2 border-slate-900 pt-5">
-                  <p className="text-sm text-slate-500">{['断在会后', '断在下次开会前', '断在两次会之间'][i]}</p>
-                  <h3 className="mt-1 text-lg font-medium text-slate-900">{t}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{d}</p>
-                </article>
-              ))}
-            </div>
-          </div>
+        <section className="border-t border-paper-line bg-white py-10" aria-label="痛点与解法">
+          <p className="mx-auto max-w-6xl px-4 text-[17px] leading-relaxed text-slate-600">
+            <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，下次开会前遗留自动排好，忘了就「问问上次」。
+          </p>
         </section>
 
         <section id="deliverables" className="py-20" aria-label="交付物一览">
