@@ -55,7 +55,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
         <Link href="/app/meeting/live" className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">🎙 开会</Link>
         <Link href="/app/meeting/new" className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">+ 粘贴转写</Link>
         <div className="ml-auto flex items-center gap-2">
-          {reminderCount > 0 && <Badge tone="red">🔔 {reminderCount} 条提醒</Badge>}
+          {reminderCount > 0 && <Link href="/app/tasks"><Badge tone="red">🔔 {reminderCount} 条提醒</Badge></Link>}
           <Badge tone="slate" className="font-mono">🕐 {demoNow.slice(0, 16).replace('T', ' ')}</Badge>
           {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><Badge tone="yellow">离线演示</Badge></span>}
           <label className="flex items-center gap-1 text-xs text-slate-500">

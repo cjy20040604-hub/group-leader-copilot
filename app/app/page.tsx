@@ -9,9 +9,9 @@ import { riskLevel, dueText, STATUS_LABEL, RISK_LABEL, type TaskStatus } from '@
 import { Card, Badge, EmptyState } from '@/components/ui';
 import { loadReviewTasks, leaderInbox, courseReview } from '@/lib/review';
 import { NewCourseCard } from '@/components/new-course-card';
-import { loadAgenda, memberLoads } from '@/lib/multi-course';
-import { WeekBoard, MemberLoadPanel } from '@/components/week-board';
-import { ReminderCard } from '@/components/reminder-card';
+import { memberLoads } from '@/lib/multi-course';
+import { MemberLoadPanel } from '@/components/week-board';
+import { ReminderChip } from '@/components/reminder-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const isLeader = user.role === 'leader';
   const courseOpts = courses.map((c) => ({ id: c.id, name: c.name, color: c.color }));
 
-  const agenda = loadAgenda(now, { ownerId: user.role === 'leader' ? undefined : user.id });
+  const topReminder = top ? reminders.find((r) => r.taskId === top.id) : undefined;
   const loads = user.role === 'leader' ? memberLoads(now) : [];
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '待认领';
   const courseOf = (id: string) => courses.find((c) => c.id === id);
@@ -96,30 +96,15 @@ export default function DashboardPage() {
             <Badge tone="blue">{courseOf(top.courseId)?.name}</Badge>
             <Link href={`/app/c/${top.courseId}`} className="text-xs text-brand-600 hover:underline">看板 →</Link>
             {isLeader && <DeleteTaskButton id={top.id} title={top.title} />}
+            {topReminder && <ReminderChip isLeader={isLeader}
+              r={{ id: topReminder.id, message: topReminder.message, kind: topReminder.kind, fireDate: topReminder.fireDate, respondedAt: topReminder.respondedAt, response: topReminder.response }} />}
           </Card>
         )}
       </section>
 
-      <WeekBoard overdue={agenda.overdue} days={agenda.days}
-        title={user.role === 'leader' ? `📅 未来 7 天 · ${agenda.courseCount} 门课一张表` : '📅 我未来 7 天要交的'} />
       {isLeader && <MemberLoadPanel loads={loads} />}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <ScheduleCard courses={courseOpts} items={scheduled.map((m) => ({ id: m.id, courseId: m.courseId, date: m.date }))} today={today} isLeader={isLeader} />
-
-        <section aria-label="最新提醒">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">🔔 最新提醒</h2>
-          {reminders.length === 0 ? <EmptyState title="暂无提醒" hint="DDL 前 3 天、前 1 天和过期当天自动生成" /> : (
-            <div className="space-y-2">
-              {reminders.slice(0, 1).map((r) => (
-                <ReminderCard key={r.id} isLeader={user.role === 'leader'}
-                  r={{ id: r.id, message: r.message, kind: r.kind, fireDate: r.fireDate, respondedAt: r.respondedAt, response: r.response }} />
-              ))}
-              {reminders.length > 1 && <p className="text-[11px] text-slate-400">还有 {reminders.length - 1} 条更早的提醒</p>}
-            </div>
-          )}
-        </section>
-      </div>
+      <ScheduleCard courses={courseOpts} items={scheduled.map((m) => ({ id: m.id, courseId: m.courseId, date: m.date }))} today={today} isLeader={isLeader} />
 
       <section aria-label="课程入口">
         <h2 className="mb-2 text-sm font-semibold text-slate-700">📚 我的课程</h2>

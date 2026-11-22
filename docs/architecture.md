@@ -46,7 +46,7 @@ npm run typecheck  # tsc --noEmit
   - kind: `created | claim | status | submit | progress | blocked | unblocked | extension_request | extension_approved | extension_rejected | review_pass | review_return`
   - 延期申请 resolved=0 表示等组长回复；批准后改 DDL 并重建提醒
   - 老库由 `lib/db/client.ts` 启动时就地升级（加列、建表，不删数据）
-- `scheduled_meetings(id, course_id, date, created_at)` — 首页「会议安排」：组长新建 / 删除（`/api/schedule`），确认纪要时按 next_meeting 自动加；「未来 7 天」的会从这里读
+- `scheduled_meetings(id, course_id, date, created_at)` — 首页「会议安排」：组长新建 / 删除（`/api/schedule`），确认纪要时按 next_meeting 自动加
 - `reminders(id, task_id, kind, fire_date, message, created_at)` — kind: `d3 | d1 | overdue`；按 (task_id, kind) 幂等
 - `usage_log(id, ts, model, input_tokens, output_tokens, audio_seconds, cost_cny, feature, meeting_id)`
 - `settings(key, value)` — `demo_now`（默认 `2026-11-19T09:00:00`）、`current_user`、`auto_record`（会议室自动开录开关）、`live_draft`（会议室结束后待整理的转写，整理后清除）
@@ -88,7 +88,7 @@ npm run typecheck  # tsc --noEmit
 
 ## 三门课并行、提醒闭环、成功指标、单位经济（确定性代码）
 
-- `lib/multi-course.ts`：`loadAgenda` 汇总未来 7 天各课程的 DDL 和组会（含已过期）；`memberLoads` / `assessLoad` 判定组员负载（≥ 3 件太满；≥ 2 件且跨 ≥ 2 门课为跨课撞车）。首页 `components/week-board.tsx` 展示。
+- `lib/multi-course.ts`：`loadAgenda` 汇总未来 7 天各课程的 DDL 和已安排的会（含已过期）；`memberLoads` / `assessLoad` 判定组员负载（≥ 3 件太满；≥ 2 件且跨 ≥ 2 门课为跨课撞车）。首页只在撞车时用 `components/week-board.tsx` 的 `MemberLoadPanel` 展示。
 - 提醒闭环：`reminders.responded_at / response`；`/r/[id]` 回复页（`components/reminder-reply.tsx`）→ `POST /api/reminders/reply` 以负责人身份调 `recordTaskAction`，再标记提醒已回复。组长复制提醒时附 `/r/{id}` 链接（`components/reminder-card.tsx`）。
 - `lib/metrics.ts`：`replyRate`、`selfUpdateShare`、`onTimeRate` 纯函数 + `loadMetrics`；`metric_events` 表记录「重复讨论被拦下」（议程查重、会中查重命中时写，同一会 / 同一议程去重）。页面 `/app/metrics`。
 - `lib/unit-economics.ts`：每组变动成本、免费用户成本、边际贡献、盈亏平衡、规模毛利和敏感度表；成本看板的表和计算器（`components/unit-econ-calculator.tsx`）共用这一份代码。
