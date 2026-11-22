@@ -63,13 +63,13 @@ export function AskPanel({ courseId }: { courseId: string }) {
           placeholder="比如：我们PPT最后定的什么风格？"
           aria-label="问上次会议的问题"
         />
-        <Button onClick={ask} disabled={loading}>{loading ? '检索中…' : '问问上次'}</Button>
+        <Button onClick={ask} disabled={loading}>{loading ? '查找中…' : '问问上次'}</Button>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {result && (
         <Card className="p-6">
           <div className="mb-3 flex items-center gap-2">
-            {result.refused ? <Badge tone="yellow">证据不足 · 拒答</Badge> : <AiBadge />}
+            {result.refused ? <Badge tone="yellow">证据不足，没有作答</Badge> : <AiBadge />}
           </div>
           <p className="max-w-3xl text-base leading-relaxed text-slate-900">{result.answer}</p>
           {result.refused && result.reason && <p className="mt-1 text-[11px] text-slate-400">为什么没答：{result.reason}</p>}
@@ -99,7 +99,7 @@ export function AskPanel({ courseId }: { courseId: string }) {
           )}
         </Card>
       )}
-      {!result && !loading && <EmptyState title="答案必须带出处，找不到就直说" hint="检索按课程硬过滤，不会串台；被推翻的旧决议默认排除" />}
+      {!result && !loading && <EmptyState title="答案必须带出处，找不到就直说" hint="只在这门课的记录里找，不会串到别的课；被推翻的旧决议默认不算" />}
     </div>
   );
 }

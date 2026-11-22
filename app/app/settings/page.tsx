@@ -34,7 +34,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-12">
-      <PageHeader title="设置" lede="课程、花名册、提醒规则和演示数据。这里的规则全是确定性代码，不调模型。" />
+      <PageHeader title="设置" lede="课程、花名册、提醒规则和演示数据。这里的规则都写在代码里，不调用模型。" />
 
       <section aria-label="课程与小组">
         <SectionTitle>课程和小组</SectionTitle>
@@ -55,7 +55,7 @@ export default function SettingsPage() {
       <section aria-label="提醒与风险规则">
         <SectionTitle>提醒规则和风险灯</SectionTitle>
         <Card className="space-y-1 p-5 text-sm leading-relaxed text-slate-600">
-          <p>提醒：D-3、D-1、过期第一天各生成一条提醒，文案按触发那天写；改 DDL 会重建提醒。新提醒出现时，页面右下角弹站内通知，开启浏览器通知后还会弹系统通知；组长也能复制带回复链接的催办发到群里。服务端每 5 分钟定时扫描一次（GitHub Actions 定时任务），没人打开网页也照样生成。钉钉 / 企业微信群机器人是下一步的发送通道。</p>
+          <p>提醒：截止前 3 天、前 1 天和过期当天各发一条，文案按发出那天来写；改了 DDL，提醒会跟着重排。新提醒出现时，页面右下角会弹站内通知，开了浏览器通知还会弹系统通知；组长也能复制带回复链接的催办，发到群里。服务端每 5 分钟检查一次（GitHub Actions 定时任务），没人打开网页也照样生成。下一步打算接钉钉 / 企业微信的群机器人来发。</p>
           <p className="mt-1">催办模板：「@负责人 课程 的「任务」{`{due_text}`}截止，目前状态：{`{status}`}，需要帮忙吗？」</p>
           <p className="flex items-start gap-2 pt-2"><RiskDot level="red" className="mt-1.5" />红：已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是待审核 / 已完成；或组员标了「卡住了」且距 DDL ≤ 3 天</p>
           <p className="flex items-start gap-2"><RiskDot level="yellow" className="mt-1.5" />黄：距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领；或组员标了「卡住了」</p>
@@ -68,7 +68,7 @@ export default function SettingsPage() {
       <section aria-label="重置">
         <SectionTitle>演示数据</SectionTitle>
         <ResetDemo />
-        <p className="mt-1 text-xs text-slate-400">和命令行 npm run seed 跑的是同一段代码：重建 SQLite 单文件数据库并重新生成种子。</p>
+        <p className="mt-1 text-xs text-slate-400">和命令行 npm run seed 是同一段代码：重建数据库，恢复初始演示数据，演示时间也回到 11 月 19 日。</p>
       </section>
     </div>
   );

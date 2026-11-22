@@ -179,6 +179,8 @@ export async function runSeed() {
 
   db.insert(schema.settings).values({ key: 'demo_now', value: DEFAULT_DEMO_NOW }).run();
   db.insert(schema.settings).values({ key: 'current_user', value: 'linxiao' }).run();
+  // 每次建库换一个编号：浏览器里「哪些提醒已经弹过」按这个编号分开记，重建数据后同样的提醒还能再弹
+  db.insert(schema.settings).values({ key: 'seed_epoch', value: String(Date.now()) }).run();
 
   // 成本看板的简报 / 问答记录：真的跑一遍问答和简报（Mock 下按真实 prompt 估算 tokens），不再写死 3000/400、4000/800
   try {

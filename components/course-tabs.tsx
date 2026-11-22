@@ -80,7 +80,7 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
 
       {tab === 'minutes' && (
         <div className="space-y-2">
-          {meetings.length === 0 && <EmptyState title="还没有纪要" hint="去「新建会议」粘贴转写" />}
+          {meetings.length === 0 && <EmptyState title="还没有纪要" hint="去「导入转写」粘贴文字稿，或者进会议室开一场" />}
           {meetings.map((m) => (
             <Link key={m.id} href={`/app/meeting/${m.id}`}>
               <Card className="flex items-center justify-between gap-4 p-4 transition-colors hover:border-slate-400">
@@ -196,7 +196,7 @@ function ProgressNote({ taskId, initial, onSave }: { taskId: string; initial: st
   return (
     <div className="mt-1 flex gap-1">
       <Input value={note} onChange={(e) => setNote(e.target.value)} className="px-1.5 py-0.5 text-[11px]" placeholder="一句进度…" aria-label={`任务 ${taskId} 进度`} />
-      <Button size="sm" variant="outline" className="px-1.5 py-0.5 text-[11px]" onClick={() => { onSave(note); setEditing(false); }}>存</Button>
+      <Button size="sm" variant="outline" className="px-1.5 py-0.5 text-[11px]" onClick={() => { onSave(note); setEditing(false); }}>保存</Button>
     </div>
   );
 }

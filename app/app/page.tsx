@@ -87,7 +87,7 @@ export default function DashboardPage() {
           {isLeader && <QuickNewTask courses={ledOpts} rosters={rosters} />}
         </>}>最紧急的事</SectionTitle>
         {!top ? (
-          <EmptyState title="没有未完成任务" hint="新建一个，或者开会让 AI 从纪要里抽" />
+          <EmptyState title="没有未完成任务" hint="新建一个，或者开完会让 AI 从纪要里整理出来" />
         ) : (
           <Card className="flex flex-wrap items-center gap-x-4 gap-y-3 p-5">
             <RiskDot level={top.risk} />

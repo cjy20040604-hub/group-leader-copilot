@@ -112,7 +112,7 @@ export default function CostPage() {
             </dl>
           </div>
         ))}
-        <p className="text-xs text-slate-400">两条按同一比例尺画：纪要版短的那一截，就是专业版多出来的 8 小时实时转写。</p>
+        <p className="text-xs text-slate-400">两条按同一比例尺画：纪要版那条短了一截，差的就是专业版多出来的 8 小时实时转写。</p>
       </figure>
 
       {/* 论证链：五步是真正的先后顺序，左边一条线串起来 */}

@@ -140,7 +140,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
       body: JSON.stringify({ draft, edits: { actions: editActions, decisions, openQuestions: editQuestions, title: confirmTitle.trim() || draft.title } }),
     });
     const data = await res.json();
-    if (!res.ok) { setError(data.error ?? '落库失败'); return; }
+    if (!res.ok) { setError(data.error ?? '保存失败'); return; }
     setGroupMessage(data.groupMessage);
     setMeetingId(data.meetingId);
     setPhase('done');
@@ -165,7 +165,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
       {/* 步骤条 */}
       <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs" aria-label="流水线步骤">
-        {['1 输入', '2 预处理', '3 召回上下文', '4 结构化抽取', '5 校验', '6 人工确认', '7 落库', '8 建索引', '9 分发'].map((s, i) => {
+        {['1 输入', '2 清理文本', '3 找相关旧记录', '4 AI 整理', '5 代码校验', '6 你来确认', '7 保存', '8 建索引', '9 发到群里'].map((s, i) => {
           const active = phase === 'input' ? i === 0 : phase === 'processing' ? i <= 4 : phase === 'confirm' ? i <= 5 : true;
           return <li key={s} className={cx('flex items-center gap-1', active ? 'font-medium text-slate-900' : 'text-slate-400')}>{i > 0 && <span className="px-1 text-slate-300" aria-hidden>/</span>}<span className={cx('tabular-nums', active && 'text-brand-600')}>{s.split(' ')[0]}</span>{s.split(' ')[1]}</li>;
         })}
@@ -197,7 +197,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
             </label>
           </div>
           <div>
-            <label className="text-xs text-slate-500">本次议程（可选，先做重复讨论检测，只比 embedding 不花钱）</label>
+            <label className="text-xs text-slate-500">本次议程（可选）：先查是不是以前定过，只比相似度，不调大模型</label>
             <div className="mt-1 flex gap-2">
               <Input value={agenda} onChange={(e) => setAgenda(e.target.value)} onBlur={checkDuplicate} placeholder="比如：PPT 用什么风格" />
               <Button variant="outline" onClick={checkDuplicate}>检测重复</Button>
@@ -205,11 +205,11 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
             {duplicates.map((d) => (
               <p key={d.memoryId} className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
                 这个在 {d.meetingDate.slice(5).replace('-', '/')} 已经定了：{d.text}。还要重新讨论吗？
-                <span className="block text-[11px] text-amber-700">向量相似度 {(d.similarity * 100).toFixed(0)}% · 对上的词：{d.matched || '—'}</span>
+                <span className="block text-[11px] text-amber-700">相似度 {(d.similarity * 100).toFixed(0)}% · 对上的词：{d.matched || '—'}</span>
               </p>
             ))}
             {dupChecked && dupChecked === agenda.trim() && duplicates.length === 0 && (
-              <p className="mt-2 text-xs text-slate-500">没撞上已经定过的决议，可以讨论。</p>
+              <p className="mt-2 text-xs text-slate-500">以前没定过类似的事，可以讨论。</p>
             )}
           </div>
           <div>
@@ -254,16 +254,16 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
               </div>
             ))}
           </div>
-          {draft.degraded && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">抽取降级：模型两次都没输出合法 JSON，已改用规则抽取，漏掉的请在下面手动补</p>}
+          {draft.degraded && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">AI 两次都没返回能用的结果，已改用规则整理，可能有遗漏，请在下面手动补上</p>}
           {!draft.degraded && draft.extractMode === 'rules' && (
-            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">这段用规则抽取，可能漏抽，请逐条核对，缺的用「+ 添加」补上。</p>
+            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">这段是用规则整理的，可能有遗漏，请逐条核对，缺的用「添加」补上。</p>
           )}
         </Card>
       )}
 
       {phase === 'confirm' && draft && (
         <Card className="space-y-5 p-5">
-          <div className="flex items-center gap-2"><AiBadge /><span className="text-xs text-slate-500">逐条勾选 / 修改，确认后才写入任务表与记忆库</span></div>
+          <div className="flex items-center gap-2"><AiBadge /><span className="text-xs text-slate-500">逐条勾选或修改，确认后才保存到任务和记录里</span></div>
 
           <section>
             <h2 className="mb-1 text-[15px] font-medium text-slate-900">会议标题</h2>
@@ -278,7 +278,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
           {draft.extraction.repeated_topics.length > 0 && (
             <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
-              {draft.extraction.repeated_topics.map((r) => <p key={r.memory_id}>重复讨论：「{r.topic}」在历史决议 {r.memory_id} 中已有结论</p>)}
+              {draft.extraction.repeated_topics.map((r) => <p key={r.memory_id}>「{r.topic}」以前已经定过（{r.memory_id}），不用重复讨论</p>)}
             </div>
           )}
 
@@ -309,7 +309,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
                           onChange={(e) => setEditDecisions((prev) => prev.map((x, j) => (j === i ? { ...x, supersedes_memory_id: e.target.checked ? c.memoryId : null } : x)))} />
                         <span>
                           可能和 {c.meetingDate.slice(5).replace('-', '/')} 定的「{c.text}」是同一件事
-                          （{c.source === 'model' ? '模型判断' : `对上的词：${c.matched}`}）。勾上 = 用这条新决议推翻它，旧决议会划线、问答不再当结论。
+                          （{c.source === 'model' ? '模型判断' : `对上的词：${c.matched}`}）。勾上表示用这条新决议取代它：旧决议会被划掉，问答也不再把它当结论。
                         </span>
                       </label>
                     );
@@ -374,14 +374,14 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
           <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
             <Button onClick={confirm}><CheckIcon />确认并保存</Button>
-            <span className="text-xs text-slate-500">写入任务和记忆库，并按 DDL 排好提醒</span>
+            <span className="text-xs text-slate-500">保存任务和决议，并按截止日期排好提醒</span>
           </div>
         </Card>
       )}
 
       {phase === 'done' && (
         <Card className="space-y-3 p-4">
-          <p className="text-sm font-medium text-emerald-700">已落库：任务上看板、决议进记忆库、提醒规则已挂载</p>
+          <p className="text-sm font-medium text-emerald-700">已保存：任务上了看板，决议存进了记录，到期提醒也排好了</p>
           <Textarea readOnly value={groupMessage} rows={14} className="font-mono text-xs" aria-label="群消息文本" />
           <div className="flex gap-2">
             <Button onClick={copyMessage}>{copied ? '已复制' : '一键复制群消息'}</Button>

@@ -6,12 +6,12 @@ import { computeEconomics, textCostPerMeeting, blendedBreakEven, NOTES, PRO, MIX
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
 const FAQS = [
-  { q: '没有 API Key 能用吗？', a: '能。没配 Key 时以离线模式运行：示例会议读预置结果，其他转写走规则抽取，问答在本课程记录上做抽取式回答，全流程都能跑；配上阿里云百炼 Key 后切换为真实模型。' },
-  { q: '开会要自己按录音吗？', a: '不用。进会议室 3 秒后自动开录（可取消），说的话实时转成文字；没人说话时不上传，长时间静音自动结束并进入纪要整理。开录前会提示参会人。' },
-  { q: '组员要怎么更新进度？', a: '在「任务与回顾」里一键点：做完了、写一句进度、卡住了、申请延期，或者自己认领没人管的任务。组长只看需要拍板的例外。' },
-  { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
-  { q: '问它上次定了什么，它会编吗？', a: '不会。RAG 回答必须带 [日期·类型] 出处，相似度不够且关键词无命中时直接回答「记录里没找到」。' },
-  { q: '三门课的决议会串台吗？', a: '不会。检索按 course_id 硬过滤，被新决议推翻的旧决议默认排除。' },
+  { q: '没有 API Key 能用吗？', a: '能。没配 Key 时用离线模式：示例会议直接读预置结果，别的转写用规则整理，问答从这门课的记录里摘原话回答，整条流程都能走通。配上阿里云百炼的 Key 就换成真实模型。' },
+  { q: '开会要自己按录音吗？', a: '不用。进会议室 3 秒后自动开录（可以取消），说的话实时转成文字；没人说话时不上传，静音太久会自动结束，接着整理纪要。开录前会提醒参会的人。' },
+  { q: '组员要怎么更新进度？', a: '在「任务与回顾」里点一下就行：做完了、写一句进度、卡住了、申请延期，也可以自己认领没人管的任务。组长只看需要拍板的事。' },
+  { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责把话整理出来。人名由代码去花名册里对，日期由代码换算和检查，拿不准的标黄，组长确认后才保存。' },
+  { q: '问它上次定了什么，它会编吗？', a: '不会。每句回答都要带 [日期·类型] 出处；意思对不上、关键词也没命中时，直接回答「记录里没找到」。' },
+  { q: '三门课的决定会串吗？', a: '不会。每门课只在自己的记录里找；被新决定推翻的旧决定，默认不拿来回答。' },
   { q: '一学期要花多少钱？', a: '按一门课的一支小组算。先用体验版：免费，每学期 3 次纪要，送 10 分钟会议室实时转写。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 14.9 元的多组包，全部小组都开纪要版。' },
   { q: '实时转写的时长用完了怎么办？', a: '会议照常开、照常录音，散会后用录音文件识别整理，不另收费，只是没有实时字幕和撞车提示。还想要实时转写，可以加购 3 小时 3.9 元的加时包，哪个档位都能买。' },
   { q: '必须组长来买吗？', a: '不用。按小组计价，组里谁买都行，也可以 AA；付钱的人和拍板的人分开，确认决定的仍是这个组的组长。老师可以按一门课的人数走团体购入版。' },
@@ -92,9 +92,9 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-6xl px-4 pb-16 pt-12 md:pt-16" aria-label="纪要书架">
           <div className="max-w-2xl">
-            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl lg:text-[52px]"><span className="block">会上说的话，</span><span className="block lg:whitespace-nowrap">散会就变成决定和任务</span></h1>
+            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl lg:text-[52px]"><span className="block">会上说定的事，</span><span className="block lg:whitespace-nowrap">会后接着推进。</span></h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-cream-200">
-              给小组作业的组长用：进会议室自动开录，散会自动出纪要，组员自己更新进度。每场会都留在书架上，下次想不起来就翻。
+              会议自动转写，AI 整理决定和待办，由您确认后发布。组员更新自己的进度，系统按截止时间提醒。多门课的组会统一收进书架，上次定了什么，随时翻得到。
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/app" className="rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">免费试用 Demo</Link>
@@ -233,7 +233,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-paper-line py-8 text-center text-xs text-slate-400">
-        <p>组长减负：AI 只负责理解和回忆，执行层全是规则，既省钱又可靠。</p>
+        <p>组长减负：AI 只负责理解和回忆，推进事情全靠规则，所以便宜，结果也可预期。</p>
       </footer>
     </div>
   );

@@ -13,6 +13,16 @@ type Perm = 'default' | 'granted' | 'denied' | 'unsupported';
 
 const KIND: Record<string, string> = { d3: '3 天后截止', d1: '明天截止', overdue: '已过期' };
 const seenKey = (uid: string) => `reminders-seen:${uid}`;
+// 重置 Demo 数据或把演示时间拨回去以后，提醒会用同样的 id 重新生成（任务 id + D-3 / D-1 / 过期）。
+// 不清掉「已看过」的记录，再快进时这些提醒就不会再弹，看起来像没反应
+export function clearSeenReminders() {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k?.startsWith('reminders-seen:')) localStorage.removeItem(k);
+    }
+  } catch { /* 隐私模式下本来就没记 */ }
+}
 
 function loadSeen(uid: string): Set<string> | null {
   try { const v = localStorage.getItem(seenKey(uid)); return v ? new Set(JSON.parse(v) as string[]) : null; } catch { return null; }
@@ -53,15 +63,16 @@ export function ReminderNotifier({ userId }: { userId: string }) {
     busy.current = true;
     try {
       const scan = await fetch('/api/reminders/scan', { method: 'POST' }).then((r) => r.json()).catch(() => ({ created: 0 }));
-      const feed = await fetch('/api/reminders/feed').then((r) => r.json()) as { userId: string; items: FeedItem[] };
-      const seen = loadSeen(feed.userId);
+      const feed = await fetch('/api/reminders/feed').then((r) => r.json()) as { userId: string; epoch: string; items: FeedItem[] };
+      const key = `${feed.userId}:${feed.epoch}`; // 换了一套演示数据就重新记
+      const seen = loadSeen(key);
       if (!seen) {
         // 第一次打开：已有的提醒只记下来，不刷屏
-        saveSeen(feed.userId, new Set(feed.items.map((i) => i.id)));
+        saveSeen(key, new Set(feed.items.map((i) => i.id)));
       } else {
         const fresh = feed.items.filter((i) => !seen.has(i.id));
         fresh.forEach((i) => seen.add(i.id));
-        saveSeen(feed.userId, seen);
+        saveSeen(key, seen);
         push(fresh);
       }
       if (scan.created > 0) router.refresh();
