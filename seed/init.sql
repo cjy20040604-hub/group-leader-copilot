@@ -131,7 +131,8 @@ CREATE TABLE course_plans (
   tier TEXT NOT NULL DEFAULT 'free',
   payer_id TEXT,
   split TEXT NOT NULL DEFAULT 'single',
-  started_at TEXT
+  started_at TEXT,
+  addon_seconds INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE scheduled_meetings (

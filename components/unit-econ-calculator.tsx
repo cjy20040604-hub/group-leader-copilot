@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import { Card, Input, Select } from '@/components/ui';
-import { computeEconomics, marginAtScale, BASELINE, ASR_FILE, ASR_REALTIME, type EconInputs } from '@/lib/unit-economics';
+import { computeEconomics, marginAtScale, PRO, ASR_FILE, ASR_REALTIME, type EconInputs } from '@/lib/unit-economics';
 
 // 单位经济计算器：改假设，立刻看到每组成本、边际贡献、盈亏平衡（确定性代码，不调模型）
 const FIELDS: { key: keyof EconInputs; label: string; step: number; min: number; suffix?: string }[] = [
   { key: 'meetingsPerSemester', label: '每组每学期会议', step: 1, min: 0, suffix: '次' },
   { key: 'meetingHours', label: '每次会时长', step: 0.5, min: 0, suffix: '小时' },
   { key: 'qaPerSemester', label: '每组每学期问答', step: 10, min: 0, suffix: '次' },
-  { key: 'recordedHours', label: '每组每学期录音转写', step: 1, min: 0, suffix: '小时' },
-  { key: 'pricePerSemester', label: '专业版定价', step: 1, min: 0, suffix: '元/组/学期' },
+  { key: 'recordedHours', label: '每组每学期实时转写', step: 1, min: 0, suffix: '小时' },
+  { key: 'pricePerSemester', label: '定价', step: 1, min: 0, suffix: '元/组/学期' },
   { key: 'freeToPaid', label: '体验版小组 : 付费组', step: 1, min: 0, suffix: ': 1' },
   { key: 'freeMeetingsPerSemester', label: '体验版额度', step: 1, min: 0, suffix: '次/学期' },
   { key: 'fixedPerMonth', label: '固定成本', step: 10, min: 0, suffix: '元/月' },
@@ -20,7 +20,7 @@ const yuan = (n: number, d = 2) => (Number.isFinite(n) ? `¥${n.toFixed(d)}` : '
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
 export function UnitEconCalculator() {
-  const [v, setV] = useState<EconInputs>(BASELINE);
+  const [v, setV] = useState<EconInputs>(PRO);
   const r = computeEconomics(v);
   const set = (key: keyof EconInputs, raw: string) => {
     const n = Number(raw);

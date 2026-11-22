@@ -57,10 +57,11 @@ export async function runSeed() {
     db.insert(schema.courseMembers).values(['linxiao', 'ajie', 'xiaoyu', 'haoran', 'siqi'].map((m) => ({ courseId: c, memberId: m, role: m === 'linxiao' ? 'leader' : 'member' }))).run();
   }
 
-  // 套餐：付钱的人和拍板的组长分开。营销课阿杰一个人买了专业版；数据库课全组 AA；创新创业还在用体验版（已用 2 / 3 次）
+  // 套餐：付钱的人和拍板的组长分开。营销课在教室面对面开会，阿杰一个人买了专业版（含 8 小时实时转写）；
+  // 数据库课用腾讯会议开会、本来就有文字稿，全组 AA 开了纪要版；创新创业还在用体验版（已用 2 / 3 次）
   db.insert(schema.coursePlans).values([
     { courseId: 'mkt', tier: 'pro', payerId: 'ajie', split: 'single', startedAt: '2026-11-05T15:30:00' },
-    { courseId: 'db', tier: 'pro', payerId: 'linxiao', split: 'aa', startedAt: '2026-11-06T16:00:00' },
+    { courseId: 'db', tier: 'notes', payerId: 'linxiao', split: 'aa', startedAt: '2026-11-06T16:00:00' },
     { courseId: 'startup', tier: 'free', payerId: null, split: 'single', startedAt: null },
   ]).run();
 

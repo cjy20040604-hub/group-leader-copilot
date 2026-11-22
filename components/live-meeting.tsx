@@ -72,7 +72,10 @@ export function LiveMeeting(props: Props) {
   const [consentOpen, setConsentOpen] = useState(false);
   const [micHelp, setMicHelp] = useState<MicHelp | null>(null);
   const [requesting, setRequesting] = useState(false);
-  const [recording, setRecording] = useState<{ url: string; seconds: number; voiced: number; segments: number } | null>(null);
+  const [recording, setRecording] = useState<{ url: string; seconds: number; voiced: number; segments: number; afterQuota?: boolean; savedTranscript?: boolean } | null>(null);
+  // 实时转写额度用完：会议不中断，后面的发言只录在本机，散会后整理（录音文件识别）
+  const [degraded, setDegraded] = useState('');
+  const degradedRef = useRef(false);
 
   const phaseRef = useRef<Phase>(autoStart ? 'countdown' : 'idle');
   const speedRef = useRef(1);
@@ -172,7 +175,7 @@ export function LiveMeeting(props: Props) {
 
   // ───── 麦克风：VAD 切段 → /api/asr/live（真实模式）─────
   const sendSegment = useCallback(async (seg: Float32Array, at: number) => {
-    if (mock) { keepLocal(seg, at); return; }
+    if (mock || degradedRef.current) { keepLocal(seg, at); return; }
     inflightRef.current += 1; setInflight(inflightRef.current);
     try {
       const audio = toBase64(encodeWav(seg, TARGET_RATE));
@@ -181,7 +184,11 @@ export function LiveMeeting(props: Props) {
         body: JSON.stringify({ audio, seconds: seg.length / TARGET_RATE, courseId, sessionId: sessionRef.current }),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error ?? '转写失败');
+      if (res.status === 402 && data.code === 'quota') {
+        degradedRef.current = true;
+        setDegraded(data.error ?? '实时转写额度用完了，后面的发言先录在本机，散会后整理');
+        keepLocal(seg, at);
+      } else if (!res.ok) setError(data.error ?? '转写失败');
       else if (data.text) appendLine(at, speakerRef.current || '发言人', data.text);
     } catch (e) {
       setError(`转写失败：${(e as Error).message}`);
@@ -247,6 +254,8 @@ export function LiveMeeting(props: Props) {
       return;
     }
     setError('');
+    degradedRef.current = false;
+    setDegraded('');
     // 新的一次录音：清掉上一次留在页面上的转写、提醒和录音（释放回放用的内存）
     if (recording) URL.revokeObjectURL(recording.url);
     linesRef.current.forEach((l) => l.audioUrl && URL.revokeObjectURL(l.audioUrl));
@@ -399,16 +408,20 @@ export function LiveMeeting(props: Props) {
       while (inflightRef.current > 0 && Date.now() - t0 < 15000) await new Promise((r) => setTimeout(r, 300));
     }
     const all = linesRef.current.filter((l) => !l.local);
-    if (all.length === 0) {
+    // 本机留下的录音（有人说话的部分拼起来），可回放、下载
+    const localRecording = () => {
       const segs = localSegsRef.current;
-      if (segs.length) {
-        // Mock 麦克风：没有文字可整理，给出录音（有人说话的部分拼起来），可回放、下载
-        const total = segs.reduce((a, b) => a + b.length, 0);
-        const joined = new Float32Array(total);
-        let o = 0;
-        for (const seg of segs) { joined.set(seg, o); o += seg.length; }
-        const url = URL.createObjectURL(new Blob([encodeWav(joined, TARGET_RATE) as BlobPart], { type: 'audio/wav' }));
-        setRecording({ url, seconds: Math.floor(micElapsed()), voiced: Math.floor(total / TARGET_RATE), segments: linesRef.current.filter((l) => l.local).length });
+      const total = segs.reduce((a, b) => a + b.length, 0);
+      const joined = new Float32Array(total);
+      let o = 0;
+      for (const seg of segs) { joined.set(seg, o); o += seg.length; }
+      const url = URL.createObjectURL(new Blob([encodeWav(joined, TARGET_RATE) as BlobPart], { type: 'audio/wav' }));
+      return { url, seconds: Math.floor(micElapsed()), voiced: Math.floor(total / TARGET_RATE), segments: linesRef.current.filter((l) => l.local).length, afterQuota: degradedRef.current };
+    };
+    if (all.length === 0) {
+      if (localSegsRef.current.length) {
+        // Mock 麦克风，或一开会就没有实时转写额度：没有文字可整理，给出录音
+        setRecording(localRecording());
         audioRef.current = null;
         go('idle');
         return;
@@ -429,6 +442,13 @@ export function LiveMeeting(props: Props) {
     if (!res?.ok) {
       setError('保存转写失败，请重试');
       go('paused');
+      return;
+    }
+    // 会开到一半额度用完：已转写的部分照常进纪要整理，后半段的录音留在这里，散会后整理
+    if (degradedRef.current && localSegsRef.current.length) {
+      setRecording({ ...localRecording(), savedTranscript: true });
+      audioRef.current = null;
+      go('idle');
       return;
     }
     router.push('/app/meeting/new?from=live');
@@ -561,14 +581,21 @@ export function LiveMeeting(props: Props) {
         {recording && (
           <div className="space-y-2 rounded-lg bg-emerald-50 p-3 text-xs text-emerald-900">
             <p className="text-sm font-medium">录音已结束：时长 {clock(recording.seconds)}，有人说话 {recording.voiced} 秒（{recording.segments} 段）</p>
-            <p>离线演示只录音、不转文字。下面是有人说话的部分。</p>
+            <p>{recording.afterQuota
+              ? `实时转写额度用完后的发言录在这里，没有丢。散会后在「导入转写」里上传这段录音，用录音文件识别整理（不占实时额度，不另收费）。${recording.savedTranscript ? '额度用完前转写好的部分已经保存。' : ''}`
+              : '离线演示只录音、不转文字。下面是有人说话的部分。'}</p>
             <audio controls src={recording.url} className="w-full" />
             <div className="flex flex-wrap gap-2">
               <a href={recording.url} download={`会议录音-${props.today}.wav`} className="rounded-lg border border-emerald-300 bg-white px-2.5 py-1 font-medium text-emerald-800 hover:bg-emerald-100">下载录音（WAV）</a>
-              <Button size="sm" variant="outline" onClick={() => { setRecording(null); setSource('demo'); setCourseId(demoCourse); }}>换演示录音，体验整理纪要</Button>
+              {recording.savedTranscript
+                ? <Button size="sm" onClick={() => router.push('/app/meeting/new?from=live')}>整理已转写的部分</Button>
+                : recording.afterQuota
+                  ? <Link href="/app/meeting/new" className="rounded-lg border border-emerald-300 bg-white px-2.5 py-1 font-medium text-emerald-800 hover:bg-emerald-100">去导入转写</Link>
+                  : <Button size="sm" variant="outline" onClick={() => { setRecording(null); setSource('demo'); setCourseId(demoCourse); }}>换演示录音，体验整理纪要</Button>}
             </div>
           </div>
         )}
+        {degraded && phase !== 'idle' && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800" role="status">{degraded}</p>}
         {error && <p className="rounded-lg bg-red-50 p-2 text-xs text-red-600">{error}</p>}
       </Card>
 

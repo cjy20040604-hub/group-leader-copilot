@@ -3,7 +3,7 @@ import { isMock } from '@/lib/llm';
 import { PRICING, ASR_PRICES, ASR_PRICE_PER_SECOND, STANDARD_MEETING } from '@/config/pricing';
 import { EmptyState, cx } from '@/components/ui';
 import { UnitEconCalculator } from '@/components/unit-econ-calculator';
-import { computeEconomics, textCostPerMeeting, qaCost, BASELINE, BUNDLE, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, qaCost, NOTES, PRO, BUNDLE, ADDON, MIX, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics } from '@/lib/unit-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,24 +29,37 @@ export default function CostPage() {
   const asrFileHour = 3600 * ASR_FILE;
   const asrLiveHour = 3600 * ASR_REALTIME;
 
-  const base = computeEconomics(BASELINE);
-  const rt = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
-  const price = BASELINE.pricePerSemester;
+  // 两档：纪要版（不含录音）和专业版（多 8 小时实时转写）。成本只算这支小组自己：模型 + 实时转写 + 服务器摊销
+  const notes = computeEconomics(NOTES);
+  const pro = computeEconomics(PRO);
+  const pro6 = computeEconomics({ ...PRO, recordedHours: 6 });
+  const pro99 = computeEconomics({ ...PRO, pricePerSemester: 9.9 });
+  const mix = blendedBreakEven(MIX);
+  const addon = addonEconomics(ADDON);
   const infra = INFRA_PER_GROUP;
-  const groupCost = base.variableCost + infra; // 只算这支小组自己：模型 + 3 小时录音 + 服务器摊销
-  const margin = price - groupCost;
+  const notesCost = notes.variableCost + infra;
+  const proCost = pro.variableCost + infra;
   const bundle = computeEconomics(BUNDLE);
   const bundleCost = bundle.variableCost + INFRA_PER_BUNDLE;
-  const oldFree = computeEconomics({ ...BASELINE, freeMeetingsPerSemester: 16 });
+  const oldFree = computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 });
   const campus = groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 3, groupSize: 5 });
+  const pct = (part: number, whole: number) => `${((part / whole) * 100).toFixed(0)}%`;
 
-  // 「9.9 元里都是什么」：成本三段 + 剩下的毛利
-  const anatomy = [
-    { label: '模型', note: '8 次会 + 约 67 次提问', value: base.modelCost, tone: 'bg-slate-700' },
-    { label: '录音转写', note: '3 小时，会后上传', value: base.asrCost, tone: 'bg-slate-500' },
-    { label: '服务器摊销', note: '每组每学期', value: infra, tone: 'bg-slate-300' },
-    { label: '毛利', note: `${((margin / price) * 100).toFixed(0)}%`, value: margin, tone: 'bg-brand-600' },
+  // 「定价里都是什么」：两条按同一比例尺画，纪要版那条短一截，差的就是实时转写
+  const bars = [
+    { name: '纪要版', price: NOTES.pricePerSemester, parts: [
+      { label: '模型', value: notes.modelCost, tone: 'bg-slate-700' },
+      { label: '服务器摊销', value: infra, tone: 'bg-slate-300' },
+      { label: '毛利', value: NOTES.pricePerSemester - notesCost, tone: 'bg-brand-600' },
+    ] },
+    { name: '专业版', price: PRO.pricePerSemester, parts: [
+      { label: '模型', value: pro.modelCost, tone: 'bg-slate-700' },
+      { label: '实时转写 8 小时', value: pro.asrCost, tone: 'bg-slate-500' },
+      { label: '服务器摊销', value: infra, tone: 'bg-slate-300' },
+      { label: '毛利', value: PRO.pricePerSemester - proCost, tone: 'bg-brand-600' },
+    ] },
   ];
+  const scale = PRO.pricePerSemester;
 
   const total = logs.reduce((a, b) => a + b.costCny, 0);
   const byFeature = new Map<string, { count: number; cost: number; input: number; output: number }>();
@@ -69,37 +82,36 @@ export default function CostPage() {
 
   return (
     <div className="mx-auto max-w-4xl pb-10">
-      {/* 开头先给结论，再给「专业版 9.9 元拆开看」 */}
+      {/* 开头先给结论，再把两档定价拆开看 */}
       <header className="pt-2">
         <h1 className="text-3xl font-medium tracking-tight text-slate-900">成本与商业模式</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-          计价单位是一门课的一支小组（不同课的组员可以不一样）。一支小组一学期成本约 <Num>{yuan(groupCost)}</Num>，专业版定价 <Num>{price} 元</Num>；
-          算上免费小组和固定成本，<Num>{base.breakEvenGroups} 个付费组</Num>回本。
+          计价单位是一门课的一支小组。纪要和实时转写分开卖：纪要版 <Num>{NOTES.pricePerSemester} 元</Num>，成本约 <Num>{yuan(notesCost)}</Num>；专业版 <Num>{PRO.pricePerSemester} 元</Num>，多 8 小时实时转写，成本约 <Num>{yuan(proCost)}</Num>。7 成纪要版、3 成专业版时，<Num>{mix.breakEvenGroups} 个付费组</Num>回本。
         </p>
       </header>
 
-      <figure className="mt-8 rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-8" aria-label={`专业版 ${price} 元拆开看`}>
-        <figcaption className="flex items-baseline justify-between gap-4">
-          <span className="text-sm text-slate-500">专业版 {price} 元拆开看</span>
-          <span className="text-sm tabular-nums text-slate-400">每组每学期</span>
-        </figcaption>
-        <div className="anatomy-bar mt-4 flex h-4 overflow-hidden rounded-full" role="img"
-          aria-label={anatomy.map((a) => `${a.label} ${a.value.toFixed(2)} 元`).join('，')}>
-          {anatomy.map((a) => (
-            <span key={a.label} className={a.tone} style={{ width: `${(a.value / price) * 100}%` }} />
-          ))}
-        </div>
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-          {anatomy.map((a) => (
-            <div key={a.label}>
-              <dt className="flex items-center gap-2 text-xs text-slate-500">
-                <span className={cx('h-2 w-2 rounded-full', a.tone)} aria-hidden />{a.label}
-              </dt>
-              <dd className={cx('mt-1 text-xl font-medium tabular-nums tracking-tight', a.label === '毛利' ? 'text-brand-700' : 'text-slate-900')}>{yuan(a.value)}</dd>
-              <dd className="text-xs text-slate-400">{a.note}</dd>
+      <figure className="mt-8 space-y-7 rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-8" aria-label="两档定价拆开看">
+        {bars.map((bar) => (
+          <div key={bar.name}>
+            <figcaption className="flex items-baseline justify-between gap-4">
+              <span className="text-sm text-slate-500">{bar.name} {bar.price} 元拆开看</span>
+              <span className="text-sm tabular-nums text-slate-400">每组每学期，毛利 {pct(bar.parts[bar.parts.length - 1].value, bar.price)}</span>
+            </figcaption>
+            <div className="anatomy-bar mt-3 flex h-4 overflow-hidden rounded-full bg-slate-100" role="img"
+              aria-label={bar.parts.map((a) => `${a.label} ${a.value.toFixed(2)} 元`).join('，')}>
+              {bar.parts.map((a) => <span key={a.label} className={a.tone} style={{ width: `${(a.value / scale) * 100}%` }} />)}
             </div>
-          ))}
-        </dl>
+            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+              {bar.parts.map((a) => (
+                <div key={a.label}>
+                  <dt className="flex items-center gap-2 text-xs text-slate-500"><span className={cx('h-2 w-2 rounded-full', a.tone)} aria-hidden />{a.label}</dt>
+                  <dd className={cx('mt-1 text-lg font-medium tabular-nums tracking-tight', a.label === '毛利' ? 'text-brand-700' : 'text-slate-900')}>{yuan(a.value)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+        <p className="text-xs text-slate-400">两条按同一比例尺画：纪要版短的那一截，就是专业版多出来的 8 小时实时转写。</p>
       </figure>
 
       {/* 论证链：五步是真正的先后顺序，左边一条线串起来 */}
@@ -121,40 +133,48 @@ export default function CostPage() {
             <p>开一场 1 小时组会，整理纪要、建索引、出会前简报，合计约 <Num>{yuan(meetingText, 3)}</Num>
               <span className="text-slate-400">（{meetingExtract.toFixed(3)} + {meetingIndex.toFixed(3)} + {meetingBrief.toFixed(4)}）</span>。</p>
             <p>问一次「问问上次」按上限约 <Num>{yuan(qa, 4)}</Num><span className="text-slate-400">（3k 输入 / 0.4k 输出）</span>。</p>
-            <p>转写 1 小时录音：会后上传 <Num>{yuan(asrFileHour)}</Num>，会议室实时 <Num>{yuan(asrLiveHour)}</Num>；导入腾讯会议、钉钉的文字稿不花转写钱。</p>
+            <p>转写 1 小时：会议室实时 <Num>{yuan(asrLiveHour)}</Num>，散会后上传录音 <Num>{yuan(asrFileHour)}</Num>；导入腾讯会议、钉钉的文字稿不花转写钱。</p>
           </div>
         </Step>
 
-        <Step n={3} title="据此定价" note={`一支小组（一门课）一学期：8 次会 + 约 67 次提问 + 3 小时录音 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(groupCost)}。多组包按组长带 3 个组算：成本 ${yuan(bundleCost)}，毛利约 ${(((19.9 - bundleCost) / 19.9) * 100).toFixed(0)}%。`}>
-          <div className="grid overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:grid-cols-2 lg:grid-cols-4">
-            <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', '不开录音转写']} />
-            <Tier name="专业版" price={`${price} 元`} unit="每组每学期" featured
-              lines={['组里任何人买，全组使用', `可以 AA，5 人每人约 ${(price / 5).toFixed(2)} 元`, '含 3 小时录音转写', `成本 ${yuan(groupCost)}，毛利约 ${((margin / price) * 100).toFixed(0)}%`]} />
-            <Tier name="多组包" price={`${BUNDLE.pricePerSemester} 元`} unit="每人每学期" lines={['你当组长的全部小组一起升级', '最多 4 个组，每组 3 小时录音', '给同时带几门课的组长']} />
-            <Tier name="团体购入版" price="5 / 4 / 3 元" unit="每人每门课" lines={['30–99 / 100–499 / 500 人以上', '老师给一门课的学生统一开通', '管理者看板还没做']} />
+        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。`}>
+          <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+              <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', '不含实时转写']} />
+              <Tier name="纪要版" price={`${NOTES.pricePerSemester} 元`} unit="每组每学期" featured
+                lines={['纪要不限次：导入文字稿、钉钉会议', '问答、提醒、会前简报、任务', `可以 AA，5 人每人约 ${(NOTES.pricePerSemester / 5).toFixed(2)} 元`, `成本 ${yuan(notesCost)}，毛利约 ${pct(NOTES.pricePerSemester - notesCost, NOTES.pricePerSemester)}`]} />
+              <Tier name="专业版" price={`${PRO.pricePerSemester} 元`} unit="每组每学期"
+                lines={['纪要版全部，纪要不限次', '含 8 小时会议室实时转写', `AA 每人约 ${(PRO.pricePerSemester / 5).toFixed(2)} 元`, `成本 ${yuan(proCost)}，毛利约 ${pct(PRO.pricePerSemester - proCost, PRO.pricePerSemester)}`]} />
+              <Tier name="多组包" price={`${BUNDLE.pricePerSemester} 元`} unit="每人每学期" lines={['你当组长的小组都开纪要版', '最多 4 个组', '给同时带几门课的组长']} />
+            </div>
+            <div className="grid gap-x-6 gap-y-2 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:grid-cols-2">
+              <p><span className="font-medium text-slate-900">加时包 {ADDON.hours} 小时 {ADDON.price} 元</span>：实时转写不够时加，哪档都能买；按满额用完算，毛利约 {(addon.margin * 100).toFixed(1)}%。</p>
+              <p><span className="font-medium text-slate-900">团体购入 5 / 4 / 3 元</span>每人每门课（30–99 / 100–499 / 500 人以上）：老师给一门课统一开通，管理者看板还没做。</p>
+            </div>
           </div>
           <div className="mt-4 max-w-3xl space-y-2 rounded-xl bg-amber-50/70 px-4 py-3 text-sm leading-relaxed text-slate-700 ring-1 ring-inset ring-amber-200">
-            <p className="font-medium text-slate-900">为什么按一门课的一支小组计价</p>
-            <p>同一个学生在不同课里组员不一样，有时在 A 课当组长、在 B 课只是组员。把一个组长的三门课当成「一个组」，付钱的人对不上，用量也被放大了 3 倍。</p>
-            <p>体验版额度也跟着改：一支小组一学期只开约 8 次会，旧方案「每月 4 次」等于一学期 16 次，单门课的小组根本用不完、不需要付费；如果沿用，每组贡献降到 {yuan(oldFree.contribution)}，要 {oldFree.breakEvenGroups} 组才回本。</p>
-            <p>团体购入按「人 × 门课」算：学校按人包下全部课程时，一个学生平均 3 门课就有 3 个小组，每人成本约 {yuan(campus)}（录音会后上传），3 元档只剩约 {(((3 - campus) / 3) * 100).toFixed(0)}% 毛利，实时转写会亏，所以全校包只开会后上传录音。</p>
+            <p className="font-medium text-slate-900">为什么把纪要和实时转写分开卖</p>
+            <p>大部分小组用腾讯会议、钉钉开会，本来就有文字稿，只需要纪要。纪要版成本 {yuan(notesCost)}，卖 {NOTES.pricePerSemester} 元，不让他们为用不上的转写付钱。</p>
+            <p>在教室面对面开会的小组才要实时转写：一学期 8 次会、每次 1 小时就是 8 小时，实时转写成本 {yuan(pro.asrCost)}，所以专业版 {PRO.pricePerSemester} 元。同样 8 小时卖 9.9 元要 {pro99.breakEvenGroups} 组才回本。</p>
+            <p>额度用完会议不中断：照常录音，散会后用录音文件识别整理（每小时 {yuan(asrFileHour)}，不另收费，只是没有实时字幕和撞车提示）；还想要实时转写就买加时包。</p>
+            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次，比一支小组一学期开的约 8 次会少；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
           </div>
         </Step>
 
         <Step n={4} title="商业模式成立吗">
           <div className="grid gap-6 sm:grid-cols-3">
-            <Metric value={yuan(base.contribution)} label="每个付费组的边际贡献" sub={`贡献率 ${(base.unitMargin * 100).toFixed(1)}%`} />
-            <Metric value={`${base.breakEvenGroups} 组`} label="回本需要的付费组" sub={`覆盖一学期 ${base.fixedPerSemester} 元固定成本；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
-            <Metric value={`${rt.breakEvenGroups} 组`} label="3 小时录音全走实时转写时" sub={`每组贡献降到 ${yuan(rt.contribution)}，实时转写只放进付费档、限量`} />
+            <Metric value={`${notes.breakEvenGroups} 组`} label="只卖纪要版时回本" sub={`每组贡献 ${yuan(notes.contribution)}，贡献率 ${(notes.unitMargin * 100).toFixed(1)}%`} />
+            <Metric value={`${pro.breakEvenGroups} 组`} label="只卖专业版时回本" sub={`8 小时用满，每组贡献 ${yuan(pro.contribution)}；实际只送有人说话的部分、用 6 小时时 ${pro6.breakEvenGroups} 组`} />
+            <Metric value={`${mix.breakEvenGroups} 组`} label="7 成纪要版 + 3 成专业版" sub={`加权每组贡献 ${yuan(mix.contribution)}；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
           </div>
-          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的模型成本（每个付费组带 {BASELINE.freeToPaid} 个体验版小组，每个每学期 {BASELINE.freeMeetingsPerSemester} 次纪要）、{(BASELINE.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {BASELINE.fixedPerMonth} 元固定成本都算进去。付费率、用量、固定成本都是假设，待访谈验证。</p>
+          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的模型成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {NOTES.fixedPerMonth} 元固定成本都算进去。付费率、档位比例、用量、固定成本都是假设，待访谈验证。</p>
           <div className="mt-5 space-y-2">
-            <Fold title="每个假设变了，回本组数怎么变">
+            <Fold title="专业版的每个假设变了，回本组数怎么变">
               <table className="w-full text-sm">
                 <thead><tr className="text-left text-xs text-slate-400"><th className="py-2 font-normal">假设</th><th className="py-2 font-normal">取值</th><th className="py-2 text-right font-normal">每组贡献</th><th className="py-2 text-right font-normal">回本</th></tr></thead>
                 <tbody>
                   {SENSITIVITY.flatMap((g) => g.rows.map((row, i) => {
-                    const r = computeEconomics({ ...BASELINE, ...row.patch });
+                    const r = computeEconomics({ ...PRO, ...row.patch });
                     const isBase = Object.keys(row.patch).length === 0;
                     return (
                       <tr key={g.factor + row.value} className={cx(i === 0 && 'border-t border-slate-100', isBase ? 'text-slate-400' : 'text-slate-700')}>
@@ -185,6 +205,7 @@ export default function CostPage() {
               <h3 className="text-sm font-medium text-slate-900">谁付钱</h3>
               <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate-600">
                 <li>每支小组单独付：组里任何一个人买，全组用；也可以 AA。</li>
+                <li>线上开会、有文字稿的组买纪要版；在教室开会、要实时转写的组买专业版，不够再加时。</li>
                 <li>同时带几个组的组长，买多组包更划算。</li>
                 <li>付钱的人和拍板的人分开，确认决定的仍是这个组的组长。</li>
                 <li>规模化以后，老师按一门课的人数团体购入。</li>

@@ -23,7 +23,7 @@ mark {
   background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #ebe6da 31px, #ebe6da 32px);
 }
 
-/* 成本看板：「专业版 9.9 元拆开看」进页面时从左往右展开一次 */
+/* 成本看板：「两档定价拆开看」进页面时从左往右展开一次 */
 @keyframes anatomy-grow {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }

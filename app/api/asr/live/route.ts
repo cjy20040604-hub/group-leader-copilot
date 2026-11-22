@@ -19,11 +19,13 @@ export async function POST(req: NextRequest) {
   if (base64Bytes(audio) > ASR_MAX_BYTES || seconds > ASR_MAX_SECONDS) {
     return NextResponse.json({ error: '单段音频超过 10 MB 或 5 分钟' }, { status: 413 });
   }
-  // 录音额度：体验版不含录音转写；专业版每组每学期 3 小时（已确认的会 + 这场还没结束的会一起算）
+  // 实时转写额度：专业版每组每学期 8 小时 + 加时包；其他档位只有加时包（已确认的会 + 这场还没结束的会一起算）
+  // 用完返回 402 code 'quota'：前端不中断会议，改成只在本机录音，散会后整理
   const courseId = String(body.courseId ?? '');
   const sessionId = typeof body.sessionId === 'string' ? body.sessionId : null;
   const sessionSeconds = sessionId ? db.select().from(schema.usageLog).all().filter((l) => l.feature === 'asr' && l.meetingId === sessionId).reduce((a, l) => a + (l.audioSeconds ?? 0), 0) : 0;
-  const allowed = canRecord(getPlan(courseId).tier, recordSecondsUsed(courseId) + sessionSeconds, seconds);
+  const plan = getPlan(courseId);
+  const allowed = canRecord(plan.tier, recordSecondsUsed(courseId) + sessionSeconds, seconds, plan.addonSeconds);
   if (!allowed.ok) return NextResponse.json({ error: allowed.reason, code: 'quota' }, { status: 402 });
 
   // 识别上下文：课程名 + 本组名单（人名、别名）+ 本课常用词（任务名、决议），提高「浩然」「ER 图」这类词的识别率

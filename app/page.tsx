@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MinutesShelf, type ShelfBook } from '@/components/minutes-shelf';
 import { db, schema } from '@/lib/db/client';
-import { computeEconomics, textCostPerMeeting, BASELINE, ASR_REALTIME } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, blendedBreakEven, NOTES, PRO, MIX, ASR_REALTIME } from '@/lib/unit-economics';
 
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
@@ -12,7 +12,8 @@ const FAQS = [
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。RAG 回答必须带 [日期·类型] 出处，相似度不够且关键词无命中时直接回答「记录里没找到」。' },
   { q: '三门课的决议会串台吗？', a: '不会。检索按 course_id 硬过滤，被新决议推翻的旧决议默认排除。' },
-  { q: '一学期要花多少钱？', a: '按一门课的一支小组算：一学期约 8 次会、约 67 次问答，纯文字稿模型成本约 0.73 元；录音转写才是大头，所以默认用导入文字稿或钉钉闪记。专业版 9.9 元/组/学期，组里谁买都行，也可以 AA；同时带几个组的组长可以买 19.9 元的多组包。' },
+  { q: '一学期要花多少钱？', a: '按一门课的一支小组算。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 14.9 元的多组包，全部小组都开纪要版。' },
+  { q: '实时转写的时长用完了怎么办？', a: '会议照常开、照常录音，散会后用录音文件识别整理，不另收费，只是没有实时字幕和撞车提示。还想要实时转写，可以加购 3 小时 3.9 元的加时包，哪个档位都能买。' },
   { q: '必须组长来买吗？', a: '不用。按小组计价，组里谁买都行，也可以 AA；付钱的人和拍板的人分开，确认决定的仍是这个组的组长。老师可以按一门课的人数走团体购入版。' },
   { q: '三门课的组员不一样怎么办？', a: '每门课单独建小组，成员和角色按课设置：同一个人可以在 A 课当组长、在 B 课当组员。整理纪要时只和这门课的名单对人名，别的组的人不会被派任务；组长只看到自己小组的任务，组员在别的组的 DDL 只显示日期，不显示内容。' },
 ];
@@ -28,8 +29,10 @@ const jsonLd = {
       description: '帮组长把会上说的话，变成确认过的决定、有人负责跟进的任务，以及下次会接着推进的记录。',
       offers: [
         { '@type': 'Offer', name: '体验版', price: '0', priceCurrency: 'CNY' },
-        { '@type': 'Offer', name: '专业版（一门课的一支小组，每学期，可 AA）', price: '9.9', priceCurrency: 'CNY' },
-        { '@type': 'Offer', name: '多组包（组长带的全部小组，每人每学期）', price: '19.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '纪要版（一门课的一支小组，每学期，纪要不限次，可 AA）', price: '6.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '专业版（纪要版 + 8 小时会议室实时转写，每组每学期）', price: '14.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '多组包（组长带的全部小组都开纪要版，每人每学期）', price: '14.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '实时转写加时包（3 小时）', price: '3.9', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '团体购入版（每人每门课，30–99 人档）', price: '5', priceCurrency: 'CNY' },
       ],
     },
@@ -65,8 +68,9 @@ function loadShelf(): ShelfBook[] {
 export default function LandingPage() {
   const books = loadShelf();
   // 交付物里的成本数字直接从成本模型算，和成本看板同一份代码，不会说岔
-  const base = computeEconomics(BASELINE);
-  const rt = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
+  const notes = computeEconomics(NOTES);
+  const pro = computeEconomics(PRO);
+  const mix = blendedBreakEven(MIX);
   const link = 'text-sm text-brand-600 hover:text-brand-700 hover:underline';
   return (
     <div className="min-h-screen bg-paper">
@@ -139,9 +143,9 @@ export default function LandingPage() {
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">成本与商业模式</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
-                  <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{base.modelCost.toFixed(2)}。</li>
-                  <li><span className="text-slate-900">定价</span>：计价单位是一门课的一支小组（不同课组员可以不一样）。体验版免费；专业版 ¥9.9 / 组 / 学期，组里谁买都行，可 AA；组长带多个组买多组包 ¥19.9；团体购入版每人每门课 ¥5 / ¥4 / ¥3。</li>
-                  <li><span className="text-slate-900">商业模式</span>：每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组回本（3 小时录音全走实时转写约 {rt.breakEvenGroups} 组）。</li>
+                  <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{notes.modelCost.toFixed(2)}。</li>
+                  <li><span className="text-slate-900">定价</span>：计价单位是一门课的一支小组，纪要和实时转写分开卖。体验版免费；纪要版 ¥6.9 / 组 / 学期；专业版 ¥14.9，多 8 小时实时转写，用完照常录音、散会后整理，或加购 3 小时 ¥3.9；组长带多个组买多组包 ¥14.9；团体购入版每人每门课 ¥5 / ¥4 / ¥3。</li>
+                  <li><span className="text-slate-900">商业模式</span>：只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时约 {mix.breakEvenGroups} 个付费组回本。</li>
                   <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；每支小组由组里任何一个人或 AA 付钱，拍板的仍是这个组的组长；规模化后老师按课团体购入。</li>
                 </ul>
                 <p className="mt-2 text-xs text-slate-400">付费率、固定成本、用量是假设，敏感度见成本看板。</p>
@@ -155,7 +159,7 @@ export default function LandingPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
                   <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0</li>
-                  <li>117 个单元测试；每次模型调用都记账</li>
+                  <li>124 个单元测试；每次模型调用都记账</li>
                   <li>成功指标：北极星是每周确认的决定数</li>
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -172,37 +176,41 @@ export default function LandingPage() {
         <section id="pricing" className="border-t border-paper-line py-20" aria-label="定价">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">定价：一杯奶茶钱，管一学期</h2>
-            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">按一门课的一支小组计价：不同课的组员可以不一样，各组自己付或 AA；同时带几个组的组长买多组包。</p>
-            <div className="mt-10 grid overflow-hidden rounded-2xl border border-paper-line bg-paper-card sm:grid-cols-2 lg:grid-cols-4">
+            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">按一门课的一支小组计价，各组自己付或 AA。线上开会有文字稿的买纪要版，在教室开会要实时转写的买专业版。</p>
+            <div className="mt-10 grid overflow-hidden rounded-t-2xl border border-paper-line bg-paper-card sm:grid-cols-2 lg:grid-cols-4">
               <article className="p-7">
                 <h3 className="text-sm text-slate-500">体验版</h3>
                 <p className="mt-2 text-3xl font-medium tracking-tight text-slate-900">¥0</p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>基础问答，不开录音</li>
+                  <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>基础问答，不含实时转写</li>
                 </ul>
               </article>
               <article className="relative border-t border-paper-line bg-brand-50/50 p-7 sm:border-l sm:border-t-0">
                 <span className="absolute inset-x-0 top-0 h-0.5 bg-brand-600" aria-hidden />
-                <h3 className="text-sm font-medium text-brand-700">专业版</h3>
-                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥9.9<span className="ml-1 text-sm font-normal text-slate-500">/ 组 / 学期</span></p>
+                <h3 className="text-sm font-medium text-brand-700">纪要版</h3>
+                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥6.9<span className="ml-1 text-sm font-normal text-slate-500">/ 组 / 学期</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>一门课的一支小组，不限次纪要</li><li>组里谁买都行，也可以 AA（5 人每人约 ¥1.98）</li><li>含 3 小时录音转写</li><li>任务与回顾、提醒、会前简报</li>
+                  <li>纪要不限次：粘贴文字稿、钉钉会议导入</li><li>问答、提醒、会前简报、任务与回顾</li><li>组里谁买都行，也可以 AA（5 人每人约 ¥1.38）</li>
                 </ul>
               </article>
               <article className="border-t border-paper-line p-7 lg:border-l lg:border-t-0">
-                <h3 className="text-sm text-slate-500">多组包</h3>
-                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥19.9<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 学期</span></p>
+                <h3 className="text-sm text-slate-500">专业版</h3>
+                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥14.9<span className="ml-1 text-sm font-normal text-slate-500">/ 组 / 学期</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>你当组长的全部小组一起升级（最多 4 个）</li><li>每组含 3 小时录音转写</li><li>给同时带几门课的组长</li>
+                  <li>纪要版全部，纪要不限次</li><li>含 8 小时会议室实时转写，开会时有字幕和撞车提示</li><li>用完照常录音，散会后整理</li>
                 </ul>
               </article>
               <article className="border-t border-paper-line p-7 sm:border-l lg:border-t-0">
-                <h3 className="text-sm text-slate-500">团体购入版</h3>
-                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥5 起<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 门课</span></p>
+                <h3 className="text-sm text-slate-500">多组包</h3>
+                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥14.9<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 学期</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>按人数阶梯：30–99 人 ¥5，100–499 人 ¥4，500 人以上 ¥3</li><li>老师给一门课的学生统一开通</li><li>管理者看各组过程数据（规划中）</li>
+                  <li>你当组长的小组都开纪要版（最多 4 个）</li><li>给同时带几门课的组长</li><li>某个组要实时转写，单独升专业版或加时</li>
                 </ul>
               </article>
+            </div>
+            <div className="grid gap-x-10 gap-y-3 border-x border-b border-paper-line bg-paper-card px-7 py-5 text-sm text-slate-600 sm:grid-cols-2 rounded-b-2xl -mt-px">
+              <p><span className="font-medium text-slate-900">加时包 ¥3.9 / 3 小时</span>：实时转写不够时加，哪个档位都能买。</p>
+              <p><span className="font-medium text-slate-900">团体购入版 ¥5 起 / 人 / 门课</span>：30–99 人 ¥5，100–499 人 ¥4，500 人以上 ¥3；老师给一门课统一开通。</p>
             </div>
           </div>
         </section>
