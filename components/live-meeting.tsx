@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button, Card, Badge, Select, cx } from '@/components/ui';
 import { clock, type ScriptLine } from '@/lib/live/cues';
 import { VadSegmenter, downsample, encodeWav, toBase64, TARGET_RATE } from '@/lib/live/audio';
@@ -524,6 +525,7 @@ export function LiveMeeting(props: Props) {
         </div>
 
         {source === 'demo' && <p className="text-xs text-slate-500">演示录音：逐句回放一场「市场营销学」组会，模拟实时转写，放完自动整理纪要。</p>}
+        {!live && <p className="text-xs text-slate-500">已经在腾讯会议、飞书或钉钉开过了？<Link href="/app/meeting/new" className="text-brand-600 hover:underline">导入转写（粘贴文字稿 / 钉钉会议）→</Link></p>}
         {demoMismatch && (
           <p className="flex flex-wrap items-center gap-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
             演示录音是「市场营销学」的一场会，其他课程请切到麦克风。

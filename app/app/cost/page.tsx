@@ -74,13 +74,12 @@ export default function CostPage() {
         </Card>
       </Step>
 
-      <Step n={2} title="单次服务成本" note="用量是假设：1 小时会约 1.2 万 tokens 转写；问答按 3k 输入 / 0.4k 输出的上限算。">
-        <div className="grid gap-3 md:grid-cols-3">
-          <Figure label="开一场 1 小时组会（文字处理）" value={yuan(meetingText, 3)}
-            hint={`整理纪要 ${meetingExtract.toFixed(3)} + 建索引 ${meetingIndex.toFixed(3)} + 会前简报 ${meetingBrief.toFixed(4)}`} />
-          <Figure label="问一次「问问上次」" value={yuan(qa, 4)} hint="上限估算；2026-11-21 真实接口实测均值 ¥0.0011" />
-          <Figure label="转写 1 小时录音" value={`${yuan(asrFileHour)} / ${yuan(asrLiveHour)}`} hint="会后上传录音 / 会议室实时转写；导入腾讯会议、钉钉的文字稿不花转写钱" />
-        </div>
+      <Step n={2} title="单次服务成本">
+        <Card className="space-y-1.5 p-4 text-sm text-slate-700">
+          <p>开一场 1 小时组会，整理纪要 + 建索引 + 会前简报合计约 <b>{yuan(meetingText, 3)}</b>（{meetingExtract.toFixed(3)} + {meetingIndex.toFixed(3)} + {meetingBrief.toFixed(4)}）。</p>
+          <p>问一次「问问上次」按上限约 <b>{yuan(qa, 4)}</b>（3k 输入 / 0.4k 输出）。</p>
+          <p>转写 1 小时录音：会后上传 <b>{yuan(asrFileHour)}</b>，会议室实时 <b>{yuan(asrLiveHour)}</b>；导入腾讯会议、钉钉的文字稿不花转写钱。</p>
+        </Card>
       </Step>
 
       <Step n={3} title="据此定价" note={`一个小组一学期：24 次会 + 200 次提问 + 10 小时录音 + 服务器摊销 ${STANDARD_MEETING.infraPerSemester} 元，成本约 ${yuan(groupCost)}。`}>
@@ -147,6 +146,9 @@ export default function CostPage() {
         <summary className="cursor-pointer text-xs font-medium text-slate-600">
           展开：这个 Demo 的调用记录（usage_log，共 {logs.length} 次，{yuan(total, 4)}）{mock ? ' · 离线演示，用量按字数估算' : ''}
         </summary>
+        <p className="mt-2 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+          真实接口实测（2026-11-21，接百炼跑完整条流程）：总花费约 ¥0.153（含调试和多轮评测）。其中演示会议的文字处理 ¥0.0117、问答平均每次 ¥0.0011、实时转写 13 秒 ¥0.0029。
+        </p>
         {byFeature.size === 0 ? <div className="mt-2"><EmptyState title="还没有调用记录" hint="处理一场会议或问一个问题试试" /></div> : (
           <table className="mt-2 w-full text-xs">
             <thead><tr className="border-b border-slate-200 text-left text-slate-500"><th className="p-2">功能</th><th className="p-2">次数</th><th className="p-2">输入 tokens</th><th className="p-2">输出 tokens</th><th className="p-2">总成本</th></tr></thead>
