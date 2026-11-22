@@ -16,6 +16,7 @@
 | 为什么是这个组合 | [`docs/why-this-combo.md`](docs/why-this-combo.md)：一段话，加上和 5 种其他组合的对比 |
 | 产品流程，哪些环节用 AI、哪些不用 | [`docs/product-v2.md`](docs/product-v2.md)：定位、用户需求、每个环节用 AI 还是规则及理由 |
 | 单次服务成本、定价、商业模式、谁使用谁付钱 | [`docs/cost-model.md`](docs/cost-model.md)；在线版「成本看板」有敏感度表和计算器；真实接口实测见 [`docs/real-run-report.md`](docs/real-run-report.md) |
+| 怎么用 Qoder 搭的 | [`qoder-quest-prompt.md`](qoder-quest-prompt.md)：交给 Qoder 的初始需求 Spec；[`TASKS.md`](TASKS.md)：分阶段迭代和更正记录 |
 
 ## 产品做了什么
 
