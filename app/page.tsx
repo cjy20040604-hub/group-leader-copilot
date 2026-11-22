@@ -107,7 +107,7 @@ export default function LandingPage() {
       <main>
         <section className="border-t border-paper-line bg-white py-10" aria-label="痛点与解法">
           <p className="mx-auto max-w-6xl px-4 text-[17px] leading-relaxed text-slate-600">
-            <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，下次开会前遗留自动排好，忘了就「问问上次」。
+            <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，DDL 前 3 天、前 1 天和过期当天自动提醒（组员点链接就能回），下次开会前遗留自动排好，忘了就「问问上次」。
           </p>
         </section>
 
