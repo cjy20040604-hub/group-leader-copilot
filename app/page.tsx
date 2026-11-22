@@ -95,7 +95,6 @@ export default function LandingPage() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/app" className="rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">免费试用 Demo</Link>
               <Link href="/app/cost" className="rounded-lg px-5 py-3 text-sm font-medium text-[#efe9de] ring-1 ring-inset ring-[#efe9de]/25 hover:bg-white/5">看成本与商业模式</Link>
-              <span className="text-xs text-[#8a8173]">不用注册，也不用 API Key</span>
             </div>
           </div>
           <div className="mt-12">
