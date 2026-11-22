@@ -1,6 +1,6 @@
 # 真实接口实测报告（2026-11-21）
 
-> 面试前把「Mock 估算」换成「实测」。本报告所有数字来自 `usage_log`（接口真实返回的 usage）或控制台/官方价格页真实查价；查不到的标「待核对」，失败如实记录。
+> 把「Mock 估算」换成「实测」。本报告所有数字来自 `usage_log`（接口真实返回的 usage）或控制台/官方价格页真实查价；查不到的标「待核对」，失败如实记录。
 > 实测环境：MOCK_LLM=false，百炼业务空间专属域名（`ws-….cn-beijing.maas.aliyuncs.com/compatible-mode/v1`），模型名全部来自环境变量（LLM_MODEL_EXTRACT=qwen3.7-plus / LLM_MODEL_CHAT=qwen-plus / EMBEDDING_MODEL=text-embedding-v4 / ASR_MODEL=qwen3-asr-flash）。
 > 跑完已改回 MOCK_LLM=true，Mock 回归全过（见文末）。
 
@@ -111,4 +111,4 @@
 - `lib/rag/search.ts`：DUPLICATE_THRESHOLD 0.7（含实测依据注释）
 - `lib/rag/terms.ts`：幻灯片同义归一
 - `eval/run.ts`：要点匹配空白归一
-- 文档：`docs/cost-model.md`（实测回填节）、`TASKS.md`、`README.md`、本报告；`~/Desktop/阿里面试/演讲稿.md` 同步
+- 文档：`docs/cost-model.md`（实测回填节）、`TASKS.md`、`README.md`、本报告

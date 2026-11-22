@@ -4,7 +4,7 @@ import { computeEconomics, textCostPerMeeting, BASELINE, ASR_REALTIME } from '@/
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
 const FAQS = [
-  { q: '没有 API Key 能演示吗？', a: '能。MOCK_LLM=true 模式用种子数据对应的预置输出跑通全流程，讲解现场不翻车。' },
+  { q: '没有 API Key 能用吗？', a: '能。没配 Key 时以离线模式运行：示例会议读预置结果，其他转写走规则抽取，问答在本课程记录上做抽取式回答，全流程都能跑；配上阿里云百炼 Key 后切换为真实模型。' },
   { q: '开会要自己按录音吗？', a: '不用。进会议室 3 秒后自动开录（可取消），说的话实时转成文字；没人说话时不上传，长时间静音自动结束并进入纪要整理。开录前会提示参会人。' },
   { q: '组员要怎么更新进度？', a: '在「任务与回顾」里一键点：做完了、写一句进度、卡住了、申请延期，或者自己认领没人管的任务。组长只看需要拍板的例外。' },
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责抽取，人名由代码模糊匹配花名册、日期由代码换算校验，低置信度标黄，组长确认后才落库。' },
@@ -68,38 +68,45 @@ export default function LandingPage() {
         <section className="border-y border-slate-200 bg-slate-50 py-12" aria-label="交付物一览">
           <div className="mx-auto max-w-5xl px-4">
             <h2 className="text-xl font-bold">交付物一览</h2>
-            <p className="mt-1 text-sm text-slate-500">Demo、为什么是这个组合、成本与商业模式，都在这一屏能找到入口。</p>
+            <p className="mt-1 text-sm text-slate-500">Demo、为什么是这个组合、成本与商业模式，以及我们怎么验证这些结论。</p>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <article className="rounded-xl border border-slate-200 bg-white p-5">
                 <h3 className="font-semibold">Demo</h3>
-                <p className="mt-2 text-sm text-slate-600">不用注册、不用 Key，离线 Mock 模式全流程可用。建议路径：顶部「🎙 开会」看自动开录和实时转写 → 确认纪要 → 「任务与回顾」→「问问上次」→「成本看板」。</p>
+                <p className="mt-2 text-sm text-slate-600">一个 5 人小组、三门课的一周：会上自动开录和实时转写，会后组长确认纪要，组员自己更新进度，下次会前自动汇总遗留。不用注册，也不用 API Key。</p>
                 <Link href="/app" className="mt-3 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">进入 Demo</Link>
               </article>
               <article className="rounded-xl border border-slate-200 bg-white p-5">
                 <h3 className="font-semibold">为什么是这个组合</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">三个痛点是同一条链断在三处：会上说的话 → 确认过的决定 → 有人跟进的任务 → 下次会接着推进，所以做一条闭环而不是三个单点工具。AI 只用在需要理解声音和语言的地方（转写、整理成决定和待办、按意思回忆旧决议）；开录、认领、延期、提醒、风险灯都用规则，因为必须可预测、几乎零边际成本。AI 产出要组长确认才生效。只做纪要没人执行，只做看板要手抄，全交给 Agent 不可控也越用越贵。</p>
-                <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">和 5 种其他组合的对比表</a>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">三个痛点是同一条链断在三处：会上说的话 → 确认过的决定 → 有人跟进的任务 → 下次会接着推进，所以做一条闭环，而不是三个单点工具。AI 只用在需要理解声音和语言的地方（转写、整理成决定和待办、按意思回忆旧决议）；开录、认领、延期、提醒、风险灯都用规则，因为必须可预测、边际成本几乎为零。AI 产出要组长确认才生效。只做纪要没人执行，只做看板要手抄，全交给 Agent 不可控也越用越贵。</p>
+                <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">和 5 种其他组合的对比</a>
               </article>
               <article className="rounded-xl border border-slate-200 bg-white p-5">
                 <h3 className="font-semibold">成本与商业模式</h3>
-                <ul className="mt-2 space-y-1 text-sm text-slate-600">
-                  <li>按阿里云百炼原价：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}，一个组长一学期模型成本约 ¥{base.modelCost.toFixed(2)}</li>
-                  <li>专业版 ¥19.9 / 组 / 学期（一人买全组用，可 AA）；每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组覆盖固定成本（录音会后上传；全走实时转写约 {rt.breakEvenGroups} 组）</li>
-                  <li>谁用：组长（核心）、组员（自己更新进度）、老师（看过程数据，规划中）；谁付钱：小组里任何一个人或 AA（付钱的人和拍板的人分开），规模化后学校、学院等机构走团体购入版（¥5 / ¥4 / ¥3 每人每学期，按人数阶梯）</li>
-                  <li className="text-xs text-slate-400">付费率、固定成本、会议次数等是假设 · 待验证，敏感度见成本看板</li>
+                <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                  <li><span className="text-slate-800">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一个小组一学期模型成本约 ¥{base.modelCost.toFixed(2)}。</li>
+                  <li><span className="text-slate-800">定价</span>：体验版免费；专业版 ¥19.9 / 组 / 学期，一人买全组用，可 AA；团体购入版按人数每人 ¥5 / ¥4 / ¥3。</li>
+                  <li><span className="text-slate-800">商业模式</span>：每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组回本（录音全走实时转写约 {rt.breakEvenGroups} 组）。</li>
+                  <li><span className="text-slate-800">谁使用，谁付钱</span>：组长和组员使用；组里任何一个人或 AA 付钱，拍板的仍是组长；规模化后由学校、学院、社团团体购入。</li>
+                  <li className="text-xs text-slate-400">付费率、固定成本、用量是假设，敏感度见成本看板。</li>
                 </ul>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
                   <Link href="/app/cost" className="text-brand-600 hover:underline">成本看板（含计算器）</Link>
-                  <a href={`${REPO}/blob/main/docs/cost-model.md`} className="text-brand-600 hover:underline">成本与商业模式测算文档</a>
+                  <a href={`${REPO}/blob/main/docs/cost-model.md`} className="text-brand-600 hover:underline">成本与商业模式测算</a>
                 </div>
               </article>
               <article className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="font-semibold">怎么判断它有用、代码在哪</h3>
-                <p className="mt-2 text-sm text-slate-600">北极星指标是每周确认的决定数，配套看提醒回复率、组员自主更新占比、按时完成率。源码、产品定位、架构和测试都在 GitHub 仓库里。</p>
+                <h3 className="font-semibold">怎么验证的</h3>
+                <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                  <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
+                  <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0</li>
+                  <li>108 个单元测试；每次模型调用都记账，成本看板的数字来自这里</li>
+                  <li>成功指标：北极星是每周确认的决定数</li>
+                </ul>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                  <a href={`${REPO}/blob/main/docs/real-run-report.md`} className="text-brand-600 hover:underline">真实接口实测报告</a>
                   <Link href="/app/metrics" className="text-brand-600 hover:underline">成功指标</Link>
+                  <a href={`${REPO}/blob/main/docs/product-v2.md`} className="text-brand-600 hover:underline">产品流程与 AI 分工</a>
                   <a href={REPO} className="text-brand-600 hover:underline">GitHub 仓库</a>
-                  <a href={`${REPO}/blob/main/docs/product-v2.md`} className="text-brand-600 hover:underline">产品定位与 AI 分工</a>
                 </div>
               </article>
             </div>

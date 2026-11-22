@@ -51,9 +51,9 @@
 ## M6 文档 + 验收
 - [x] docs/why-this-combo.md（150–200 字一段）
 - [x] docs/cost-model.md（实测数据回填 + 定价 + 谁付钱 + 待验证假设）
-- [x] docs/pitch-3min.md（按秒分段）
+- [x] 3 分钟讲解稿（现场讲解用，不放仓库）
 - [x] docs/flows.md + docs/research/interview-targets.md
-- [x] README（一键启动 / Mock 说明 / 演示脚本）
+- [x] README（2026-11-22 改为交付说明；操作说明移到本地）
 - [x] lint + typecheck + test 全绿；浏览器实测三条演示路径
 - 验收：新机器 `npm i && npm run seed && npm run dev` 5 分钟跑通 ✅（README 含步骤与 macOS 沙箱终端注意事项；生产模式 `npm run build && npm start` 已全流程实测）
 ## M7 轻量通用化（2026-11-20，用户确认后追加）

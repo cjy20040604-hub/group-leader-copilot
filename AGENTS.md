@@ -6,7 +6,7 @@
 ## 核心用户
 - 组长林晓：3 门课小组作业并行（市场营销学 / 数据库原理 / 创新创业实践），付费决策人
 - 组员：阿杰、小雨、浩然、思琪 —— 在「任务与回顾」一键更新（做完了 / 写进度 / 卡住了 / 申请延期 / 认领）
-- 老师：B 端课程版，看贡献度看板
+- 老师 / 机构：团体购入版（按人数阶梯），看各组过程数据（规划中）
 
 ## 硬性规则
 1. AI 只用于：语音→文字（ASR）、转写→结构化纪要、待办抽取、RAG 问答、会前简报、embedding 重复检测（含会中「这事定过了」）
@@ -30,7 +30,7 @@ Next.js App Router + TypeScript + Tailwind + shadcn/ui · SQLite + Drizzle · Op
 - `lib/prompts/` 运行时 prompt · `lib/rag/` 索引与检索 · `lib/risk.ts` 风险灯规则 · `config/pricing.ts` 单价表
 - `lib/task-flow.ts` 任务流转规则（纯函数）· `lib/task-updates.ts` 动态落库 · `lib/review.ts` 待我处理 / 回顾 · `lib/live/` 会议室（VAD、WAV、ASR 请求、会中查重）
 - `seed/` 种子会议与 mock 输出 · `eval/golden.json` 评估集
-- `docs/` PRD、architecture、flows、why-this-combo、cost-model、pitch-3min、research/
+- `docs/` PRD、architecture、flows、why-this-combo、cost-model、product-v2、real-run-report、dingtalk-integration、research/
 - `TASKS.md` 里程碑与进度（每个里程碑结束更新）
 
 ## 术语表

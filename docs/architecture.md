@@ -11,7 +11,7 @@
 | tasks-risk | 任务 CRUD、风险灯、提醒扫描、催办模板、时间快进 | db-seed |
 | tasks-flow（v2） | 组员认领/提交/进度/卡住/申请延期，组长确认/打回/批延期（`lib/task-flow.ts` 纯函数）；动态留痕 `task_updates`（`lib/task-updates.ts`）；待我处理 / 回顾 / 带到下次会（`lib/review.ts`） | db-seed, tasks-risk |
 | live（v2） | 会议室：自动开录、VAD 切段、WAV 编码（`lib/live/audio.ts`）、百炼 ASR 请求（`lib/live/asr-request.ts`）、会中「这事定过了」（`lib/live/cues.ts` + `findSameTopicDecisions`） | llm-gateway, rag |
-| ui | 10 个路由页面、身份切换、成本看板、落地页 | 全部 |
+| ui | 12 个页面路由、身份切换、成本看板、成功指标、落地页 | 全部 |
 
 构建顺序：db-seed → llm-gateway → rag / tasks-risk → pipeline → ui。
 
@@ -79,7 +79,7 @@ npm run typecheck  # tsc --noEmit
 - 开录：进页面 3 秒倒计时自动开录（`settings.auto_record`，可关），倒计时期间显示录音告知；Mock 下非演示课程不自动开。
 - 麦克风授权（`lib/live/mic-permission.ts` + 会议室同意框）：`navigator.permissions.query({name:'microphone'})` 读当前状态并监听变化；没授权时绝不调用 `getUserMedia`，先弹页面内同意框（用途 / 录什么 / 存到哪里 / 随时可停），组长点「允许使用麦克风」后才触发浏览器授权框。自动开录倒计时中发现麦克风没授权，会停下倒计时改弹同意框。拒绝（NotAllowedError）、没设备（NotFoundError）、被占用（NotReadableError）、非安全上下文分别给出浏览器 / macOS 的修复步骤；录到一半设备断开会暂停并提示。
 - Mock 模式麦克风：真实录音 + VAD 切段，但不调语音模型；每段可回放，结束后把有人说话的部分拼成 WAV 供回放 / 下载（页面内最多保留 30 分钟），不进纪要流水线。
-- 真实模式（有 Key + `ASR_MODEL`）：浏览器 `getUserMedia` → ScriptProcessor → 降采样 16 kHz → `VadSegmenter`（RMS 阈值 0.015、静音 800 ms 判一句说完、单段 ≤ 20 s、开口前留 200 ms、短于 300 ms 丢弃）→ WAV Base64 → `POST /api/asr/live` → `transcribeSegment()`（百炼 OpenAI 兼容接口，`input_audio` Data URL，system 消息放课程名 + 花名册做识别上下文，`asr_options.enable_itn=true`）→ usage_log(feature=asr, meeting_id=会话 id)。**未联调**。
+- 真实模式（有 Key + `ASR_MODEL`）：浏览器 `getUserMedia` → ScriptProcessor → 降采样 16 kHz → `VadSegmenter`（RMS 阈值 0.015、静音 800 ms 判一句说完、单段 ≤ 20 s、开口前留 200 ms、短于 300 ms 丢弃）→ WAV Base64 → `POST /api/asr/live` → `transcribeSegment()`（百炼 OpenAI 兼容接口，`input_audio` Data URL，system 消息放课程名 + 花名册做识别上下文，`asr_options.enable_itn=true`）→ usage_log(feature=asr, meeting_id=会话 id)。2026-11-21 真实接口联调通过（见 `docs/real-run-report.md`）。
 - Mock：「演示录音」按 `seed/new_meeting.txt` 逐句打字式播放，结束时 `POST /api/live/finish` 按会议时长记一条 ASR 估算。
 - 会中查重：每句话先用规则挑出「在提议 / 翻旧账」的半句（要不要、换回、改成…），再 `POST /api/live/check` → `findSameTopicDecisions`（embedding + 关键词规则，不调大模型）。
 - 自动结束：演示放完 5 秒、真实模式连续静音 2 分钟后 30 秒倒计时（可取消）。
@@ -120,7 +120,7 @@ npm run typecheck  # tsc --noEmit
 
 ## 测试策略
 
-node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 94 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）、钉钉 client 对本地模拟服务（`lib/dingtalk/client.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
+node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 108 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）、钉钉 client 对本地模拟服务（`lib/dingtalk/client.test.ts`）、单位经济（`lib/unit-economics.test.ts`）、组员跨课负载（`lib/multi-course.test.ts`）、成功指标（`lib/metrics.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
 
 ## 边界
 
