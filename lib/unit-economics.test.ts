@@ -31,10 +31,10 @@ describe('unit economics', () => {
     assert.equal(computeEconomics({ ...BASELINE, freeMeetingsPerSemester: 16 }).breakEvenGroups, 98);
   });
 
-  it('多组包（组长带 3 个组，19.9 元）：变动成本 4.7872，29 个付费包回本', () => {
+  it('多组包（组长带 3 个组，19.9 元，配 12 个体验版小组）：变动成本 4.7872，32 个付费包回本', () => {
     const r = computeEconomics(BUNDLE);
     near(r.variableCost, 2.1952 + 2.592);
-    assert.equal(r.breakEvenGroups, 29);
+    assert.equal(r.breakEvenGroups, 32);
   });
 
   it('贡献为负时盈亏平衡为无穷大', () => {

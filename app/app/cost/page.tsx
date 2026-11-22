@@ -69,7 +69,7 @@ export default function CostPage() {
 
   return (
     <div className="mx-auto max-w-4xl pb-10">
-      {/* 开头先给结论，再给「19.9 元拆开看」 */}
+      {/* 开头先给结论，再给「专业版 9.9 元拆开看」 */}
       <header className="pt-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">成本与商业模式</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
@@ -78,7 +78,7 @@ export default function CostPage() {
         </p>
       </header>
 
-      <figure className="mt-8 rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-8" aria-label="19.9 元拆开看">
+      <figure className="mt-8 rounded-2xl bg-white p-6 ring-1 ring-slate-200 sm:p-8" aria-label={`专业版 ${price} 元拆开看`}>
         <figcaption className="flex items-baseline justify-between gap-4">
           <span className="text-sm text-slate-500">专业版 {price} 元拆开看</span>
           <span className="text-sm tabular-nums text-slate-400">每组每学期</span>
@@ -145,7 +145,7 @@ export default function CostPage() {
           <div className="grid gap-6 sm:grid-cols-3">
             <Metric value={yuan(base.contribution)} label="每个付费组的边际贡献" sub={`贡献率 ${(base.unitMargin * 100).toFixed(1)}%`} />
             <Metric value={`${base.breakEvenGroups} 组`} label="回本需要的付费组" sub={`覆盖一学期 ${base.fixedPerSemester} 元固定成本；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
-            <Metric value={`${rt.breakEvenGroups} 组`} label="录音全走实时转写时" sub={`每组贡献降到 ${yuan(rt.contribution)}，实时转写只放进付费档、限量`} />
+            <Metric value={`${rt.breakEvenGroups} 组`} label="3 小时录音全走实时转写时" sub={`每组贡献降到 ${yuan(rt.contribution)}，实时转写只放进付费档、限量`} />
           </div>
           <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的模型成本（每个付费组带 {BASELINE.freeToPaid} 个体验版小组，每个每学期 {BASELINE.freeMeetingsPerSemester} 次纪要）、{(BASELINE.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {BASELINE.fixedPerMonth} 元固定成本都算进去。付费率、用量、固定成本都是假设，待访谈验证。</p>
           <div className="mt-5 space-y-2">

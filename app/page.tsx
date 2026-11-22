@@ -138,7 +138,7 @@ export default function LandingPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{base.modelCost.toFixed(2)}。</li>
                   <li><span className="text-slate-900">定价</span>：计价单位是一门课的一支小组（不同课组员可以不一样）。体验版免费；专业版 ¥9.9 / 组 / 学期，组里谁买都行，可 AA；组长带多个组买多组包 ¥19.9；团体购入版每人每门课 ¥5 / ¥4 / ¥3。</li>
-                  <li><span className="text-slate-900">商业模式</span>：每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组回本（录音全走实时转写约 {rt.breakEvenGroups} 组）。</li>
+                  <li><span className="text-slate-900">商业模式</span>：每个付费组边际贡献约 ¥{base.contribution.toFixed(2)}，约 {base.breakEvenGroups} 个付费组回本（3 小时录音全走实时转写约 {rt.breakEvenGroups} 组）。</li>
                   <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；每支小组由组里任何一个人或 AA 付钱，拍板的仍是这个组的组长；规模化后老师按课团体购入。</li>
                 </ul>
                 <p className="mt-2 text-xs text-slate-400">付费率、固定成本、用量是假设，敏感度见成本看板。</p>
@@ -152,7 +152,7 @@ export default function LandingPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
                   <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0</li>
-                  <li>108 个单元测试；每次模型调用都记账</li>
+                  <li>114 个单元测试；每次模型调用都记账</li>
                   <li>成功指标：北极星是每周确认的决定数</li>
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-4">

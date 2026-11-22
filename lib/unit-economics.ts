@@ -5,10 +5,10 @@
 import { PRICING, ASR_PRICE_PER_SECOND, ASR_PRICES } from '@/config/pricing';
 
 export interface EconInputs {
-  meetingsPerSemester: number; // 每组每学期开几次会（3 门课 × 8 次 = 24）
+  meetingsPerSemester: number; // 每组每学期开几次会（一门课约 8 次）
   meetingHours: number;        // 每次会多长（小时）
   qaPerSemester: number;       // 每组每学期问几次「问问上次」
-  recordedHours: number;       // 每组每学期有多少小时录音要我们转写（专业版含 10 小时）
+  recordedHours: number;       // 每组每学期有多少小时录音要我们转写（专业版单组含 3 小时）
   asrPerSecond: number;        // 转写单价：录音文件识别 0.00008 / 会议室实时转写（qwen3-asr-flash）0.00022
   pricePerSemester: number;    // 专业版定价（每组每学期）
   freeToPaid: number;          // 每 1 个付费组带着几个体验版小组（体验版也会产生模型成本）
@@ -43,6 +43,7 @@ export const BUNDLE: EconInputs = {
   qaPerSemester: 200,
   recordedHours: 9,
   pricePerSemester: 19.9,
+  freeToPaid: 12, // 3 个组 × 每组带 4 个体验版小组，和单组口径一致
 };
 
 // 服务器 / 数据库 / 推送摊销：原来按「一个组长三门课」估 2 元/学期，按单组算约 2/3 元（只用于展示单组毛利；单位经济里固定成本按月单列）
