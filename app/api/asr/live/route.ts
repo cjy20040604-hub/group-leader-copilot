@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { isMock, transcribeSegment } from '@/lib/llm';
 import { ASR_MAX_BYTES, ASR_MAX_SECONDS, base64Bytes } from '@/lib/live/asr-request';
+import { getPlan, recordSecondsUsed, canRecord } from '@/lib/plans';
+import { courseRoster } from '@/lib/membership';
 
 // 会议室实时转写：浏览器按静音切好一段 16kHz WAV（Base64）→ 百炼 ASR → 文字
 // 声音转文字只能靠模型（AI）；什么时候开录、哪段送去识别是规则（浏览器端 VAD，Auto）
@@ -17,13 +19,24 @@ export async function POST(req: NextRequest) {
   if (base64Bytes(audio) > ASR_MAX_BYTES || seconds > ASR_MAX_SECONDS) {
     return NextResponse.json({ error: '单段音频超过 10 MB 或 5 分钟' }, { status: 413 });
   }
-  // 识别上下文：课程名 + 花名册（人名、别名），提高「浩然」「ER 图」这类词的识别率
-  const course = body.courseId ? db.select().from(schema.courses).where(eq(schema.courses.id, body.courseId)).get() : null;
-  const members = db.select().from(schema.members).all();
-  const names = members.flatMap((m) => [m.name, ...(JSON.parse(m.aliasesJson) as string[])]);
-  const context = `这是一场大学小组作业讨论会${course ? `，课程：${course.name}` : ''}。参会人：${names.join('、')}。`;
+  // 录音额度：体验版不含录音转写；专业版每组每学期 3 小时（已确认的会 + 这场还没结束的会一起算）
+  const courseId = String(body.courseId ?? '');
+  const sessionId = typeof body.sessionId === 'string' ? body.sessionId : null;
+  const sessionSeconds = sessionId ? db.select().from(schema.usageLog).all().filter((l) => l.feature === 'asr' && l.meetingId === sessionId).reduce((a, l) => a + (l.audioSeconds ?? 0), 0) : 0;
+  const allowed = canRecord(getPlan(courseId).tier, recordSecondsUsed(courseId) + sessionSeconds, seconds);
+  if (!allowed.ok) return NextResponse.json({ error: allowed.reason, code: 'quota' }, { status: 402 });
+
+  // 识别上下文：课程名 + 本组名单（人名、别名）+ 本课常用词（任务名、决议），提高「浩然」「ER 图」这类词的识别率
+  // 2026-11-21 真实联调里「ER 图」被识别成「样图」，就是上下文里缺了领域词
+  const course = courseId ? db.select().from(schema.courses).where(eq(schema.courses.id, courseId)).get() : null;
+  const names = (courseId ? courseRoster(courseId) : []).flatMap((m) => [m.name, ...m.aliases]);
+  const terms = courseId ? [...new Set([
+    ...db.select().from(schema.tasks).where(eq(schema.tasks.courseId, courseId)).all().map((t) => t.title),
+    ...db.select().from(schema.memoryItems).where(eq(schema.memoryItems.courseId, courseId)).all().filter((m) => m.type === 'decision').map((m) => m.text),
+  ])].join('；').slice(0, 300) : '';
+  const context = `这是一场大学小组作业讨论会${course ? `，课程：${course.name}` : ''}。参会人：${names.join('、')}。${terms ? `这门课常说的词：${terms}。` : ''}`;
   try {
-    const r = await transcribeSegment(audio, seconds, { context, meetingId: typeof body.sessionId === 'string' ? body.sessionId : null });
+    const r = await transcribeSegment(audio, seconds, { context, meetingId: sessionId });
     return NextResponse.json(r);
   } catch (e) {
     return NextResponse.json({ error: `转写失败：${(e as Error).message}` }, { status: 502 });

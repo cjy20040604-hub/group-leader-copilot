@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDemoNowISO } from '@/lib/time';
 import { CourseTabs } from '@/components/course-tabs';
 import { roleIn, courseRoster } from '@/lib/membership';
+import { quotaNote } from '@/lib/plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,7 @@ export default async function CoursePage({ params }: { params: Promise<{ courseI
       members={members.map((m) => ({ id: m.id, name: m.name, role: m.role }))}
       currentUserId={user.id}
       isLeader={role === 'leader'}
+      planNote={quotaNote(courseId)}
       demoNow={getDemoNowISO()}
     />
   );

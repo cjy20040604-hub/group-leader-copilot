@@ -23,13 +23,14 @@ const COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: 'done', label: '已完成' },
 ];
 
-export function CourseTabs({ course, meetings, tasks, members, currentUserId, isLeader, demoNow }: {
+export function CourseTabs({ course, meetings, tasks, members, currentUserId, isLeader, demoNow, planNote }: {
   course: { id: string; name: string; color: string };
   meetings: MeetingRow[];
   tasks: TaskRow[];
   members: MemberRow[];
   currentUserId: string;
   isLeader: boolean;
+  planNote?: string;
   demoNow: string;
 }) {
   const [tab, setTab] = useState<'minutes' | 'kanban' | 'ask'>('kanban');
@@ -64,6 +65,7 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
       <div className="flex flex-wrap items-center gap-3">
         <span className="h-3 w-3 rounded-full" style={{ background: course.color }} aria-hidden />
         <h1 className="text-2xl font-medium tracking-tight text-slate-900 sm:text-[28px]">{course.name}</h1>
+        {planNote && <span className="text-xs text-slate-500">{planNote}</span>}
         <div className="ml-auto"><BriefingButton courseId={course.id} /></div>
       </div>
 

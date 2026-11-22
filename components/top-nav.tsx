@@ -2,9 +2,9 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect } from 'react';
 import { Badge, Select, cx } from '@/components/ui';
 import { MicIcon } from '@/components/icons';
+import { ReminderNotifier } from '@/components/reminder-notifier';
 
 interface Props {
   members: { id: string; name: string; role: string }[];
@@ -27,15 +27,6 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
   const router = useRouter();
   const pathname = usePathname();
   const current = members.find((m) => m.id === currentUserId);
-
-  useEffect(() => {
-    const timer = setInterval(async () => {
-      const res = await fetch('/api/reminders/scan', { method: 'POST' });
-      const data = await res.json();
-      if (data.created > 0) router.refresh();
-    }, 60000);
-    return () => clearInterval(timer);
-  }, [router]);
 
   async function switchUser(id: string) {
     await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ current_user: id }) });
@@ -74,6 +65,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
           <span className="tabular-nums">演示时间 {demoNow.slice(0, 16).replace('T', ' ')}</span>
           {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><span className="rounded px-1.5 py-px text-slate-600 ring-1 ring-inset ring-slate-300">离线演示</span></span>}
           {reminderCount > 0 && <Link href="/app/tasks" className="text-red-600 hover:underline">{reminderCount} 条提醒待处理</Link>}
+          <ReminderNotifier userId={currentUserId} />
           <label className="ml-auto flex items-center gap-1.5">
             身份
             <Select value={currentUserId} onChange={(e) => switchUser(e.target.value)} aria-label="切换身份" className="py-1 pl-2 pr-7 text-xs">

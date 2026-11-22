@@ -145,7 +145,7 @@ export default function LandingPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
                   <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0</li>
-                  <li>114 个单元测试；每次模型调用都记账</li>
+                  <li>117 个单元测试；每次模型调用都记账</li>
                   <li>成功指标：北极星是每周确认的决定数</li>
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-4">

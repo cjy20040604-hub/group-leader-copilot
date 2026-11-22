@@ -20,6 +20,7 @@ interface Props {
   courses: { id: string; name: string }[];
   rosters: Record<string, { id: string; name: string }[]>; // 每门课的小组名单：负责人下拉只列本组的人
   people?: { id: string; name: string }[];
+  quotaNotes?: Record<string, string>; // 每门课的套餐额度说明（体验版还剩几次）
   defaultDate: string;
   live?: LiveDraft | null; // 会议室结束后带过来的转写：自动开始整理，组长只需确认
   canCreateCourse?: boolean;
@@ -27,7 +28,7 @@ interface Props {
 
 type Phase = 'input' | 'processing' | 'confirm' | 'done';
 
-export function PipelineWizard({ courses: initialCourses, rosters, people, defaultDate, live, canCreateCourse = false }: Props) {
+export function PipelineWizard({ courses: initialCourses, rosters, people, defaultDate, live, canCreateCourse = false, quotaNotes = {} }: Props) {
   const [courses, setCourses] = useState(initialCourses);
   const [phase, setPhase] = useState<Phase>(live ? 'processing' : 'input');
   const [courseId, setCourseId] = useState(live?.courseId ?? courses[0]?.id ?? '');
@@ -143,6 +144,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
     setGroupMessage(data.groupMessage);
     setMeetingId(data.meetingId);
     setPhase('done');
+    window.dispatchEvent(new Event('reminders:check')); // 新任务马上就到期的，立刻弹提醒
   }
 
   async function copyMessage() {
@@ -185,6 +187,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
                 <CoursePicker courses={courses} value={courseId} onChange={setCourseId} canCreate={canCreateCourse} people={people} className="w-full"
                   onCourseCreated={(c) => setCourses((prev) => [...prev, c])} />
               </div>
+              {quotaNotes[courseId] && <p className="mt-1.5 text-xs text-slate-500">{quotaNotes[courseId]}</p>}
             </div>
             <label className="text-xs text-slate-500">会议日期
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />

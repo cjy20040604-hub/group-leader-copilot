@@ -3,6 +3,7 @@ import { getDemoNow, dateOnly, toLocalISO, getSetting } from '@/lib/time';
 import { PipelineWizard, type LiveDraft } from '@/components/pipeline-wizard';
 import { getCurrentUser } from '@/lib/auth';
 import { ledCourseIds, rosterByCourse } from '@/lib/membership';
+import { quotaNote } from '@/lib/plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ export default async function NewMeetingPage({ searchParams }: { searchParams: P
       courses={courses.map((c) => ({ id: c.id, name: c.name }))}
       rosters={Object.fromEntries(Object.entries(rosters).map(([k, v]) => [k, v.map((m) => ({ id: m.id, name: m.name }))]))}
       people={people}
+      quotaNotes={Object.fromEntries(courses.map((c) => [c.id, quotaNote(c.id)]))}
       defaultDate={dateOnly(toLocalISO(getDemoNow()))}
       live={live}
       canCreateCourse

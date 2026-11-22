@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS metric_events;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS scheduled_meetings;
 DROP TABLE IF EXISTS course_members;
+DROP TABLE IF EXISTS course_plans;
 DROP TABLE IF EXISTS settings;
 
 CREATE TABLE courses (
@@ -123,6 +124,14 @@ CREATE TABLE course_members (
   member_id TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'member',
   PRIMARY KEY (course_id, member_id)
+);
+
+CREATE TABLE course_plans (
+  course_id TEXT PRIMARY KEY,
+  tier TEXT NOT NULL DEFAULT 'free',
+  payer_id TEXT,
+  split TEXT NOT NULL DEFAULT 'single',
+  started_at TEXT
 );
 
 CREATE TABLE scheduled_meetings (

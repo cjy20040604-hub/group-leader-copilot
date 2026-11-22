@@ -3,10 +3,13 @@ import { eq } from 'drizzle-orm';
 import { processMeeting } from '@/lib/pipeline';
 import { db, schema } from '@/lib/db/client';
 import { getSetting } from '@/lib/time';
+import { getPlan, meetingsUsed, canAddMeeting } from '@/lib/plans';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const quota = canAddMeeting(getPlan(String(body.courseId ?? '')).tier, meetingsUsed(String(body.courseId ?? '')));
+    if (!quota.ok) return NextResponse.json({ error: quota.reason, code: 'quota' }, { status: 402 });
     const draft = await processMeeting({
       courseId: body.courseId,
       date: body.date,

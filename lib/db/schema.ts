@@ -127,3 +127,12 @@ export const courseMembers = sqliteTable('course_members', {
   memberId: text('member_id').notNull(),
   role: text('role').notNull().default('member'), // leader | member
 });
+
+// 小组套餐：体验版 / 专业版（单组）/ 多组包；付款人可以是组里任何人，也可以 AA（付款人和拍板的组长分开）
+export const coursePlans = sqliteTable('course_plans', {
+  courseId: text('course_id').primaryKey(),
+  tier: text('tier').notNull().default('free'), // free | pro | bundle
+  payerId: text('payer_id'),
+  split: text('split').notNull().default('single'), // single | aa
+  startedAt: text('started_at'),
+});

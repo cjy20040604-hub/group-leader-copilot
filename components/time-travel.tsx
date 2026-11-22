@@ -16,6 +16,7 @@ export function TimeTravel({ demoNow }: { demoNow: string }) {
     if (res.ok) {
       setInfo(`当前虚拟时间：${data.demoNow.replace('T', ' ')}${data.remindersCreated ? `，新生成 ${data.remindersCreated} 条提醒` : ''}`);
       router.refresh();
+      window.dispatchEvent(new Event('reminders:check')); // 新提醒马上弹通知
     } else {
       setInfo(data.error ?? '操作失败');
     }

@@ -47,6 +47,7 @@ npm run typecheck  # tsc --noEmit
   - 延期申请 resolved=0 表示等组长回复；批准后改 DDL 并重建提醒
   - 老库由 `lib/db/client.ts` 启动时就地升级（加列、建表，不删数据）
 - `course_members(course_id, member_id, role)` — 小组成员按课程分开，角色按课算（同一个人可以在 A 课当组长、在 B 课当组员）。`lib/membership.ts` 提供 `roleIn / ledCourseIds / myCourseIds / courseRoster`；所有写操作按「你在这门课里的角色」鉴权（`canLead(courseId)`），页面只显示你所在的小组；整理纪要只和本组名单对人名，名字对得上别组的人时标「不在这个小组的名单里」不自动派；撞 DDL 时别组的任务只显示日期。老库启动时按原全局花名册补齐（`lib/db/client.ts`）
+- `course_plans(course_id, tier, payer_id, split, started_at)` — 小组套餐：free / pro / bundle，付款人可以是组里任何人或 AA；`lib/plans.ts` 按 BASELINE 的额度拦截：体验版每学期 3 次纪要、不含录音，专业版每组 3 小时录音（/api/meetings/process、/confirm、/api/asr/live）。实时转写上下文加了本组名单和本课任务、决议词
 - `scheduled_meetings(id, course_id, date, created_at)` — 首页「会议安排」：组长新建 / 删除（`/api/schedule`），确认纪要时按 next_meeting 自动加
 - `reminders(id, task_id, kind, fire_date, message, created_at)` — kind: `d3 | d1 | overdue`；按 (task_id, kind) 幂等
 - `usage_log(id, ts, model, input_tokens, output_tokens, audio_seconds, cost_cny, feature, meeting_id)`
@@ -111,7 +112,7 @@ npm run typecheck  # tsc --noEmit
 
 - 风险灯 `lib/risk.ts`：🔴 过期未完成 或 d≤1 且状态∉{待审核,已完成} 或 卡住且 d≤3（红灯规则先判，待认领的任务过期也是红）；🟡 待认领 或 卡住 或 d≤3 且 48h 未更新；🟢 其他。所有计算基于 `DEMO_NOW`（settings.demo_now）。
 - 任务 CRUD：`/api/tasks` POST / PATCH / DELETE，新建、改内容/DDL/负责人、删除只有组长能做；改 DDL 会删掉旧提醒按新日期重建。
-- 提醒扫描：POST /api/reminders/scan（页面每 60s 轮询代替服务端定时任务 + 时间快进/确认纪要/改任务后立即触发），D-3 / D-1 / 过期第一天各一条，文案按触发那天写；任务创建之前的触发日不补。页面只显示未完成任务的提醒，组员只看自己的。模板：「@{owner} {course} 的「{task}」{due_text}截止，目前状态：{status}，需要帮忙吗？」
+- 提醒扫描：POST /api/reminders/scan（GitHub Actions 每 5 分钟定时调用一次；页面每 60s、切页、回到标签页、时间快进 / 确认纪要后也会触发；`components/reminder-notifier.tsx` 比对 GET /api/reminders/feed，新提醒弹站内通知，用户允许后再弹浏览器系统通知），D-3 / D-1 / 过期第一天各一条，文案按触发那天写；任务创建之前的触发日不补。页面只显示未完成任务的提醒，组员只看自己的。模板：「@{owner} {course} 的「{task}」{due_text}截止，目前状态：{status}，需要帮忙吗？」
 - 时间快进：/app/settings「+1 天 / +3 天 / 重置」改 demo_now。
 
 ## 页面
@@ -122,7 +123,7 @@ npm run typecheck  # tsc --noEmit
 
 ## 测试策略
 
-node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 114 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）、钉钉 client 对本地模拟服务（`lib/dingtalk/client.test.ts`）、单位经济（`lib/unit-economics.test.ts`）、组员跨课负载（`lib/multi-course.test.ts`）、成功指标（`lib/metrics.test.ts`）、按课程分组员的人名匹配和组长判断（`lib/pipeline-validate.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
+node:test（`tsx --test` 运行，Node 22+ 内置，无额外依赖），共 117 例：风险灯（含卡住）、日期换算、人名匹配、规则抽取、RRF、证据闸门关键词、同一件事判断、任务流转（`lib/task-flow.test.ts`）、VAD/WAV/降采样（`lib/live/audio.test.ts`）、会中挑句与演示稿解析（`lib/live/cues.test.ts`）、ASR 请求体（`lib/live/asr-request.test.ts`）、麦克风出错引导（`lib/live/mic-permission.test.ts`）、钉钉转写转换（`lib/dingtalk/cloud-texts.test.ts`）、钉钉 client 对本地模拟服务（`lib/dingtalk/client.test.ts`）、单位经济（`lib/unit-economics.test.ts`）、组员跨课负载（`lib/multi-course.test.ts`）、成功指标（`lib/metrics.test.ts`）、按课程分组员的人名匹配和组长判断（`lib/pipeline-validate.test.ts`）、套餐额度（`lib/plans.test.ts`）。eval 脚本独立跑检索指标。每个里程碑结束跑 lint + typecheck + test。
 
 ## 边界
 

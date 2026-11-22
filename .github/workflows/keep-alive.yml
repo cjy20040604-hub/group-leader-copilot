@@ -12,3 +12,6 @@ jobs:
     steps:
       - name: Ping demo to prevent free-tier spin down
         run: curl -sS -m 90 -o /dev/null -w "HTTP %{http_code}\n" https://group-leader-copilot.onrender.com/
+      # 服务端定时扫描提醒：没人打开网页时也按 D-3 / D-1 / 过期当天生成提醒（扫描是幂等的，重复调用不会多生成）
+      - name: Scan DDL reminders on schedule
+        run: curl -sS -m 90 -X POST -o /dev/null -w "HTTP %{http_code}\n" https://group-leader-copilot.onrender.com/api/reminders/scan

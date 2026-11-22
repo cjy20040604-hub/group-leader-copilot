@@ -22,6 +22,7 @@ interface Props {
   courses: { id: string; name: string; color: string }[];
   rosters: Record<string, { id: string; name: string }[]>; // 每门课的小组名单（不同课的组员可以不一样）
   people?: { id: string; name: string }[];
+  quotaNotes?: Record<string, string>;
   initialCourse: string;
   today: string;
   mock: boolean;
@@ -527,6 +528,7 @@ export function LiveMeeting(props: Props) {
         </div>
 
         {source === 'demo' && <p className="text-xs text-slate-500">演示录音：逐句回放一场「市场营销学」组会，模拟实时转写，放完自动整理纪要。</p>}
+        {source === 'mic' && props.quotaNotes?.[courseId] && <p className="text-xs text-slate-500">{props.quotaNotes[courseId]}</p>}
         {!live && <p className="text-xs text-slate-500">已经在腾讯会议、飞书或钉钉开过了？<Link href="/app/meeting/new" className="text-brand-600 hover:underline">导入转写（粘贴文字稿 / 钉钉会议）→</Link></p>}
         {demoMismatch && (
           <p className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">

@@ -8,6 +8,7 @@ import { parseScript } from '@/lib/live/cues';
 import { LiveMeeting } from '@/components/live-meeting';
 import { getCurrentUser } from '@/lib/auth';
 import { ledCourseIds, rosterByCourse } from '@/lib/membership';
+import { quotaNote } from '@/lib/plans';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default async function LiveMeetingPage({ searchParams }: { searchParams: 
       courses={courses.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
       rosters={Object.fromEntries(Object.entries(rosters).map(([k, v]) => [k, v.map((m) => ({ id: m.id, name: m.name }))]))}
       people={people}
+      quotaNotes={Object.fromEntries(courses.map((c) => [c.id, quotaNote(c.id)]))}
       initialCourse={initialCourse}
       today={dateOnly(toLocalISO(now))}
       mock={isMock()}
