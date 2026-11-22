@@ -127,8 +127,8 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
       <TaskHead t={t} reminded={reminded} replyId={replyId} />
       {t.progressNote && <p className="mt-2 text-xs text-slate-600">我上次写的进度：「{t.progressNote}」</p>}
       {leaderSaid && (
-        <p className="mt-2 rounded-lg bg-blue-50 p-2 text-xs text-blue-800">
-          组长{leaderSaid.label}{leaderSaid.note ? `：${leaderSaid.note}` : ''} <span className="text-blue-500">· {when(leaderSaid.createdAt)}</span>
+        <p className="mt-2 rounded-lg bg-brand-50 p-2 text-xs text-brand-700">
+          组长{leaderSaid.label}{leaderSaid.note ? `：${leaderSaid.note}` : ''} <span className="text-brand-500">· {when(leaderSaid.createdAt)}</span>
         </p>
       )}
       {t.blocker && (
@@ -137,7 +137,7 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
           <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(t.id, { type: 'unblock' })}>已解决</Button>
         </div>
       )}
-      {t.pending && <p className="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
+      {t.pending && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
 
       {t.status === 'awaiting_review' ? (
         <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
@@ -239,7 +239,7 @@ function CourseReviewCard({ r }: { r: CourseReview }) {
       </div>
       {r.doneSince.length > 0 && <p className="text-xs text-slate-600">上次会后做完：{r.doneSince.map((t) => `${t.ownerName}「${t.title}」`).join('、')}</p>}
       <div>
-        <p className="mb-1 text-xs font-semibold text-slate-600">带到下次会（{r.carry.length}）</p>
+        <p className="mb-1 text-xs font-medium text-slate-600">带到下次会（{r.carry.length}）</p>
         {r.carry.length === 0 ? <p className="text-xs text-slate-400">没有遗留，下次会可以直接推进新议题</p> : (
           <ul className="space-y-1">
             {r.carry.map((c, i) => (
@@ -274,7 +274,7 @@ export function TaskReview(props: Props) {
             mine.map((t) => <MyTaskCard key={t.id} t={t} today={today} reminded={reminded.has(t.id)} replyId={props.reminderLinks?.[t.id]} act={act} busy={busy} />)}
         </section>
         <section aria-label="没人认领" className="space-y-2">
-          <h2 className="text-[15px] font-semibold text-slate-900">还没人认领（{unclaimed.length}）<span className="ml-2 text-xs font-normal text-slate-400">会上说了「那个谁」的事，谁有空谁拿</span></h2>
+          <h2 className="text-[15px] font-medium text-slate-900">还没人认领（{unclaimed.length}）<span className="ml-2 text-xs font-normal text-slate-400">会上说了「那个谁」的事，谁有空谁拿</span></h2>
           {unclaimed.length === 0 ? <p className="text-xs text-slate-400">都有人负责了</p> : unclaimed.map((t) => (
             <Card key={t.id} className="flex flex-wrap items-center gap-2 p-3">
               <div className="min-w-0 flex-1"><TaskHead t={t} /></div>
@@ -284,13 +284,13 @@ export function TaskReview(props: Props) {
         </section>
         <div className="grid gap-6 md:grid-cols-2">
           <section aria-label="我做完的">
-            <h2 className="mb-2 text-[15px] font-semibold text-slate-900">我做完的（{doneMine.length}）</h2>
+            <h2 className="mb-2 text-[15px] font-medium text-slate-900">我做完的（{doneMine.length}）</h2>
             {doneMine.length === 0 ? <p className="text-xs text-slate-400">还没有</p> : (
               <ul className="space-y-1">{doneMine.slice(0, 5).map((t) => <li key={t.id} className="text-xs text-slate-600">{t.courseName} ·「{t.title}」</li>)}</ul>
             )}
           </section>
           <section aria-label="我的任务动态">
-            <h2 className="mb-2 text-[15px] font-semibold text-slate-900">我的任务动态</h2>
+            <h2 className="mb-2 text-[15px] font-medium text-slate-900">我的任务动态</h2>
             <FeedList feed={feed} empty="还没有动态" />
           </section>
         </div>
@@ -306,7 +306,7 @@ export function TaskReview(props: Props) {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <h2 className="text-[15px] font-semibold text-slate-900">待我处理 <span className="tabular-nums text-slate-400">{inbox.total}</span></h2>
+          <h2 className="text-[15px] font-medium text-slate-900">待我处理 <span className="tabular-nums text-slate-400">{inbox.total}</span></h2>
           {inbox.total === 0 && <EmptyState title="没有要你处理的事" hint="组员都在按计划推进" />}
           <InboxSection title="等你确认完成" hint="点了「做完了」，等你确认" items={inbox.review}>{(t) => <ReviewActions t={t} act={act} busy={busy} />}</InboxSection>
           <InboxSection title="延期申请" hint="同意就自动改 DDL" items={inbox.extensions}>{(t) => <ExtensionActions t={t} act={act} busy={busy} />}</InboxSection>
@@ -339,14 +339,14 @@ export function TaskReview(props: Props) {
         </div>
 
         <aside aria-label="组员动态" className="space-y-2">
-          <h2 className="text-[15px] font-semibold text-slate-900">组员动态</h2>
+          <h2 className="text-[15px] font-medium text-slate-900">组员动态</h2>
           <Card className="p-4"><FeedList feed={feed.filter((f) => nameOf(f.actorId) !== props.user.name || f.kind !== 'created')} empty="组员还没有更新" /></Card>
         </aside>
       </div>
 
       <section aria-label="回顾" className="space-y-3">
         <div>
-          <h2 className="text-[15px] font-semibold text-slate-900">带到下次会</h2>
+          <h2 className="text-[15px] font-medium text-slate-900">带到下次会</h2>
           <p className="mt-1 text-xs text-slate-500">只列有遗留的课；规则自动汇总，不调模型。</p>
         </div>
         {reviews.some((r) => r.carry.length > 0) ? (

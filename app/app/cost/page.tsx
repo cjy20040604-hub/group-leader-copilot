@@ -71,7 +71,7 @@ export default function CostPage() {
     <div className="mx-auto max-w-4xl pb-10">
       {/* 开头先给结论，再给「专业版 9.9 元拆开看」 */}
       <header className="pt-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">成本与商业模式</h1>
+        <h1 className="text-3xl font-medium tracking-tight text-slate-900">成本与商业模式</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
           计价单位是一门课的一支小组（不同课的组员可以不一样）。一支小组一学期成本约 <Num>{yuan(groupCost)}</Num>，专业版定价 <Num>{price} 元</Num>；
           算上免费小组和固定成本，<Num>{base.breakEvenGroups} 个付费组</Num>回本。
@@ -95,7 +95,7 @@ export default function CostPage() {
               <dt className="flex items-center gap-2 text-xs text-slate-500">
                 <span className={cx('h-2 w-2 rounded-full', a.tone)} aria-hidden />{a.label}
               </dt>
-              <dd className={cx('mt-1 text-xl font-semibold tabular-nums tracking-tight', a.label === '毛利' ? 'text-brand-700' : 'text-slate-900')}>{yuan(a.value)}</dd>
+              <dd className={cx('mt-1 text-xl font-medium tabular-nums tracking-tight', a.label === '毛利' ? 'text-brand-700' : 'text-slate-900')}>{yuan(a.value)}</dd>
               <dd className="text-xs text-slate-400">{a.note}</dd>
             </div>
           ))}
@@ -220,14 +220,14 @@ export default function CostPage() {
 }
 
 function Num({ children }: { children: React.ReactNode }) {
-  return <span className="whitespace-nowrap font-semibold tabular-nums text-slate-900">{children}</span>;
+  return <span className="whitespace-nowrap font-medium tabular-nums text-slate-900">{children}</span>;
 }
 
 function Step({ n, title, note, children }: { n: number; title: string; note?: string; children: React.ReactNode }) {
   return (
     <li className="relative" aria-label={title}>
-      <span className="absolute -left-[45px] top-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-sm font-semibold tabular-nums text-slate-900 ring-1 ring-slate-300">{n}</span>
-      <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
+      <span className="absolute -left-[46px] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-sm font-medium tabular-nums text-slate-900 ring-1 ring-slate-300">{n}</span>
+      <h2 className="text-lg font-medium tracking-tight text-slate-900">{title}</h2>
       <div className="mt-4">{children}</div>
       {note && <p className="mt-3 max-w-2xl text-xs leading-relaxed text-slate-500">{note}</p>}
     </li>
@@ -239,7 +239,7 @@ function Tier({ name, price, unit, lines, featured }: { name: string; price: str
     <div className={cx('relative border-slate-100 p-5 [&:not(:first-child)]:border-t sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-t-0', featured && 'bg-brand-50/60')}>
       {featured && <span className="absolute inset-x-0 top-0 h-0.5 bg-brand-600" aria-hidden />}
       <p className={cx('text-sm', featured ? 'font-medium text-brand-700' : 'text-slate-500')}>{name}</p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{price}</p>
+      <p className="mt-2 text-2xl font-medium tabular-nums tracking-tight text-slate-900">{price}</p>
       {unit && <p className="text-xs text-slate-400">{unit}</p>}
       <ul className="mt-4 space-y-1.5 text-sm text-slate-600">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
     </div>
@@ -249,7 +249,7 @@ function Tier({ name, price, unit, lines, featured }: { name: string; price: str
 function Metric({ value, label, sub, accent }: { value: string; label: string; sub: string; accent?: boolean }) {
   return (
     <div>
-      <p className={cx('text-3xl font-semibold tabular-nums tracking-tight', accent ? 'text-brand-700' : 'text-slate-900')}>{value}</p>
+      <p className={cx('text-3xl font-medium tabular-nums tracking-tight', accent ? 'text-brand-700' : 'text-slate-900')}>{value}</p>
       <p className="mt-1 text-sm text-slate-700">{label}</p>
       <p className="mt-1 text-xs leading-relaxed text-slate-400">{sub}</p>
     </div>

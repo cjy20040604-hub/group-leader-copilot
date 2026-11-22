@@ -57,7 +57,7 @@ export function UnitEconCalculator() {
         ].map(([title, value, hint]) => (
           <div key={title} className="rounded-lg bg-slate-50 p-2">
             <p className="text-[11px] text-slate-500">{title}</p>
-            <p className={`text-lg font-semibold ${title === '盈亏平衡' && value === '亏损' ? 'text-red-600' : ''}`}>{value}</p>
+            <p className={`text-lg font-medium ${title === '盈亏平衡' && value === '亏损' ? 'text-red-600' : ''}`}>{value}</p>
             <p className="text-[11px] text-slate-400">{hint}</p>
           </div>
         ))}

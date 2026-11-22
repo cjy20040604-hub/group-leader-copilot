@@ -21,7 +21,7 @@ export default async function CoursePage({ params }: { params: Promise<{ courseI
   if (!role) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <p className="text-lg font-semibold text-slate-900">你不在「{course.name}」这个小组</p>
+        <p className="text-lg font-medium text-slate-900">你不在「{course.name}」这个小组</p>
         <p className="mt-2 text-sm text-slate-500">请这个小组的组长在设置里把你加进来。</p>
       </div>
     );

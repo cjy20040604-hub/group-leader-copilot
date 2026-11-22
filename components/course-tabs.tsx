@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Card, Select, Input, cx, EmptyState, RiskDot } from '@/components/ui';
+import { PlusIcon } from '@/components/icons';
 import { AskPanel } from '@/components/ask-panel';
 import { BriefingButton } from '@/components/briefing-button';
 import { riskLevel, taskDueText, type TaskStatus } from '@/lib/risk';
@@ -62,7 +63,7 @@ export function CourseTabs({ course, meetings, tasks, members, currentUserId, is
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <span className="h-3 w-3 rounded-full" style={{ background: course.color }} aria-hidden />
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px]">{course.name}</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-slate-900 sm:text-[28px]">{course.name}</h1>
         <div className="ml-auto"><BriefingButton courseId={course.id} /></div>
       </div>
 
@@ -167,7 +168,7 @@ function NewTaskForm({ members, onCreate }: { members: MemberRow[]; onCreate: (t
   const [title, setTitle] = useState('');
   const [ownerId, setOwnerId] = useState('');
   const [dueDate, setDueDate] = useState('');
-  if (!open) return <Button size="sm" variant="outline" className="mb-3" onClick={() => setOpen(true)}>+ 新建任务</Button>;
+  if (!open) return <Button size="sm" variant="outline" className="mb-3" onClick={() => setOpen(true)}><PlusIcon />新建任务</Button>;
   return (
     <Card className="mb-3 flex flex-wrap items-center gap-2 p-2">
       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="要做什么" className="min-w-48 flex-1 text-xs" aria-label="新任务内容" />

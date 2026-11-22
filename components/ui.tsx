@@ -89,7 +89,7 @@ export function PageHeader({ title, lede, actions, children }: { title: React.Re
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px]">{title}</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-slate-900 sm:text-[28px]">{title}</h1>
         {lede && <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-slate-600">{lede}</p>}
         {children}
       </div>
@@ -102,7 +102,7 @@ export function PageHeader({ title, lede, actions, children }: { title: React.Re
 export function SectionTitle({ children, aside, className }: { children: React.ReactNode; aside?: React.ReactNode; className?: string }) {
   return (
     <div className={cx('mb-3 flex flex-wrap items-center justify-between gap-2', className)}>
-      <h2 className="text-[15px] font-semibold text-slate-900">{children}</h2>
+      <h2 className="text-[15px] font-medium text-slate-900">{children}</h2>
       {aside && <div className="flex flex-wrap items-center gap-2">{aside}</div>}
     </div>
   );
@@ -113,4 +113,23 @@ export function RiskDot({ level, className }: { level: 'red' | 'yellow' | 'green
   const tone = { red: 'bg-red-500 ring-red-500/20', yellow: 'bg-amber-400 ring-amber-400/25', green: 'bg-emerald-500 ring-emerald-500/20' }[level];
   const label = { red: '高风险', yellow: '要留意', green: '正常' }[level];
   return <span className={cx('inline-block h-2.5 w-2.5 shrink-0 rounded-full ring-4', tone, className)} role="img" aria-label={`风险：${label}`} title={label} />;
+}
+
+// 标志性细节：纪要条目的种类标记。全站同一套形状和颜色——决定 / 待办 / 待定 / 分歧 / 议题 / 原文
+const KIND: Record<string, { label: string; cls: string }> = {
+  decision: { label: '决定', cls: 'bg-brand-50 text-brand-700 ring-brand-600/25' },
+  action: { label: '待办', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-600/25' },
+  open_question: { label: '待定', cls: 'bg-amber-50 text-amber-800 ring-amber-600/30' },
+  disagreement: { label: '分歧', cls: 'bg-rose-50 text-rose-700 ring-rose-600/25' },
+  topic_summary: { label: '议题', cls: 'bg-slate-50 text-slate-600 ring-slate-400/40' },
+  transcript: { label: '原文', cls: 'bg-slate-50 text-slate-600 ring-slate-400/40' },
+};
+export function KindTag({ kind, className }: { kind: string; className?: string }) {
+  const k = KIND[kind] ?? { label: kind, cls: 'bg-slate-50 text-slate-600 ring-slate-400/40' };
+  return <span className={cx('inline-flex shrink-0 items-center rounded px-1.5 py-px text-[11px] font-medium ring-1 ring-inset', k.cls, className)}>{k.label}</span>;
+}
+
+// 原话：一律用「」引用，次要文字色
+export function Quote({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <span className={cx('text-slate-500', className)}>「{children}」</span>;
 }

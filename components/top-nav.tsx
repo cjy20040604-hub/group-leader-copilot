@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { Badge, Select, cx } from '@/components/ui';
+import { MicIcon } from '@/components/icons';
 
 interface Props {
   members: { id: string; name: string; role: string }[];
@@ -44,8 +45,8 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3 lg:h-14 lg:flex-nowrap lg:py-0">
-        <Link href="/app" className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-slate-900">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-bold text-white" aria-hidden>减</span>
+        <Link href="/app" className="flex shrink-0 items-center gap-2 text-[15px] font-medium tracking-tight text-slate-900">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-semibold text-white" aria-hidden>减</span>
           组长减负
         </Link>
         <nav className="order-last -mx-4 flex w-full gap-1 overflow-x-auto px-4 lg:order-none lg:mx-0 lg:w-auto lg:px-0" aria-label="主导航">
@@ -53,7 +54,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
             const active = pathname === n.href;
             return (
               <Link key={n.href} href={n.href} aria-current={active ? 'page' : undefined}
-                className={cx('relative whitespace-nowrap px-2.5 py-3 text-sm transition-colors lg:py-[18px]', active ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900')}>
+                className={cx('relative flex items-center whitespace-nowrap px-2.5 py-3 text-sm transition-colors lg:h-14 lg:py-0', active ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900')}>
                 {n.label}
                 {active && <span className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-brand-600" aria-hidden />}
               </Link>
@@ -63,7 +64,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
         <div className="ml-auto flex items-center gap-2">
           <Link href="/app/meeting/new" className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">导入转写</Link>
           <Link href="/app/meeting/live" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">
-            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" /><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15" strokeLinecap="round" /></svg>
+            <MicIcon />
             开会
           </Link>
         </div>
@@ -71,7 +72,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
       <div className="border-t border-slate-100 bg-slate-50/60">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-xs text-slate-500">
           <span className="tabular-nums">演示时间 {demoNow.slice(0, 16).replace('T', ' ')}</span>
-          {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><Badge tone="yellow">离线演示</Badge></span>}
+          {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><span className="rounded px-1.5 py-px text-slate-600 ring-1 ring-inset ring-slate-300">离线演示</span></span>}
           {reminderCount > 0 && <Link href="/app/tasks" className="text-red-600 hover:underline">{reminderCount} 条提醒待处理</Link>}
           <label className="ml-auto flex items-center gap-1.5">
             身份

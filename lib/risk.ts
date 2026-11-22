@@ -46,10 +46,11 @@ export function taskDueText(task: { dueDate: string | null; status: string }, no
 export function dueText(dueDate: string | null, now: Date): string {
   if (!dueDate) return '日期待定';
   const d = daysUntilDue(dueDate, now);
-  if (d < 0) return `已过期 ${-d} 天（${dueDate}）`;
+  const md = `${Number(dueDate.slice(5, 7))}/${Number(dueDate.slice(8, 10))}`; // 全站日期一个格式：11/21
+  if (d < 0) return `已过期 ${-d} 天（${md}）`;
   if (d === 0) return '今天截止';
   if (d === 1) return '明天截止';
-  return `${d} 天后截止（${dueDate}）`;
+  return `${d} 天后截止（${md}）`;
 }
 
 // 催办文案：模板优先，不花钱

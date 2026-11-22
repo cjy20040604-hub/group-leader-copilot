@@ -28,8 +28,8 @@ export function ReminderReply({ reminderId, ownerName, done, awaiting, minDate, 
   }
 
   if (!ownerName) return <p className="text-sm text-slate-600">这个任务还没人认领。<a href="/app/tasks" className="text-brand-600 underline">去认领</a></p>;
-  if (done) return <p className="text-sm text-green-700">已经完成了，不用再回复。</p>;
-  if (sent) return <p className="rounded-lg bg-green-50 p-3 text-sm text-green-800">已告诉组长：{sent}。<a href="/app/tasks" className="ml-1 underline">看我的全部待办</a></p>;
+  if (done) return <p className="text-sm text-emerald-700">已经完成了，不用再回复。</p>;
+  if (sent) return <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">已告诉组长：{sent}。<a href="/app/tasks" className="ml-1 underline">看我的全部待办</a></p>;
   return (
     <div className="space-y-2">
       {responded && <p className="text-xs text-slate-500">上次回复：{responded}</p>}

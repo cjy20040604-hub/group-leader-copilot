@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx, PageHeader } from '@/components/ui';
+import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx, PageHeader, KindTag } from '@/components/ui';
+import { PlusIcon, XIcon, CheckIcon } from '@/components/icons';
 import type { Draft, ValidatedAction } from '@/lib/pipeline';
 import { CoursePicker } from '@/components/course-picker';
 
@@ -199,9 +200,9 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
               <Button variant="outline" onClick={checkDuplicate}>检测重复</Button>
             </div>
             {duplicates.map((d) => (
-              <p key={d.memoryId} className="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
+              <p key={d.memoryId} className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
                 这个在 {d.meetingDate.slice(5).replace('-', '/')} 已经定了：{d.text}。还要重新讨论吗？
-                <span className="block text-[11px] text-yellow-700">向量相似度 {(d.similarity * 100).toFixed(0)}% · 对上的词：{d.matched || '—'}</span>
+                <span className="block text-[11px] text-amber-700">向量相似度 {(d.similarity * 100).toFixed(0)}% · 对上的词：{d.matched || '—'}</span>
               </p>
             ))}
             {dupChecked && dupChecked === agenda.trim() && duplicates.length === 0 && (
@@ -231,7 +232,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
               </div>
             )}
             <Textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={12} className="mt-2 text-sm leading-relaxed" placeholder="林晓：人到齐了，我们开始……" />
-            {asrNote && <p className="mt-1 text-xs text-yellow-700">{asrNote}</p>}
+            {asrNote && <p className="mt-1 text-xs text-amber-700">{asrNote}</p>}
           </div>
           <Button onClick={process} disabled={!transcript.trim()}>开始整理</Button>
         </Card>
@@ -241,7 +242,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
       {(phase === 'confirm' || phase === 'done') && draft && (
         <Card className="space-y-3 p-5">
-          <p className="text-[15px] font-semibold text-slate-900">流水线耗时与花费</p>
+          <p className="text-[15px] font-medium text-slate-900">流水线耗时与花费</p>
           <div className="grid gap-1 md:grid-cols-2">
             {draft.steps.map((s) => (
               <div key={s.name} className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1 text-[11px]">
@@ -250,9 +251,9 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
               </div>
             ))}
           </div>
-          {draft.degraded && <p className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">抽取降级：模型两次都没输出合法 JSON，已改用规则抽取，漏掉的请在下面手动补</p>}
+          {draft.degraded && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">抽取降级：模型两次都没输出合法 JSON，已改用规则抽取，漏掉的请在下面手动补</p>}
           {!draft.degraded && draft.extractMode === 'rules' && (
-            <p className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">这段用规则抽取，可能漏抽，请逐条核对，缺的用「+ 添加」补上。</p>
+            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">这段用规则抽取，可能漏抽，请逐条核对，缺的用「+ 添加」补上。</p>
           )}
         </Card>
       )}
@@ -262,7 +263,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
           <div className="flex items-center gap-2"><AiBadge /><span className="text-xs text-slate-500">逐条勾选 / 修改，确认后才写入任务表与记忆库</span></div>
 
           <section>
-            <h2 className="mb-1 text-[15px] font-semibold text-slate-900">会议标题</h2>
+            <h2 className="mb-1 text-[15px] font-medium text-slate-900">会议标题</h2>
             <div className="flex items-center gap-2">
               <Input value={confirmTitle} onChange={(e) => setConfirmTitle(e.target.value)} className="text-xs" aria-label="会议标题" />
               {draft.titleSource === 'ai' && <AiBadge />}
@@ -273,15 +274,15 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
           </section>
 
           {draft.extraction.repeated_topics.length > 0 && (
-            <div className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
+            <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
               {draft.extraction.repeated_topics.map((r) => <p key={r.memory_id}>重复讨论：「{r.topic}」在历史决议 {r.memory_id} 中已有结论</p>)}
             </div>
           )}
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold text-slate-900">决议（{editDecisions.length}）</h2>
-              <Button size="sm" variant="ghost" onClick={() => setEditDecisions((prev) => [...prev, { text: '', evidence: '', confidence: 'high', supersedes_memory_id: null, note: null, checked: true, manual: true }])}>+ 添加决议</Button>
+              <h2 className="flex items-center gap-2 text-[15px] font-medium text-slate-900"><KindTag kind="decision" />决议 <span className="tabular-nums text-slate-400">{editDecisions.length}</span></h2>
+              <Button size="sm" variant="ghost" onClick={() => setEditDecisions((prev) => [...prev, { text: '', evidence: '', confidence: 'high', supersedes_memory_id: null, note: null, checked: true, manual: true }])}><PlusIcon />添加决议</Button>
             </div>
             {editDecisions.length === 0 && <p className="text-xs text-slate-400">无</p>}
             {editDecisions.map((d, i) => (
@@ -300,7 +301,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
                     if (!check.candidate) return null;
                     const c = check.candidate;
                     return (
-                      <label className="mt-1 flex items-start gap-1.5 rounded-md bg-yellow-50 p-1.5 text-[11px] text-yellow-900">
+                      <label className="mt-1 flex items-start gap-1.5 rounded-md bg-amber-50 p-1.5 text-[11px] text-amber-900">
                         <input type="checkbox" className="mt-0.5" checked={d.supersedes_memory_id === c.memoryId}
                           onChange={(e) => setEditDecisions((prev) => prev.map((x, j) => (j === i ? { ...x, supersedes_memory_id: e.target.checked ? c.memoryId : null } : x)))} />
                         <span>
@@ -311,20 +312,20 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
                     );
                   })()}
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => setEditDecisions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条决议">✕</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditDecisions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条决议"><XIcon /></Button>
               </div>
             ))}
           </section>
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold text-slate-900">待办（{editActions.length}）</h2>
-              <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => [...prev, blankAction()])}>+ 添加待办</Button>
+              <h2 className="flex items-center gap-2 text-[15px] font-medium text-slate-900"><KindTag kind="action" />待办 <span className="tabular-nums text-slate-400">{editActions.length}</span></h2>
+              <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => [...prev, blankAction()])}><PlusIcon />添加待办</Button>
             </div>
             {editActions.length === 0 && <p className="text-xs text-slate-400">无</p>}
             <div className="space-y-2">
               {editActions.map((a, i) => (
-                <div key={i} className={cx('rounded-lg border p-2', a.flags.length ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200')}>
+                <div key={i} className={cx('rounded-lg border p-2', a.flags.length ? 'border-amber-300 bg-amber-50' : 'border-slate-200')}>
                   <div className="grid gap-2 md:grid-cols-[1fr_130px_140px_auto]">
                     <Input value={a.task} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, task: e.target.value } : x)))} className="text-xs" aria-label="任务内容" placeholder="要做什么" />
                     <Select value={a.ownerId ?? ''} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, ownerId: e.target.value || null } : x)))} className="text-xs" aria-label="负责人">
@@ -332,7 +333,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
                       {(rosters[draft.courseId] ?? []).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </Select>
                     <Input type="date" value={a.dueDate ?? ''} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, dueDate: e.target.value || null } : x)))} className="text-xs" aria-label="截止日期" />
-                    <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条待办">✕</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条待办"><XIcon /></Button>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-500">
                     {a.manual ? <Badge tone="slate">手动添加</Badge> : <>原话指派：「{a.ownerRaw}」 · 原话日期：「{a.dueRaw ?? '无'}」</>}
@@ -345,7 +346,7 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
           {draft.extraction.disagreements.length > 0 && (
             <section>
-              <h2 className="mb-1 text-[15px] font-semibold text-slate-900">分歧（未达成一致）</h2>
+              <h2 className="mb-1 flex items-center gap-2 text-[15px] font-medium text-slate-900"><KindTag kind="disagreement" />分歧（未达成一致）</h2>
               {draft.extraction.disagreements.map((d, i) => (
                 <p key={i} className="text-xs text-slate-600">{d.topic}：{d.positions.join(' / ')}</p>
               ))}
@@ -354,13 +355,13 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold text-slate-900">待定问题</h2>
-              <Button size="sm" variant="ghost" onClick={() => setEditQuestions((prev) => [...prev, ''])}>+ 添加待定问题</Button>
+              <h2 className="flex items-center gap-2 text-[15px] font-medium text-slate-900"><KindTag kind="open_question" />待定问题</h2>
+              <Button size="sm" variant="ghost" onClick={() => setEditQuestions((prev) => [...prev, ''])}><PlusIcon />添加待定问题</Button>
             </div>
             {editQuestions.map((q, i) => (
               <div key={i} className="mb-1 flex gap-2">
                 <Input value={q} onChange={(e) => setEditQuestions((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))} className="text-xs" aria-label="待定问题" placeholder="下次要讨论的问题" />
-                <Button size="sm" variant="ghost" onClick={() => setEditQuestions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条待定问题">✕</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditQuestions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条待定问题"><XIcon /></Button>
               </div>
             ))}
             {editQuestions.length === 0 && <p className="text-xs text-slate-400">无</p>}
@@ -368,13 +369,16 @@ export function PipelineWizard({ courses: initialCourses, rosters, people, defau
 
           {draft.extraction.next_meeting && <p className="text-xs text-slate-500">下次会议：{draft.extraction.next_meeting}</p>}
 
-          <Button onClick={confirm}>✔ 确认并落库（写入任务 + 记忆库 + 提醒）</Button>
+          <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+            <Button onClick={confirm}><CheckIcon />确认并保存</Button>
+            <span className="text-xs text-slate-500">写入任务和记忆库，并按 DDL 排好提醒</span>
+          </div>
         </Card>
       )}
 
       {phase === 'done' && (
         <Card className="space-y-3 p-4">
-          <p className="text-sm font-semibold text-green-700">已落库：任务上看板、决议进记忆库、提醒规则已挂载</p>
+          <p className="text-sm font-medium text-emerald-700">已落库：任务上看板、决议进记忆库、提醒规则已挂载</p>
           <Textarea readOnly value={groupMessage} rows={14} className="font-mono text-xs" aria-label="群消息文本" />
           <div className="flex gap-2">
             <Button onClick={copyMessage}>{copied ? '已复制' : '一键复制群消息'}</Button>

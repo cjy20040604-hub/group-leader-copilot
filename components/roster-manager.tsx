@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Input, Select, cx } from '@/components/ui';
+import { PlusIcon } from '@/components/icons';
 
 interface Member { id: string; name: string; aliasesJson: string }
 interface Course { id: string; name: string; color: string }
@@ -125,7 +126,7 @@ export function RosterManager({ members, courses, memberships, ledCourseIds, cur
       )}
       {canManage && !adding && (
         <div className="border-t border-slate-100 px-4 py-3">
-          <Button size="sm" variant="outline" onClick={() => { setAdding(true); setEditingId(null); }}>+ 添加成员</Button>
+          <Button size="sm" variant="outline" onClick={() => { setAdding(true); setEditingId(null); }}><PlusIcon />添加成员</Button>
         </div>
       )}
       {error && <p className="px-4 pb-3 text-xs text-red-600">{error}</p>}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, Badge, AiBadge, Input, EmptyState } from '@/components/ui';
+import { Button, Card, Badge, AiBadge, Input, EmptyState, KindTag } from '@/components/ui';
 
 interface CitationRow {
   id: string;
@@ -87,7 +87,7 @@ export function AskPanel({ courseId }: { courseId: string }) {
                 <Link key={c.id} href={`/app/meeting/${c.meetingId}?hl=${encodeURIComponent(c.evidence ?? '')}`} className="block">
                   <div className="rounded-lg border border-slate-200 px-3 py-2.5 transition-colors hover:border-slate-400">
                     <div className="flex items-center gap-2">
-                      <Badge tone="blue">[{c.meetingDate.slice(5).replace('-', '/')}·{TYPE_LABEL[c.type] ?? c.type}]</Badge>
+                      <KindTag kind={c.type} /><span className="text-xs tabular-nums text-slate-500">{Number(c.meetingDate.slice(5, 7))}/{Number(c.meetingDate.slice(8))}</span>
                       {c.status === 'superseded' && <Badge tone="slate">已被推翻</Badge>}
                       <span className="text-[11px] text-slate-400">{c.id}</span>
                     </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Card, Badge, Select, cx } from '@/components/ui';
+import { RecordIcon, PauseIcon, PlayIcon, FastIcon } from '@/components/icons';
 import { clock, type ScriptLine } from '@/lib/live/cues';
 import { VadSegmenter, downsample, encodeWav, toBase64, TARGET_RATE } from '@/lib/live/audio';
 import { describeMicError, detectBrowser, PERMISSION_LABEL, type MicHelp, type MicPermission } from '@/lib/live/mic-permission';
@@ -483,7 +484,7 @@ export function LiveMeeting(props: Props) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px]">会议室</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-slate-900 sm:text-[28px]">会议室</h1>
         {course && <span className="inline-flex items-center gap-1.5 text-sm text-slate-600"><span className="h-2.5 w-2.5 rounded-full" style={{ background: course.color }} aria-hidden />{course.name} · {md(props.today)}</span>}
       </div>
 
@@ -513,13 +514,13 @@ export function LiveMeeting(props: Props) {
             </span>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {phase === 'idle' && <Button onClick={startRecording} disabled={demoMismatch}>● 开始录音</Button>}
+            {phase === 'idle' && <Button onClick={startRecording} disabled={demoMismatch}><RecordIcon />开始录音</Button>}
             {phase === 'countdown' && <Button variant="outline" onClick={cancelCountdown}>先别录</Button>}
-            {phase === 'recording' && <Button variant="outline" onClick={pause}>⏸ 暂停</Button>}
-            {phase === 'paused' && <Button variant="outline" onClick={resume}>▶︎ 继续</Button>}
+            {phase === 'recording' && <Button variant="outline" onClick={pause}><PauseIcon />暂停</Button>}
+            {phase === 'paused' && <Button variant="outline" onClick={resume}><PlayIcon />继续</Button>}
             {phase === 'winding' && source === 'mic' && <Button variant="outline" onClick={keepRecording}>还在开，继续录</Button>}
             {source === 'demo' && (phase === 'recording' || phase === 'paused') && (
-              <Button variant="ghost" size="sm" onClick={() => setSpeed(speed === 1 ? 4 : 1)}>{speed === 1 ? '4 倍速' : '1 倍速'}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSpeed(speed === 1 ? 4 : 1)}><FastIcon />{speed === 1 ? '4 倍速' : '1 倍速'}</Button>
             )}
             {(phase === 'recording' || phase === 'paused' || phase === 'winding') && <Button onClick={() => void finish()}>结束会议，整理纪要</Button>}
           </div>
@@ -528,7 +529,7 @@ export function LiveMeeting(props: Props) {
         {source === 'demo' && <p className="text-xs text-slate-500">演示录音：逐句回放一场「市场营销学」组会，模拟实时转写，放完自动整理纪要。</p>}
         {!live && <p className="text-xs text-slate-500">已经在腾讯会议、飞书或钉钉开过了？<Link href="/app/meeting/new" className="text-brand-600 hover:underline">导入转写（粘贴文字稿 / 钉钉会议）→</Link></p>}
         {demoMismatch && (
-          <p className="flex flex-wrap items-center gap-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
+          <p className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
             演示录音是「市场营销学」的一场会，其他课程请切到麦克风。
             <Button size="sm" variant="outline" onClick={() => setCourseId(demoCourse)}>换成市场营销学</Button>
           </p>
@@ -537,7 +538,7 @@ export function LiveMeeting(props: Props) {
         {/* 状态：录音灯 + 音量 + 会议时间 */}
         <div className="flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 px-4 py-3">
           <span className={cx('h-2.5 w-2.5 rounded-full', phase === 'recording' ? 'animate-pulse bg-red-500' : phase === 'countdown' ? 'bg-amber-400' : 'bg-slate-300')} aria-hidden />
-          <span className="text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{clock(clockSec)}</span>
+          <span className="text-2xl font-medium tabular-nums tracking-tight text-slate-900">{clock(clockSec)}</span>
           <div className="flex h-7 items-end gap-0.5" aria-hidden>
             {Array.from({ length: 14 }, (_, i) => (
               <span key={i} className={cx('w-1 rounded-sm', speaking ? 'bg-brand-500' : 'bg-slate-300')}
@@ -556,12 +557,12 @@ export function LiveMeeting(props: Props) {
         )}
         {phase === 'winding' && source === 'demo' && <p className="rounded-lg bg-slate-100 p-2 text-xs text-slate-600">演示录音放完了，{wind} 秒后自动结束会议并进入纪要整理。</p>}
         {recording && (
-          <div className="space-y-2 rounded-lg bg-green-50 p-3 text-xs text-green-900">
+          <div className="space-y-2 rounded-lg bg-emerald-50 p-3 text-xs text-emerald-900">
             <p className="text-sm font-medium">录音已结束：时长 {clock(recording.seconds)}，有人说话 {recording.voiced} 秒（{recording.segments} 段）</p>
             <p>离线演示只录音、不转文字。下面是有人说话的部分。</p>
             <audio controls src={recording.url} className="w-full" />
             <div className="flex flex-wrap gap-2">
-              <a href={recording.url} download={`会议录音-${props.today}.wav`} className="rounded-lg border border-green-300 bg-white px-2.5 py-1 font-medium text-green-800 hover:bg-green-100">下载录音（WAV）</a>
+              <a href={recording.url} download={`会议录音-${props.today}.wav`} className="rounded-lg border border-emerald-300 bg-white px-2.5 py-1 font-medium text-emerald-800 hover:bg-emerald-100">下载录音（WAV）</a>
               <Button size="sm" variant="outline" onClick={() => { setRecording(null); setSource('demo'); setCourseId(demoCourse); }}>换演示录音，体验整理纪要</Button>
             </div>
           </div>
@@ -573,7 +574,7 @@ export function LiveMeeting(props: Props) {
         {/* 实时转写 */}
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-            <p className="text-[15px] font-semibold text-slate-900">实时转写</p>
+            <p className="text-[15px] font-medium text-slate-900">实时转写</p>
             {source === 'mic' && live && (
               <label className="text-xs text-slate-500">当前发言人
                 <Select value={speaker} onChange={(e) => setSpeaker(e.target.value)} className="ml-1 py-0.5 text-xs">
@@ -594,7 +595,7 @@ export function LiveMeeting(props: Props) {
                 <span className="mr-3 text-[11px] tabular-nums text-slate-400">{clock(l.at)}</span>
                 <span className="font-medium text-slate-900">{l.speaker}：</span>{l.text}
                 {l.hint && <span className="ml-2 text-xs font-medium text-amber-700">定过了</span>}
-                {l.audioUrl && <button className="ml-2 text-xs text-brand-600 hover:underline" onClick={() => void new Audio(l.audioUrl).play()}>▶ 回放</button>}
+                {l.audioUrl && <button className="ml-2 text-xs text-brand-600 hover:underline" onClick={() => void new Audio(l.audioUrl).play()}>回放</button>}
               </p>
             ))}
             {partial && (
@@ -609,7 +610,7 @@ export function LiveMeeting(props: Props) {
         <div className="space-y-4">
           {/* 会中提醒 */}
           <Card className="p-5">
-            <p className="text-[15px] font-semibold text-slate-900">会中提醒</p>
+            <p className="text-[15px] font-medium text-slate-900">会中提醒</p>
             {hints.length === 0 ? (
               <p className="mt-1 text-xs text-slate-400">有人提议改已经定过的事时，这里会提醒你，免得重复讨论。</p>
             ) : (
@@ -626,7 +627,7 @@ export function LiveMeeting(props: Props) {
 
           {/* 上次遗留 */}
           <Card className="p-5">
-            <p className="text-[15px] font-semibold text-slate-900">上次遗留，逐条过 <span className="tabular-nums text-slate-400">{carry.items.length}</span></p>
+            <p className="text-[15px] font-medium text-slate-900">上次遗留，逐条过 <span className="tabular-nums text-slate-400">{carry.items.length}</span></p>
             <p className="text-[11px] text-slate-400">{carry.lastMeeting ? `${md(carry.lastMeeting)} 那次会之后自动汇总` : '这门课还没开过会'}</p>
             {carry.items.length === 0 ? <p className="mt-2 text-xs text-slate-400">没有遗留</p> : (
               <ul className="mt-2 space-y-1.5">
@@ -643,7 +644,7 @@ export function LiveMeeting(props: Props) {
           </Card>
 
           <Card className="p-5 text-xs text-slate-600">
-            <p className="mb-2 text-[15px] font-semibold text-slate-900">这一页哪里用了 AI</p>
+            <p className="mb-2 text-[15px] font-medium text-slate-900">这一页哪里用了 AI</p>
             <ul className="space-y-1.5">
               <li><Badge tone="slate">规则</Badge> 麦克风先征得你同意，再由浏览器弹授权框</li>
               <li><Badge tone="slate">规则</Badge> 开录、静音暂停上传、没人说话自动结束</li>
@@ -658,7 +659,7 @@ export function LiveMeeting(props: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
           onKeyDown={(e) => { if (e.key === 'Escape' && !requesting) setConsentOpen(false); }}>
           <Card role="dialog" aria-modal="true" aria-labelledby="mic-consent-title" className="w-full max-w-md space-y-3 p-5">
-            <h2 id="mic-consent-title" className="text-base font-semibold">会议室要使用你电脑的麦克风</h2>
+            <h2 id="mic-consent-title" className="text-base font-medium">会议室要使用你电脑的麦克风</h2>
             {!micHelp ? (
               <>
                 <ul className="space-y-1.5 text-sm text-slate-600">

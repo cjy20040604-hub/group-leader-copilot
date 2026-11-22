@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Input, Select, SectionTitle } from '@/components/ui';
+import { PlusIcon } from '@/components/icons';
 
 type CourseOpt = { id: string; name: string; color: string };
 type MemberOpt = { id: string; name: string };
@@ -44,7 +45,7 @@ export function ScheduleCard({ courses, ledCourseIds, items, today }: {
 
   return (
     <section aria-label="会议安排">
-      <SectionTitle aside={isLeader && !open && <Button size="sm" variant="outline" onClick={() => setOpen(true)}>＋ 安排会议</Button>}>会议安排</SectionTitle>
+      <SectionTitle aside={isLeader && !open && <Button size="sm" variant="outline" onClick={() => setOpen(true)}><PlusIcon />安排会议</Button>}>会议安排</SectionTitle>
       <Card className="divide-y divide-slate-100">
         {open && (
           <div className="flex flex-wrap items-center gap-2 px-5 py-3">
@@ -84,7 +85,7 @@ export function QuickNewTask({ courses, rosters }: { courses: CourseOpt[]; roste
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
 
-  if (!open) return <Button size="sm" variant="outline" onClick={() => setOpen(true)}>＋ 新建任务</Button>;
+  if (!open) return <Button size="sm" variant="outline" onClick={() => setOpen(true)}><PlusIcon />新建任务</Button>;
   async function add() {
     setError('');
     try {

@@ -8,12 +8,22 @@
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
 }
 
+/* 原话高亮：像在纪要上用荧光笔划过一道，不用整块黄底 */
 mark {
-  @apply bg-yellow-200 text-yellow-900 rounded px-0.5;
+  @apply rounded-sm px-0.5 text-slate-900;
+  background: linear-gradient(transparent 55%, #fde68a 55%);
 }
-/* 成本看板：「19.9 元拆开看」进页面时从左往右展开一次 */
+
+/* 落地页首屏示意里的「笔记纸」：横线是纸张本身的纹理，不是装饰色 */
+.ruled {
+  background-color: #fdfcf9;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, #ebe6da 31px, #ebe6da 32px);
+}
+
+/* 成本看板：「专业版 9.9 元拆开看」进页面时从左往右展开一次 */
 @keyframes anatomy-grow {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }

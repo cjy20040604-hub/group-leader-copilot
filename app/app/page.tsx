@@ -62,7 +62,7 @@ export default function DashboardPage() {
         <Link href="/app/tasks" className="group block">
           <Card className="flex flex-wrap items-center gap-x-6 gap-y-3 p-5 transition-colors group-hover:border-brand-500">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{inbox.total}</span>
+              <span className="text-3xl font-medium tabular-nums tracking-tight text-slate-900">{inbox.total}</span>
               <span className="text-sm text-slate-600">件待我处理</span>
             </div>
             <div className="flex flex-1 flex-wrap gap-1.5">
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                 {top.progressNote ? `：「${top.progressNote}」` : ''}
               </p>
             </div>
-            <Badge tone="blue">{courseOf(top.courseId)?.name}</Badge>
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2 w-2 rounded-full" style={{ background: courseOf(top.courseId)?.color }} aria-hidden />{courseOf(top.courseId)?.name}</span>
             <Link href={`/app/c/${top.courseId}`} className="text-xs text-slate-500 hover:text-slate-900">看板</Link>
             {ledIds.includes(top.courseId) && <DeleteTaskButton id={top.id} title={top.title} />}
             {topReminder && <ReminderChip isLeader={isLeader}
@@ -128,9 +128,9 @@ export default function DashboardPage() {
                   <span className="absolute inset-x-0 top-0 h-1" style={{ background: c.color }} aria-hidden />
                   <p className="text-[15px] font-medium text-slate-900">{c.name}</p>
                   <dl className="mt-4 grid grid-cols-3 gap-2">
-                    <div><dt className="text-[11px] text-slate-400">纪要</dt><dd className="text-lg font-semibold tabular-nums text-slate-900">{cMeetings}</dd></div>
-                    <div><dt className="text-[11px] text-slate-400">未完成</dt><dd className="text-lg font-semibold tabular-nums text-slate-900">{cOpenTasks.length}</dd></div>
-                    <div><dt className="text-[11px] text-slate-400">带到下次会</dt><dd className="text-lg font-semibold tabular-nums text-slate-900">{cReview.carry.length}</dd></div>
+                    <div><dt className="text-[11px] text-slate-400">纪要</dt><dd className="text-lg font-medium tabular-nums text-slate-900">{cMeetings}</dd></div>
+                    <div><dt className="text-[11px] text-slate-400">未完成</dt><dd className="text-lg font-medium tabular-nums text-slate-900">{cOpenTasks.length}</dd></div>
+                    <div><dt className="text-[11px] text-slate-400">带到下次会</dt><dd className="text-lg font-medium tabular-nums text-slate-900">{cReview.carry.length}</dd></div>
                   </dl>
                   <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                     {reds > 0 && <span className="inline-flex items-center gap-1.5"><RiskDot level="red" />{reds}</span>}

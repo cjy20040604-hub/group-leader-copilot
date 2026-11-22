@@ -17,11 +17,11 @@ export default function MetricsPage() {
 
       <Card className="p-6">
         <p className="text-sm text-slate-500">北极星</p>
-        <p className="mt-0.5 text-[15px] font-semibold text-slate-900">每周确认的决定数</p>
+        <p className="mt-0.5 text-[15px] font-medium text-slate-900">每周确认的决定数</p>
         <div className="mt-3 flex items-end gap-4" aria-label="最近 4 周确认的决定数">
           {weeks.map((w) => (
             <div key={w.label} className="flex flex-1 flex-col items-center gap-1">
-              <span className="text-sm font-semibold tabular-nums text-slate-900">{w.total}</span>
+              <span className="text-sm font-medium tabular-nums text-slate-900">{w.total}</span>
               <div className="flex w-full max-w-16 flex-col-reverse overflow-hidden rounded-md bg-slate-100" style={{ height: 120 }}>
                 {w.byCourse.filter((c) => c.n > 0).map((c) => (
                   <div key={c.name} title={`${c.name} ${c.n} 条`} style={{ height: `${(c.n / max) * 100}%`, background: c.color }} />
@@ -40,10 +40,10 @@ export default function MetricsPage() {
         {metrics.map((m) => (
           <Card key={m.key} className="space-y-1.5 p-5" title={`为什么看它：${m.why}\n数据来源：${m.source}`}>
             <div className="flex items-center gap-2">
-              <p className="flex-1 text-sm font-semibold">{m.name}</p>
+              <p className="flex-1 text-sm font-medium">{m.name}</p>
               <Badge tone={STATUS[m.status].tone}>{STATUS[m.status].label}</Badge>
             </div>
-            <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{m.value}</p>
+            <p className="text-3xl font-medium tabular-nums tracking-tight text-slate-900">{m.value}</p>
             <p className="text-xs text-slate-500">目标：{m.target}{m.detail ? ` · ${m.detail}` : ''}</p>
             <p className="text-xs text-slate-600">{m.definition}</p>
           </Card>

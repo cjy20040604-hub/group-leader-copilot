@@ -24,7 +24,7 @@ export function ReminderCard({ r, isLeader }: { r: ReminderView; isLeader: boole
       <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
         <span className="flex-1">{KIND[r.kind] ?? r.kind} · {r.fireDate}</span>
         {r.response
-          ? <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700">✓ 已回复：{r.response}</span>
+          ? <span className="text-emerald-700">已回复：{r.response}</span>
           : <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">未回复</span>}
         {isLeader
           ? <button className="text-brand-600 hover:underline" onClick={async () => { await copyWithLink(r.message, r.id); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? '已复制' : '复制（带回复链接）'}</button>
@@ -41,7 +41,7 @@ export function ReminderChip({ r, isLeader }: { r: ReminderView; isLeader: boole
     <p className="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
       <span>{KIND[r.kind] ?? r.kind}</span>
       {r.response
-        ? <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700">✓ 已回复：{r.response}</span>
+        ? <span className="text-emerald-700">已回复：{r.response}</span>
         : <span className="rounded-full bg-slate-100 px-2 py-0.5">未回复</span>}
       {isLeader
         ? <button className="text-brand-600 hover:underline" onClick={async () => { await copyWithLink(r.message, r.id); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>{copied ? '已复制' : '复制提醒（带回复链接）'}</button>

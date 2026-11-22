@@ -81,7 +81,7 @@ export function CoursePicker({ courses, value, onChange, onCourseCreated, canCre
           onChange(e.target.value);
         }}>
         {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        {canCreate && <option value={NEW}>＋ 新建课程…</option>}
+        {canCreate && <option value={NEW}>新建课程…</option>}
       </Select>
       {creating && (
         <NewCourseForm people={people}
