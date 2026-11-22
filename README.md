@@ -15,7 +15,7 @@
 | Demo | 在线版（上方链接），首页「交付物一览」能找到下面所有入口 |
 | 为什么是这个组合 | [`docs/why-this-combo.md`](docs/why-this-combo.md)：一段话，加上和 5 种其他组合的对比 |
 | 产品流程，哪些环节用 AI、哪些不用 | [`docs/product-v2.md`](docs/product-v2.md)：定位、用户需求、每个环节用 AI 还是规则及理由 |
-| 单次服务成本、定价、商业模式、谁使用谁付钱 | [`docs/cost-model.md`](docs/cost-model.md)；在线版「成本看板」有敏感度表和计算器；真实接口实测见 [`docs/real-run-report.md`](docs/real-run-report.md) |
+| 单次服务成本、定价、商业模式、谁使用谁付钱 | [`docs/cost-model.md`](docs/cost-model.md)；在线版「成本看板」一页按模型 → 单次成本 → 定价 → 成立吗 → 谁付钱讲完，敏感度表和计算器在展开里；真实接口实测见 [`docs/real-run-report.md`](docs/real-run-report.md) |
 | 怎么用 Qoder 搭的 | [`qoder-quest-prompt.md`](qoder-quest-prompt.md)：交给 Qoder 的初始需求 Spec；[`TASKS.md`](TASKS.md)：分阶段迭代和更正记录 |
 
 ## 产品做了什么
@@ -73,7 +73,7 @@
 - RAG 评估 23 题（14 道能答 + 9 道应拒答，含跨课程提问）：
   - 离线模式：检索命中 14/14，答对 14/14，拒答 9/9，串台 0；
   - 真实模型：检索命中 14/14，答对 12/14（没答对的是措辞或日期写法和要点对不上），误拒 0，拒答 9/9，串台 0。
-- 每次模型调用都写 `usage_log`，成本看板上的数字来自这张表。
+- 每次模型调用都写 `usage_log`，成本看板底部可以展开逐项看；上面的单次成本和回本组数由同一套单价和公式计算（`lib/unit-economics.ts`，有单测）。
 
 ## 局限与下一步
 
