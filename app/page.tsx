@@ -104,17 +104,28 @@ export default function LandingPage() {
       </div>
 
       <main>
-        <section className="border-b border-paper-line py-12" aria-label="痛点与解法">
-          <p className="mx-auto max-w-6xl px-4 text-[17px] leading-relaxed text-slate-600">
-            <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，DDL 前 3 天、前 1 天和过期当天自动提醒（组员点链接就能回），下次开会前遗留自动排好，忘了就「问问上次」。
-          </p>
+        <section className="py-16" aria-label="痛点与解法">
+          <div className="mx-auto max-w-6xl px-4">
+            <h2 className="text-2xl font-medium tracking-tight text-slate-900">痛点与解法</h2>
+            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">纪要、旧决议、DDL 三件事都压在组长一个人身上；Demo 把它们连成一条线。</p>
+            <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
+              <article className="bg-paper-card p-7">
+                <h3 className="text-[15px] font-medium text-slate-900">组长的痛点</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">会后没人整理纪要，下次没人记得定了啥，进度全靠组长一个个追。</p>
+              </article>
+              <article className="bg-paper-card p-7">
+                <h3 className="text-[15px] font-medium text-slate-900">Demo 怎么解决</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">会上自动转写，AI 整理成决定和待办、组长确认后生效；组员自己更新进度，DDL 前 3 天、前 1 天和过期当天自动提醒（组员点链接就能回）；下次开会前遗留自动排好，忘了就「问问上次」。</p>
+              </article>
+            </div>
+          </div>
         </section>
 
-        <section id="deliverables" className="py-20" aria-label="交付物一览">
+        <section id="deliverables" className="border-t border-paper-line py-16" aria-label="交付物一览">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">交付物一览</h2>
             <p className="mt-3 max-w-2xl text-[15px] text-slate-600">Demo、为什么是这个组合、成本与商业模式，以及我们怎么验证这些结论。</p>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
+            <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">Demo</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">一个 5 人小组、三门课的一周：会上自动开录和实时转写，会后组长确认纪要，组员自己更新进度，下次会前自动汇总遗留。</p>

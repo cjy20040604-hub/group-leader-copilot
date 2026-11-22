@@ -90,7 +90,7 @@ function InlineForm({ placeholder, submitLabel, withDate, minDate, onSubmit, onC
   const [date, setDate] = useState('');
   const disabled = !text.trim() || (withDate && !date);
   return (
-    <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!disabled && await onSubmit(text, date)) onCancel(); }}>
+    <form className="flex flex-wrap items-center gap-2" onSubmit={async (e) => { e.preventDefault(); if (!disabled && await onSubmit(text, date)) onCancel(); }}>
       {withDate && <Input type="date" value={date} min={minDate} onChange={(e) => setDate(e.target.value)} className="w-40 py-1 text-xs" aria-label="新的截止日期" />}
       <Input autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={100} className="min-w-48 flex-1 py-1 text-xs" aria-label={placeholder} />
       <Button size="sm" type="submit" disabled={disabled}>{submitLabel}</Button>
@@ -101,11 +101,11 @@ function InlineForm({ placeholder, submitLabel, withDate, minDate, onSubmit, onC
 
 function TaskHead({ t, reminded, replyId }: { t: ReviewTask; reminded?: boolean; replyId?: string }) {
   return (
-    <div className="flex flex-wrap items-start gap-2">
-      <RiskDot level={t.risk} className="mt-1.5" />
+    <div className="flex flex-wrap items-start gap-3">
+      <RiskDot level={t.risk} className="mt-[7px]" />
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-medium text-slate-900">{t.title}</p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+        <p className="text-[15px] font-medium leading-6 text-slate-900">{t.title}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-5 text-slate-500">
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: t.courseColor }} aria-hidden />{t.courseName}</span>
           <span>{t.ownerName}</span>
           <span>{t.dueText}</span>
@@ -123,29 +123,29 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
   const [form, setForm] = useState<'' | 'progress' | 'block' | 'extend' | 'submit'>('');
   const leaderSaid = t.lastUpdate?.byLeader && ['review_return', 'extension_rejected', 'extension_approved', 'unblocked'].includes(t.lastUpdate.kind) ? t.lastUpdate : null;
   return (
-    <Card className={cx('p-4', t.risk === 'red' && 'border-red-200')}>
+    <Card className={cx('p-5', t.risk === 'red' && 'border-red-200')}><div className={BODY}>
       <TaskHead t={t} reminded={reminded} replyId={replyId} />
-      {t.progressNote && <p className="mt-2 text-xs text-slate-600">我上次写的进度：「{t.progressNote}」</p>}
+      {t.progressNote && <p className="text-[13px] leading-relaxed text-slate-600">我上次写的进度：「{t.progressNote}」</p>}
       {leaderSaid && (
-        <p className="mt-2 rounded-lg bg-brand-50 p-2 text-xs text-brand-700">
+        <p className="rounded-lg bg-brand-50 p-2 text-[13px] leading-relaxed text-brand-700">
           组长{leaderSaid.label}{leaderSaid.note ? `：${leaderSaid.note}` : ''} <span className="text-brand-500">· {when(leaderSaid.createdAt)}</span>
         </p>
       )}
       {t.blocker && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2 text-[13px] leading-relaxed text-red-700">
           <span className="flex-1">卡住：{t.blocker}（组长已在「待我处理」里看到）</span>
           <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(t.id, { type: 'unblock' })}>已解决</Button>
         </div>
       )}
-      {t.pending && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
+      {t.pending && <p className="rounded-lg bg-amber-50 p-2 text-[13px] leading-relaxed text-amber-800">已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
 
       {t.status === 'awaiting_review' ? (
-        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-[13px] text-slate-500">
           <span className="flex-1">已交给组长确认</span>
           <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => act(t.id, { type: 'start' })}>撤回继续改</Button>
         </div>
       ) : (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           <Button size="sm" disabled={!!busy} onClick={() => setForm(form === 'submit' ? '' : 'submit')}>做完了</Button>
           <Button size="sm" variant="outline" onClick={() => setForm(form === 'progress' ? '' : 'progress')}>写进度</Button>
           {!t.blocker && <Button size="sm" variant="outline" onClick={() => setForm(form === 'block' ? '' : 'block')}>卡住了</Button>}
@@ -160,23 +160,23 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
         onSubmit={(text) => act(t.id, { type: 'block', reason: text })} />}
       {form === 'extend' && <InlineForm withDate minDate={t.dueDate && t.dueDate > today ? t.dueDate : today} placeholder="为什么要延期" submitLabel="发给组长" onCancel={() => setForm('')}
         onSubmit={(text, date) => act(t.id, { type: 'request_extension', proposedDue: date, reason: text })} />}
-      {form === 'submit' && <div className="mt-1"><Button size="sm" variant="ghost" className="text-[11px]" onClick={async () => { if (await act(t.id, { type: 'submit' })) setForm(''); }}>不写备注，直接提交</Button></div>}
-    </Card>
+      {form === 'submit' && <div><Button size="sm" variant="ghost" className="text-[11px]" onClick={async () => { if (await act(t.id, { type: 'submit' })) setForm(''); }}>不写备注，直接提交</Button></div>}
+    </div></Card>
   );
 }
 
 function FeedList({ feed, empty }: { feed: FeedItem[]; empty: string }) {
   if (feed.length === 0) return <p className="text-xs text-slate-400">{empty}</p>;
   return (
-    <ol className="space-y-2">
+    <ol className="space-y-3">
       {feed.map((f) => (
-        <li key={f.id} className="text-xs leading-relaxed">
+        <li key={f.id} className="text-[13px] leading-relaxed">
           <span className="text-slate-400">{when(f.createdAt)}</span>{' '}
           <span className="font-medium text-slate-700">{f.actorName}</span>{' '}
           <span className="text-slate-600">{f.label}</span>{' '}
           <span className="text-slate-700">「{f.taskTitle}」</span>
           {f.proposedDue && <span className="text-slate-500">（{md(f.proposedDue)}）</span>}
-          {f.note && <span className="block text-slate-500">「{f.note}」</span>}
+          {f.note && <span className="mt-0.5 block text-slate-500">「{f.note}」</span>}
         </li>
       ))}
     </ol>
@@ -185,12 +185,15 @@ function FeedList({ feed, empty }: { feed: FeedItem[]; empty: string }) {
 
 // ───────────── 组长视图：只看例外 ─────────────
 
+// 卡片内容：标题行之后的每一块都和任务标题左对齐（风险圆点 10px + 间距 12px），块与块之间统一 12px
+const BODY = 'space-y-3 [&>*+*]:pl-[22px]';
+
 function InboxSection({ title, hint, items, children }: { title: string; hint: string; items: ReviewTask[]; children: (t: ReviewTask) => React.ReactNode }) {
   if (items.length === 0) return null;
   return (
-    <section aria-label={title} className="space-y-2">
+    <section aria-label={title} className="space-y-3">
       <h3 className="flex items-baseline gap-2 text-sm font-medium text-slate-900">{title}<span className="tabular-nums text-slate-400">{items.length}</span><span className="text-xs font-normal text-slate-400">{hint}</span></h3>
-      {items.map((t) => <Card key={t.id} className="p-4">{children(t)}</Card>)}
+      {items.map((t) => <Card key={t.id} className="p-5"><div className={BODY}>{children(t)}</div></Card>)}
     </section>
   );
 }
@@ -200,8 +203,8 @@ function ReviewActions({ t, act, busy }: { t: ReviewTask; act: ReturnType<typeof
   return (
     <>
       <TaskHead t={t} />
-      {t.progressNote && <p className="mt-2 text-xs text-slate-600">{t.ownerName}：「{t.progressNote}」</p>}
-      <div className="mt-2 flex gap-1.5">
+      {t.progressNote && <p className="text-[13px] leading-relaxed text-slate-600">{t.ownerName}：「{t.progressNote}」</p>}
+      <div className="flex flex-wrap gap-2">
         <Button size="sm" disabled={!!busy} onClick={() => act(t.id, { type: 'approve' })}>确认完成</Button>
         <Button size="sm" variant="outline" onClick={() => setReturning(!returning)}>打回…</Button>
       </div>
@@ -216,14 +219,14 @@ function ExtensionActions({ t, act, busy }: { t: ReviewTask; act: ReturnType<typ
   return (
     <>
       <TaskHead t={t} />
-      <p className="mt-2 text-xs text-slate-700">
+      <p className="text-[13px] leading-relaxed text-slate-700">
         {t.ownerName}想从 <b>{t.dueDate ? md(t.dueDate) : '未定'}</b> 延到 <b>{md(p.proposedDue)}</b>：「{p.reason}」<span className="text-slate-400"> · {when(p.createdAt)}</span>
       </p>
-      <div className="mt-2 flex gap-1.5">
+      <div className="flex flex-wrap gap-2">
         <Button size="sm" disabled={!!busy} onClick={() => act(t.id, { type: 'approve_extension', updateId: p.id })}>同意，改到 {md(p.proposedDue)}</Button>
         <Button size="sm" variant="outline" onClick={() => setRejecting(!rejecting)}>不同意…</Button>
       </div>
-      <p className="mt-1 text-[11px] text-slate-400">同意后 DDL 自动改，D-3 / D-1 提醒按新日期重排</p>
+      <p className="text-xs text-slate-400">同意后 DDL 自动改，D-3 / D-1 提醒按新日期重排</p>
       {rejecting && <InlineForm placeholder="说一句原因" submitLabel="回复" onCancel={() => setRejecting(false)} onSubmit={(text) => act(t.id, { type: 'reject_extension', updateId: p.id, note: text })} />}
     </>
   );
@@ -241,9 +244,9 @@ function CourseReviewCard({ r }: { r: CourseReview }) {
       <div>
         <p className="mb-1 text-xs font-medium text-slate-600">带到下次会（{r.carry.length}）</p>
         {r.carry.length === 0 ? <p className="text-xs text-slate-400">没有遗留，下次会可以直接推进新议题</p> : (
-          <ul className="space-y-1">
+          <ul className="space-y-2.5">
             {r.carry.map((c, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
+              <li key={i} className="flex items-start gap-2 text-[13px] leading-relaxed text-slate-700">
                 <Badge tone={CARRY_TONE[c.kind]} className="shrink-0">{CARRY_LABEL[c.kind]}</Badge>
                 <span>{c.text}</span>
               </li>
@@ -313,8 +316,8 @@ export function TaskReview(props: Props) {
           <InboxSection title="卡住了" hint="组员主动求助" items={inbox.blocked}>{(t) => (
             <>
               <TaskHead t={t} />
-              <p className="mt-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{t.ownerName}：{t.blocker}</p>
-              <div className="mt-2 flex gap-1.5">
+              <p className="rounded-lg bg-red-50 p-2 text-[13px] leading-relaxed text-red-700">{t.ownerName}：{t.blocker}</p>
+              <div className="flex flex-wrap gap-2">
                 <CopyButton label="复制协调消息" text={`@${t.ownerName} 看到「${t.title}」卡在：${t.blocker}。我来协调，今晚给你答复。`} />
                 <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(t.id, { type: 'unblock', note: '组长已协调' })}>标记已解决</Button>
               </div>
@@ -323,8 +326,8 @@ export function TaskReview(props: Props) {
           <InboxSection title={`${48} 小时没动静`} hint="进行中但一直没更新" items={inbox.silent}>{(t) => (
             <>
               <TaskHead t={t} reminded={reminded.has(t.id)} />
-              {t.progressNote && <p className="mt-2 text-xs text-slate-500">最后一次进度：「{t.progressNote}」{t.lastUpdateAt && ` · ${when(t.lastUpdateAt)}`}</p>}
-              <div className="mt-2 flex items-center gap-2"><CopyButton label={props.reminderLinks?.[t.id] ? '复制催办（带回复链接）' : '复制催办'} text={nudges[t.id]} reminderId={props.reminderLinks?.[t.id]} />{props.reminderLinks?.[t.id] && <span className="text-[11px] text-slate-400">组员点链接回复后，会出现在组员动态里</span>}</div>
+              {t.progressNote && <p className="text-[13px] leading-relaxed text-slate-500">最后一次进度：「{t.progressNote}」{t.lastUpdateAt && ` · ${when(t.lastUpdateAt)}`}</p>}
+              <div className="flex flex-wrap items-center gap-2"><CopyButton label={props.reminderLinks?.[t.id] ? '复制催办（带回复链接）' : '复制催办'} text={nudges[t.id]} reminderId={props.reminderLinks?.[t.id]} />{props.reminderLinks?.[t.id] && <span className="text-[11px] text-slate-400">组员点链接回复后，会出现在组员动态里</span>}</div>
             </>
           )}</InboxSection>
           <InboxSection title="没人认领" hint="组员也能自己认领" items={inbox.unclaimed}>{(t) => (
@@ -340,7 +343,7 @@ export function TaskReview(props: Props) {
 
         <aside aria-label="组员动态" className="space-y-2">
           <h2 className="text-[15px] font-medium text-slate-900">组员动态</h2>
-          <Card className="p-4"><FeedList feed={feed.filter((f) => nameOf(f.actorId) !== props.user.name || f.kind !== 'created')} empty="组员还没有更新" /></Card>
+          <Card className="p-5"><FeedList feed={feed.filter((f) => nameOf(f.actorId) !== props.user.name || f.kind !== 'created')} empty="组员还没有更新" /></Card>
         </aside>
       </div>
 
