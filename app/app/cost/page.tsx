@@ -52,7 +52,7 @@ export default function CostPage() {
   const proPrice = 19.9;
   const proAsr = asrCost(10 * 3600); // 专业版含 10 小时录音
   const proCost = semesterAll + proAsr;
-  const measuredLabel = mock ? 'Mock 估算' : '实测';
+  const measuredLabel = mock ? '估算' : '实测';
 
   const fmt = (n: number) => `¥${n.toFixed(4)}`;
 
@@ -60,7 +60,7 @@ export default function CostPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <h1 className="text-xl font-bold">成本看板</h1>
-        {mock && <Badge tone="yellow">Demo 模拟计量（tokens 按字数估算）</Badge>}
+        {mock && <Badge tone="yellow">离线演示 · 用量按字数估算</Badge>}
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
@@ -72,7 +72,6 @@ export default function CostPage() {
 
       <section aria-label="按功能统计">
         <h2 className="mb-2 text-sm font-semibold">按功能计量（usage_log · {measuredLabel}）</h2>
-        {mock && <p className="mb-2 text-xs text-slate-500">Mock 模式没有真的调用模型：每条记录按「真实会发出的 prompt + Mock 输出」的字数估算 tokens；配上百炼 Key 后同一张表记录接口返回的真实用量。种子会议的转写只有 1200–1800 字，所以比下面的 1 小时会议推算便宜。</p>}
         {byFeature.size === 0 ? <EmptyState title="还没有调用记录" hint="处理一场会议或问一个问题试试" /> : (
           <Card className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -146,7 +145,7 @@ export default function CostPage() {
             </tbody>
           </table>
         </Card>
-        <p className="mt-1 text-xs text-slate-500">基线：每组每学期 24 次 × 1 小时会、200 次问答、10 小时录音会后上传走录音文件识别（「上传音频」目前是 Demo 模拟；全走会议室实时转写见表中那一行）；专业版 19.9 元；体验版用户 : 付费组 = 4 : 1；固定成本 100 元/月；支付通道费 0.6%。除单价外都是假设。最敏感的是录音走实时转写和体验版用户比例。</p>
+        <p className="mt-1 text-xs text-slate-500">基线：每组每学期 24 次 × 1 小时会、200 次问答、10 小时录音会后上传走录音文件识别（全走会议室实时转写见表中那一行）；专业版 19.9 元；体验版用户 : 付费组 = 4 : 1；固定成本 100 元/月；支付通道费 0.6%。除单价外都是假设。最敏感的是录音走实时转写和体验版用户比例。</p>
       </section>
 
       <section aria-label="单位经济计算器">

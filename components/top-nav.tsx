@@ -57,7 +57,7 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
         <div className="ml-auto flex items-center gap-2">
           {reminderCount > 0 && <Badge tone="red">🔔 {reminderCount} 条提醒</Badge>}
           <Badge tone="slate" className="font-mono">🕐 {demoNow.slice(0, 16).replace('T', ' ')}</Badge>
-          {mock && <Badge tone="yellow">Demo 模拟</Badge>}
+          {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><Badge tone="yellow">离线演示</Badge></span>}
           <label className="flex items-center gap-1 text-xs text-slate-500">
             身份
             <Select value={currentUserId} onChange={(e) => switchUser(e.target.value)} aria-label="切换身份">

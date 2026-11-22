@@ -70,7 +70,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
     const data = await res.json();
     setTranscript(data.transcript);
     setCourseId('mkt');
-    setAsrNote(`Demo 模拟：已把「${file.name}」当作 1 小时录音，按 Paraformer 计量 ${data.costCny.toFixed(2)} 元，返回预置转写。`);
+    setAsrNote(`「${file.name}」按 1 小时录音计费 ${data.costCny.toFixed(2)} 元，已填入示例转写。`);
   }
 
   // 从钉钉视频会议的云录制（闪记）导入转写：发言人按花名册对上名字
@@ -85,7 +85,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
       if (data.suggestedCourse) setCourseId(data.suggestedCourse);
       const mapped = (data.speakers as { nickName: string; mappedTo: string | null }[])
         .map((sp) => (sp.mappedTo && sp.mappedTo !== sp.nickName ? `${sp.nickName}→${sp.mappedTo}` : sp.mappedTo ? sp.nickName : `${sp.nickName}（不在花名册）`)).join('、');
-      setAsrNote(`${data.simulated ? '演示模拟（没配 DINGTALK_APP_KEY，返回按钉钉官方响应格式构造的示例）：' : ''}已从钉钉会议导入 ${data.paragraphs} 段，约 ${Math.max(1, Math.round(data.seconds / 60))} 分钟。发言人：${mapped}。`);
+      setAsrNote(`${data.simulated ? '示例数据：' : ''}已从钉钉会议导入 ${data.paragraphs} 段，约 ${Math.max(1, Math.round(data.seconds / 60))} 分钟。发言人：${mapped}。`);
       setDingOpen(false);
     } catch (e) {
       setError((e as Error).message);
@@ -170,7 +170,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
       {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>}
       {live && phase !== 'input' && (
         <p className="rounded-lg bg-brand-50 p-2 text-xs text-brand-800">
-          🎙 来自会议室：实时转写 {live.lines} 句（{live.source === 'demo' ? '演示录音 · 模拟' : '麦克风'}，约 {Math.max(1, Math.round(live.seconds / 60))} 分钟）
+          🎙 来自会议室：实时转写 {live.lines} 句（{live.source === 'demo' ? '演示录音' : '麦克风'}，约 {Math.max(1, Math.round(live.seconds / 60))} 分钟）
           {live.hints > 0 ? `，会中提醒了 ${live.hints} 次「这事定过了」` : ''}。已自动开始整理，你只需要逐条确认。
         </p>
       )}
@@ -214,7 +214,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
                 <Button size="sm" variant="ghost" onClick={loadSample}>📋 粘贴示例转写</Button>
                 <Button size="sm" variant="ghost" onClick={() => setDingOpen(!dingOpen)}>📞 从钉钉会议导入</Button>
                 <label className="inline-flex cursor-pointer items-center rounded-lg px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100">
-                  🎤 上传音频（Demo 模拟）
+                  🎤 上传音频
                   <input type="file" accept="audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && mockAsr(e.target.files[0])} />
                 </label>
               </div>
@@ -236,7 +236,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
         </Card>
       )}
 
-      {phase === 'processing' && <Card className="p-8 text-center text-sm text-slate-500">流水线运行中…（Mock 模式即时返回）</Card>}
+      {phase === 'processing' && <Card className="p-8 text-center text-sm text-slate-500">正在整理…</Card>}
 
       {(phase === 'confirm' || phase === 'done') && draft && (
         <Card className="space-y-2 p-4">
@@ -251,7 +251,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
           </div>
           {draft.degraded && <p className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">抽取降级：模型两次都没输出合法 JSON，已改用规则抽取，漏掉的请在下面手动补</p>}
           {!draft.degraded && draft.extractMode === 'rules' && (
-            <p className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">Mock 模式：这段不是示例转写，改用规则抽取（「定了/就用」→ 决议，「某人 + 时间」→ 待办，问句 → 待定）。规则可能漏抽，请逐条核对，缺的用「+ 添加」补上；配上百炼 Key 后由 qwen3.7-plus 抽取。</p>
+            <p className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">这段用规则抽取，可能漏抽，请逐条核对，缺的用「+ 添加」补上。</p>
           )}
         </Card>
       )}

@@ -239,7 +239,7 @@ const OWNER_INTENT = /谁|负责|什么时候|何时|哪天|几号|截止|交|�
 
 function composeAnswer(question: string, items: Retrieved[], ctx: AnswerCtx): ChatAnswerResult {
   const notFound = (reason: string): ChatAnswerResult => ({ answer: '记录里没找到。', citations: [], refused: true, reason });
-  if (items.length === 0 && ctx.chunks.length === 0) return notFound('Mock 作答：本课程没有检索结果');
+  if (items.length === 0 && ctx.chunks.length === 0) return notFound('本课程没有相关记录');
 
   // 课程名里的词（「营销」「创新创业」）不算必须对上的关键词
   const courseName = db.select().from(schema.courses).where(eq(schema.courses.id, ctx.courseId)).get()?.name ?? '';
@@ -283,7 +283,7 @@ function composeAnswer(question: string, items: Retrieved[], ctx: AnswerCtx): Ch
     const topic = items.filter((r) => r.type === 'topic_summary')
       .map((r) => ({ r, cover: coverStrong(terms, r.text, { exclude: courseName }) })).filter((x) => x.cover.ok)
       .sort((a, b) => b.r.score - a.r.score)[0]?.r;
-    if (!topic) return notFound('Mock 作答：纪要和原文里都没有和问题关键词全部对上的记录');
+    if (!topic) return notFound('纪要和原文里都没有和问题关键词全部对上的记录');
     const meeting = db.select().from(schema.meetings).where(eq(schema.meetings.id, topic.meetingId)).get();
     const tail = topic.text.includes('下次会议') && meeting?.nextMeeting
       ? `，那次会定的下次会议是 ${formatCN(meeting.nextMeeting)}。`

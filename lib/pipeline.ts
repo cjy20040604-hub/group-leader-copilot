@@ -149,7 +149,7 @@ export async function processMeeting(input: { courseId: string; date: string; tr
       meetingId,
     }), (r) => r.usage.input + r.usage.output);
   if (degraded) steps.push({ name: '4b 降级', ms: 0, detail: 'JSON 解析重试后仍失败 → 规则抽取兜底 + 组长手动补', ai: false });
-  else if (mode === 'rules') steps.push({ name: '4b 规则抽取', ms: 0, detail: 'Mock 模式：不是示例转写，改用规则抽取（关键词 + 花名册 + 日期）', ai: false });
+  else if (mode === 'rules') steps.push({ name: '4b 规则抽取', ms: 0, detail: '规则抽取（关键词 + 花名册 + 日期）', ai: false });
 
   const actions = await mark('5 校验 · 代码', false, '日期按规则换算并和模型对账；人名匹配花名册，猜的标黄；低置信度标黄', () =>
     extraction.action_items.map((a) => validateAction(a, { meetingDate: input.date, roster, transcript: input.transcript })));

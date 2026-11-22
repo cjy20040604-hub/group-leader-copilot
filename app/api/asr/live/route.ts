@@ -8,7 +8,7 @@ import { ASR_MAX_BYTES, ASR_MAX_SECONDS, base64Bytes } from '@/lib/live/asr-requ
 // 声音转文字只能靠模型（AI）；什么时候开录、哪段送去识别是规则（浏览器端 VAD，Auto）
 export async function POST(req: NextRequest) {
   if (isMock()) {
-    return NextResponse.json({ error: 'Mock 模式不调用语音模型：请用「演示录音」，或配置 DASHSCOPE_API_KEY 和 ASR_MODEL' }, { status: 409 });
+    return NextResponse.json({ error: '离线演示不转文字，请用「演示录音」' }, { status: 409 });
   }
   const body = await req.json().catch(() => ({}));
   const audio = String(body.audio ?? '');

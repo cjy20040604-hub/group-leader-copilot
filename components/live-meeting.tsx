@@ -161,7 +161,7 @@ export function LiveMeeting(props: Props) {
     if (kept < MAX_LOCAL_SECONDS) localSegsRef.current.push(seg);
     const url = URL.createObjectURL(new Blob([encodeWav(seg, TARGET_RATE) as BlobPart], { type: 'audio/wav' }));
     const n = linesRef.current.filter((l) => l.local).length + 1;
-    const line: Line = { id: ++lineIdRef.current, at, speaker: speakerRef.current || '发言人', text: `第 ${n} 段发言 · ${(seg.length / TARGET_RATE).toFixed(1)} 秒（Mock 模式不转文字）`, local: true, audioUrl: url };
+    const line: Line = { id: ++lineIdRef.current, at, speaker: speakerRef.current || '发言人', text: `第 ${n} 段发言 · ${(seg.length / TARGET_RATE).toFixed(1)} 秒（未转文字）`, local: true, audioUrl: url };
     linesRef.current = [...linesRef.current, line];
     setLines(linesRef.current);
   }, []);
@@ -483,7 +483,6 @@ export function LiveMeeting(props: Props) {
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-bold">会议室</h1>
         {course && <span className="inline-flex items-center gap-1.5 text-sm text-slate-600"><span className="h-2.5 w-2.5 rounded-full" style={{ background: course.color }} aria-hidden />{course.name} · {md(props.today)}</span>}
-        {source === 'demo' && <Badge tone="yellow">演示模拟 · 未调用语音模型</Badge>}
       </div>
 
       {/* 控制条 */}
@@ -496,7 +495,7 @@ export function LiveMeeting(props: Props) {
           </div>
           <div role="radiogroup" aria-label="录音来源" className="flex overflow-hidden rounded-lg border border-slate-300 text-xs">
             <button role="radio" aria-checked={source === 'mic'} disabled={live} onClick={() => { setSource('mic'); setRecording(null); }}
-              title={mock ? 'Mock 模式：真的录音，可回放、下载，但不转成文字' : ''}
+              title={mock ? '离线演示：只录音，不转文字' : ''}
               className={cx('px-3 py-1.5', source === 'mic' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600', live && 'cursor-not-allowed opacity-50')}>🎤 麦克风</button>
             <button role="radio" aria-checked={source === 'demo'} disabled={live} onClick={() => setSource('demo')}
               className={cx('px-3 py-1.5', source === 'demo' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600', live && 'cursor-not-allowed opacity-50')}>▶︎ 演示录音</button>
@@ -524,10 +523,10 @@ export function LiveMeeting(props: Props) {
           </div>
         </div>
 
-        {mock && <p className="text-xs text-slate-500">Mock 模式（没配百炼 Key）：「演示录音」逐句模拟实时转写；「麦克风」会真的录音（先征得你同意），但不转文字，录完可以回放、下载。配上 Key 和 <code>ASR_MODEL</code> 后麦克风会实时转写{props.asrModel ? `（当前 ${props.asrModel}）` : ''}。</p>}
+        {source === 'demo' && <p className="text-xs text-slate-500">演示录音：逐句回放一场「市场营销学」组会，模拟实时转写，放完自动整理纪要。</p>}
         {demoMismatch && (
           <p className="flex flex-wrap items-center gap-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
-            演示录音是「市场营销学」的一场会。{mock ? '其他课程要用真麦克风（需要百炼 Key）。' : '其他课程请切到麦克风。'}
+            演示录音是「市场营销学」的一场会，其他课程请切到麦克风。
             <Button size="sm" variant="outline" onClick={() => setCourseId(demoCourse)}>换成市场营销学</Button>
           </p>
         )}
@@ -556,7 +555,7 @@ export function LiveMeeting(props: Props) {
         {recording && (
           <div className="space-y-2 rounded-lg bg-green-50 p-3 text-xs text-green-900">
             <p className="text-sm font-medium">录音已结束：时长 {clock(recording.seconds)}，有人说话 {recording.voiced} 秒（{recording.segments} 段）</p>
-            <p>Mock 模式没有调用语音模型，所以没有转成文字。配上百炼 Key 和 <code>ASR_MODEL</code> 后，这些语音段会实时转成文字，散会后自动整理纪要。下面只拼接了有人说话的部分。</p>
+            <p>离线演示只录音、不转文字。下面是有人说话的部分。</p>
             <audio controls src={recording.url} className="w-full" />
             <div className="flex flex-wrap gap-2">
               <a href={recording.url} download={`会议录音-${props.today}.wav`} className="rounded-lg border border-green-300 bg-white px-2.5 py-1 font-medium text-green-800 hover:bg-green-100">⬇ 下载录音（WAV）</a>
@@ -662,7 +661,7 @@ export function LiveMeeting(props: Props) {
                 <ul className="space-y-1.5 text-sm text-slate-600">
                   <li><b className="text-slate-800">用来做什么：</b>{mock ? '把会上说的话录下来，可以回放和下载' : '把会上说的话实时转成文字，散会后整理成纪要'}</li>
                   <li><b className="text-slate-800">录什么：</b>只处理有人说话的片段，静音部分不{mock ? '保存' : '上传'}</li>
-                  <li><b className="text-slate-800">存到哪里：</b>{mock ? 'Mock 模式下录音只留在这个浏览器页面，不上传任何服务器' : '语音片段发给阿里云百炼识别，转出的文字只在本组可见'}</li>
+                  <li><b className="text-slate-800">存到哪里：</b>{mock ? '录音只留在这个浏览器页面，不上传' : '语音片段发给阿里云百炼识别，转出的文字只在本组可见'}</li>
                   <li><b className="text-slate-800">随时可停：</b>可以暂停或结束；也请告诉参会的同学正在录音</li>
                 </ul>
                 <p className="rounded-lg bg-slate-50 p-2 text-xs text-slate-500">点「允许使用麦克风」后，浏览器会再弹一个授权框，请在那里选「允许」。</p>
