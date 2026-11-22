@@ -63,10 +63,10 @@ export function MinutesShelf({ books }: { books: ShelfBook[] }) {
           {FILLERS_RIGHT.map((f, i) => <Filler key={`r${i}`} {...f} />)}
         </div>
         <div className="h-3 rounded-[2px] bg-[#5a4431] shadow-[0_6px_12px_rgba(0,0,0,0.35)]" aria-hidden />
-        <p className="mt-3 text-xs text-[#a39a8c]">每本书是一场组会，颜色是课程。选一本看这场会定了什么，点开翻到原话。</p>
+        <p className="mt-3 text-xs text-cream-400">每本书是一场组会，颜色是课程。选一本看这场会定了什么，点开翻到原话。</p>
       </div>
 
-      <div aria-live="polite" className="min-h-[200px] rounded-xl bg-[#f6f1e7] p-5 text-[#2b2620] shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+      <div aria-live="polite" className="min-h-[200px] rounded-xl bg-paper-card p-5 text-[#2b2620] shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
         {active ? (
           <>
             <p className="flex items-center gap-2 text-xs text-[#7a6f60]">
@@ -112,7 +112,7 @@ function Spread({ book, onClose }: { book: ShelfBook; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0b09]/70 p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={`${book.courseName} ${md(book.date)} 纪要`} onClick={(e) => e.stopPropagation()}
-        className="spread relative grid max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-[#f6f1e7] text-[#2b2620] shadow-[0_24px_60px_rgba(0,0,0,0.5)] md:grid-cols-2">
+        className="spread relative grid max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-paper-card text-[#2b2620] shadow-[0_24px_60px_rgba(0,0,0,0.5)] md:grid-cols-2">
         <button ref={closeRef} type="button" onClick={onClose} aria-label="合上纪要"
           className="absolute right-3 top-3 rounded-md p-1.5 text-[#7a6f60] hover:bg-black/5 hover:text-[#2b2620] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"><XIcon /></button>
         <section className="p-7 md:border-r md:border-[#e2d9c8]">

@@ -89,9 +89,9 @@ export function ReminderNotifier({ userId }: { userId: string }) {
 
   return (
     <>
-      {perm === 'default' && <button type="button" onClick={enable} className="text-brand-600 hover:underline">开启浏览器通知</button>}
-      {perm === 'granted' && <span className="text-slate-500">浏览器通知已开</span>}
-      {perm === 'denied' && <span className="text-slate-400" title="在浏览器地址栏左侧的站点设置里允许通知">浏览器通知被拦截</span>}
+      {perm === 'default' && <button type="button" onClick={enable} className="text-[#e8c77a] hover:underline">开启浏览器通知</button>}
+      {perm === 'granted' && <span className="text-cream-400">浏览器通知已开</span>}
+      {perm === 'denied' && <span className="text-cream-400" title="在浏览器地址栏左侧的站点设置里允许通知">浏览器通知被拦截</span>}
 
       {/* 挂到 body 上：顶栏有毛玻璃效果，fixed 定位放在顶栏里会跟着顶栏走 */}
       {mounted && createPortal(<div aria-live="polite" className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2">

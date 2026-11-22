@@ -32,7 +32,7 @@ export function Button({ variant = 'primary', size = 'md', className, ...props }
 }
 
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx('rounded-xl border border-slate-200 bg-white', className)} {...props} />;
+  return <div className={cx('rounded-xl border border-paper-line bg-paper-card', className)} {...props} />;
 }
 
 export function Badge({ tone = 'slate', children, className }: { tone?: 'slate' | 'blue' | 'green' | 'yellow' | 'red' | 'purple'; children: React.ReactNode; className?: string }) {

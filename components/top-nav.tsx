@@ -34,9 +34,9 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-ink-line bg-ink text-cream-50">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3 lg:h-14 lg:flex-nowrap lg:py-0">
-        <Link href="/app" className="flex shrink-0 items-center gap-2 text-[15px] font-medium tracking-tight text-slate-900">
+        <Link href="/app" className="flex shrink-0 items-center gap-2 text-[15px] font-medium tracking-tight text-cream-50">
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-semibold text-white" aria-hidden>减</span>
           组长减负
         </Link>
@@ -45,26 +45,26 @@ export function TopNav({ members, currentUserId, demoNow, mock, reminderCount }:
             const active = pathname === n.href;
             return (
               <Link key={n.href} href={n.href} aria-current={active ? 'page' : undefined}
-                className={cx('relative flex items-center whitespace-nowrap px-2.5 py-3 text-sm transition-colors lg:h-14 lg:py-0', active ? 'font-medium text-slate-900' : 'text-slate-500 hover:text-slate-900')}>
+                className={cx('relative flex items-center whitespace-nowrap px-2.5 py-3 text-sm transition-colors lg:h-14 lg:py-0', active ? 'font-medium text-cream-50' : 'text-cream-400 hover:text-cream-50')}>
                 {n.label}
-                {active && <span className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-brand-600" aria-hidden />}
+                {active && <span className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full bg-[#e8c77a]" aria-hidden />}
               </Link>
             );
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/app/meeting/new" className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">导入转写</Link>
-          <Link href="/app/meeting/live" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">
+          <Link href="/app/meeting/new" className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm text-cream-50 ring-1 ring-inset ring-cream-50/30 hover:bg-white/5">导入转写</Link>
+          <Link href="/app/meeting/live" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-cream-50 px-3 py-1.5 text-sm font-medium text-ink hover:bg-white">
             <MicIcon />
             开会
           </Link>
         </div>
       </div>
-      <div className="border-t border-slate-100 bg-slate-50/60">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-xs text-slate-500">
+      <div className="border-t border-ink-line bg-ink-raised">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-xs text-cream-200">
           <span className="tabular-nums">演示时间 {demoNow.slice(0, 16).replace('T', ' ')}</span>
-          {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><span className="rounded px-1.5 py-px text-slate-600 ring-1 ring-inset ring-slate-300">离线演示</span></span>}
-          {reminderCount > 0 && <Link href="/app/tasks" className="text-red-600 hover:underline">{reminderCount} 条提醒待处理</Link>}
+          {mock && <span title="离线演示：示例数据是一个 5 人小组三门课的一周，AI 结果为预置或规则生成，不调用模型"><span className="rounded px-1.5 py-px text-cream-200 ring-1 ring-inset ring-cream-50/30">离线演示</span></span>}
+          {reminderCount > 0 && <Link href="/app/tasks" className="text-[#f2b880] hover:underline">{reminderCount} 条提醒待处理</Link>}
           <ReminderNotifier userId={currentUserId} />
           <label className="ml-auto flex items-center gap-1.5">
             身份

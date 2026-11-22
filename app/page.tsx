@@ -72,16 +72,16 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* 首屏：纪要书架。深色暖光是这个场景的灯光，只在首屏出现；往下回到纸面暖白 */}
-      <div className="relative overflow-hidden bg-[#1c1814] text-[#efe9de]" style={{ backgroundImage: 'radial-gradient(ellipse 60% 50% at 72% 0%, rgba(255, 196, 120, 0.10), transparent 70%)' }}>
+      <div className="relative overflow-hidden bg-ink text-cream-50" style={{ backgroundImage: 'radial-gradient(ellipse 60% 50% at 72% 0%, rgba(255, 196, 120, 0.08), transparent 70%)' }}>
         <header>
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
             <p className="flex items-center gap-2 text-[15px] font-medium tracking-tight">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-semibold text-white" aria-hidden>减</span>组长减负
             </p>
             <nav aria-label="落地页导航" className="flex items-center gap-5 text-sm">
-              <a href="#deliverables" className="hidden text-[#b3aa9c] hover:text-[#efe9de] sm:inline">交付物</a>
-              <a href="#pricing" className="hidden text-[#b3aa9c] hover:text-[#efe9de] sm:inline">定价</a>
-              <Link href="/app" className="rounded-lg bg-[#efe9de] px-4 py-2 font-medium text-[#1c1814] hover:bg-white">进入 Demo</Link>
+              <a href="#deliverables" className="hidden text-cream-200 hover:text-cream-50 sm:inline">交付物</a>
+              <a href="#pricing" className="hidden text-cream-200 hover:text-cream-50 sm:inline">定价</a>
+              <Link href="/app" className="rounded-lg bg-cream-50 px-4 py-2 font-medium text-ink hover:bg-white">进入 Demo</Link>
             </nav>
           </div>
         </header>
@@ -89,12 +89,12 @@ export default function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 pb-16 pt-12 md:pt-16" aria-label="纪要书架">
           <div className="max-w-2xl">
             <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl lg:text-[52px]"><span className="block">会上说的话，</span><span className="block lg:whitespace-nowrap">散会就变成决定和任务</span></h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#b3aa9c]">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-cream-200">
               给小组作业的组长用：进会议室自动开录，散会自动出纪要，组员自己更新进度。每场会都留在书架上，下次想不起来就翻。
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/app" className="rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">免费试用 Demo</Link>
-              <Link href="/app/cost" className="rounded-lg px-5 py-3 text-sm font-medium text-[#efe9de] ring-1 ring-inset ring-[#efe9de]/25 hover:bg-white/5">看成本与商业模式</Link>
+              <Link href="/app/cost" className="rounded-lg px-5 py-3 text-sm font-medium text-cream-50 ring-1 ring-inset ring-cream-50/30 hover:bg-white/5">看成本与商业模式</Link>
             </div>
           </div>
           <div className="mt-12">
@@ -104,7 +104,7 @@ export default function LandingPage() {
       </div>
 
       <main>
-        <section className="border-t border-paper-line bg-white py-10" aria-label="痛点与解法">
+        <section className="border-b border-paper-line py-12" aria-label="痛点与解法">
           <p className="mx-auto max-w-6xl px-4 text-[17px] leading-relaxed text-slate-600">
             <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，DDL 前 3 天、前 1 天和过期当天自动提醒（组员点链接就能回），下次开会前遗留自动排好，忘了就「问问上次」。
           </p>
@@ -114,18 +114,18 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">交付物一览</h2>
             <p className="mt-3 max-w-2xl text-[15px] text-slate-600">Demo、为什么是这个组合、成本与商业模式，以及我们怎么验证这些结论。</p>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 md:grid-cols-2">
-              <article className="bg-white p-7">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
+              <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">Demo</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">一个 5 人小组、三门课的一周：会上自动开录和实时转写，会后组长确认纪要，组员自己更新进度，下次会前自动汇总遗留。</p>
                 <Link href="/app" className={`mt-4 inline-block ${link}`}>进入 Demo</Link>
               </article>
-              <article className="bg-white p-7">
+              <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">为什么是这个组合</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">AI 只用在需要理解声音和语言的地方：转写、整理成决定和待办、按意思回忆旧决议。开录、认领、延期、提醒、风险灯都用规则，因为必须可预测、边际成本几乎为零。AI 产出要组长确认才生效。只做纪要没人执行，只做看板要手抄，全交给 Agent 不可控也越用越贵。</p>
                 <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className={`mt-4 inline-block ${link}`}>和 5 种其他组合的对比</a>
               </article>
-              <article className="bg-white p-7">
+              <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">成本与商业模式</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{base.modelCost.toFixed(2)}。</li>
@@ -139,7 +139,7 @@ export default function LandingPage() {
                   <a href={`${REPO}/blob/main/docs/cost-model.md`} className={link}>成本与商业模式测算</a>
                 </div>
               </article>
-              <article className="bg-white p-7">
+              <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">怎么验证的</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
@@ -158,11 +158,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="pricing" className="border-t border-paper-line bg-white py-20" aria-label="定价">
+        <section id="pricing" className="border-t border-paper-line py-20" aria-label="定价">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">定价：一杯奶茶钱，管一学期</h2>
             <p className="mt-3 max-w-2xl text-[15px] text-slate-600">按一门课的一支小组计价：不同课的组员可以不一样，各组自己付或 AA；同时带几个组的组长买多组包。</p>
-            <div className="mt-10 grid overflow-hidden rounded-2xl border border-slate-200 bg-white sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid overflow-hidden rounded-2xl border border-paper-line bg-paper-card sm:grid-cols-2 lg:grid-cols-4">
               <article className="p-7">
                 <h3 className="text-sm text-slate-500">体验版</h3>
                 <p className="mt-2 text-3xl font-medium tracking-tight text-slate-900">¥0</p>
@@ -170,7 +170,7 @@ export default function LandingPage() {
                   <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>基础问答，不开录音</li>
                 </ul>
               </article>
-              <article className="relative border-t border-slate-100 bg-brand-50/50 p-7 sm:border-l sm:border-t-0">
+              <article className="relative border-t border-paper-line bg-brand-50/50 p-7 sm:border-l sm:border-t-0">
                 <span className="absolute inset-x-0 top-0 h-0.5 bg-brand-600" aria-hidden />
                 <h3 className="text-sm font-medium text-brand-700">专业版</h3>
                 <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥9.9<span className="ml-1 text-sm font-normal text-slate-500">/ 组 / 学期</span></p>
@@ -178,14 +178,14 @@ export default function LandingPage() {
                   <li>一门课的一支小组，不限次纪要</li><li>组里谁买都行，也可以 AA（5 人每人约 ¥1.98）</li><li>含 3 小时录音转写</li><li>任务与回顾、提醒、会前简报</li>
                 </ul>
               </article>
-              <article className="border-t border-slate-100 p-7 lg:border-l lg:border-t-0">
+              <article className="border-t border-paper-line p-7 lg:border-l lg:border-t-0">
                 <h3 className="text-sm text-slate-500">多组包</h3>
                 <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥19.9<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 学期</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
                   <li>你当组长的全部小组一起升级（最多 4 个）</li><li>每组含 3 小时录音转写</li><li>给同时带几门课的组长</li>
                 </ul>
               </article>
-              <article className="border-t border-slate-100 p-7 sm:border-l lg:border-t-0">
+              <article className="border-t border-paper-line p-7 sm:border-l lg:border-t-0">
                 <h3 className="text-sm text-slate-500">团体购入版</h3>
                 <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥5 起<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 门课</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
@@ -199,7 +199,7 @@ export default function LandingPage() {
         <section className="py-20" aria-label="常见问题">
           <div className="mx-auto max-w-3xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">常见问题</h2>
-            <div className="mt-8 divide-y divide-slate-200 border-y border-slate-200">
+            <div className="mt-8 divide-y divide-paper-line border-y border-paper-line">
               {FAQS.map((f) => (
                 <details key={f.q} className="group py-4 [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium text-slate-900">
