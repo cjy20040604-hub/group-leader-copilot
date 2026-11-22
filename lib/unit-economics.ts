@@ -13,6 +13,7 @@ export interface EconInputs {
   pricePerSemester: number;    // 定价（每组每学期）
   freeToPaid: number;          // 每 1 个付费组带着几个体验版小组（体验版也会产生模型成本）
   freeMeetingsPerSemester: number; // 体验版每学期几次纪要（一支小组一学期只开约 8 次会，额度必须小于它，否则没人需要付费）
+  freeRealtimeMinutes: number; // 体验版每组每学期送几分钟会议室实时转写（让没付费的组也体验一次实时字幕），按满额用完、实时转写价算
   semesterMonths: number;      // 一学期几个月
   fixedPerMonth: number;       // 服务器、数据库、域名等固定成本（元/月）
   paymentFeeRate: number;      // 支付通道费率
@@ -33,6 +34,7 @@ export const NOTES: EconInputs = {
   pricePerSemester: 6.9,
   freeToPaid: 4,
   freeMeetingsPerSemester: 3,
+  freeRealtimeMinutes: 10,
   semesterMonths: 4,
   fixedPerMonth: 100,
   paymentFeeRate: 0.006,
@@ -94,7 +96,7 @@ export interface EconResult {
   modelCost: number;        // 会议文字处理 + 问答
   asrCost: number;
   variableCost: number;     // 每个付费组每学期的变动成本
-  freeCostPerUser: number;  // 每个体验版用户每学期的模型成本
+  freeCostPerUser: number;  // 每个体验版小组每学期的成本（纪要 + 送的实时转写）
   netRevenue: number;       // 扣支付通道费后的收入
   contribution: number;     // 每个付费组的边际贡献（扣变动成本和它带着的体验版用户成本）
   unitMargin: number;       // contribution / netRevenue
@@ -107,7 +109,7 @@ export function computeEconomics(i: EconInputs): EconResult {
   const modelCost = i.meetingsPerSemester * textPerMeeting + i.qaPerSemester * qaCost();
   const asrCost = i.recordedHours * 3600 * i.asrPerSecond;
   const variableCost = modelCost + asrCost;
-  const freeCostPerUser = i.freeMeetingsPerSemester * textPerMeeting;
+  const freeCostPerUser = i.freeMeetingsPerSemester * textPerMeeting + i.freeRealtimeMinutes * 60 * ASR_REALTIME;
   const netRevenue = i.pricePerSemester * (1 - i.paymentFeeRate);
   const contribution = netRevenue - variableCost - i.freeToPaid * freeCostPerUser;
   const fixedPerSemester = i.fixedPerMonth * i.semesterMonths;
@@ -152,7 +154,9 @@ export const SENSITIVITY: { factor: string; rows: SensitivityRow[] }[] = [
     { label: '9 : 1（10% 付费）', value: '9', patch: { freeToPaid: 9 } },
   ] },
   { factor: '体验版额度', rows: [
-    { label: '每学期 3 次（基线）', value: '3', patch: {} },
+    { label: '每学期 3 次纪要 + 10 分钟实时转写（基线）', value: '3', patch: {} },
+    { label: '不送实时转写', value: '3-0', patch: { freeRealtimeMinutes: 0 } },
+    { label: '送 30 分钟实时转写', value: '3-30', patch: { freeRealtimeMinutes: 30 } },
     { label: '每月 4 次（旧方案，约 16 次/学期）', value: '16', patch: { freeMeetingsPerSemester: 16 } },
   ] },
   { factor: '专业版定价', rows: [

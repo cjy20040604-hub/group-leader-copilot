@@ -35,6 +35,7 @@ export default function CostPage() {
   const pro6 = computeEconomics({ ...PRO, recordedHours: 6 });
   const pro99 = computeEconomics({ ...PRO, pricePerSemester: 9.9 });
   const mix = blendedBreakEven(MIX);
+  const mix0 = blendedBreakEven(MIX.map((m) => ({ ...m, inputs: { ...m.inputs, freeRealtimeMinutes: 0 } })));
   const addon = addonEconomics(ADDON);
   const infra = INFRA_PER_GROUP;
   const notesCost = notes.variableCost + infra;
@@ -140,7 +141,7 @@ export default function CostPage() {
         <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。`}>
           <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4">
-              <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', '不含实时转写']} />
+              <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', `送 ${NOTES.freeRealtimeMinutes} 分钟实时转写，先体验实时字幕`]} />
               <Tier name="纪要版" price={`${NOTES.pricePerSemester} 元`} unit="每组每学期" featured
                 lines={['纪要不限次：导入文字稿、钉钉会议', '问答、提醒、会前简报、任务', `可以 AA，5 人每人约 ${(NOTES.pricePerSemester / 5).toFixed(2)} 元`, `成本 ${yuan(notesCost)}，毛利约 ${pct(NOTES.pricePerSemester - notesCost, NOTES.pricePerSemester)}`]} />
               <Tier name="专业版" price={`${PRO.pricePerSemester} 元`} unit="每组每学期"
@@ -157,7 +158,7 @@ export default function CostPage() {
             <p>大部分小组用腾讯会议、钉钉开会，本来就有文字稿，只需要纪要。纪要版成本 {yuan(notesCost)}，卖 {NOTES.pricePerSemester} 元，不让他们为用不上的转写付钱。</p>
             <p>在教室面对面开会的小组才要实时转写：一学期 8 次会、每次 1 小时就是 8 小时，实时转写成本 {yuan(pro.asrCost)}，所以专业版 {PRO.pricePerSemester} 元。同样 8 小时卖 9.9 元要 {pro99.breakEvenGroups} 组才回本。</p>
             <p>额度用完会议不中断：照常录音，散会后用录音文件识别整理（每小时 {yuan(asrFileHour)}，不另收费，只是没有实时字幕和撞车提示）；还想要实时转写就买加时包。</p>
-            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次，比一支小组一学期开的约 8 次会少；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
+            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次纪要，比一支小组一学期开的约 8 次会少；另送 {NOTES.freeRealtimeMinutes} 分钟实时转写，让没付费的组也体验一次实时字幕，每组成本 {yuan(NOTES.freeRealtimeMinutes * 60 * ASR_REALTIME, 3)}，混合回本因此从 {mix0.breakEvenGroups} 组变成 {mix.breakEvenGroups} 组；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
           </div>
         </Step>
 
@@ -167,7 +168,7 @@ export default function CostPage() {
             <Metric value={`${pro.breakEvenGroups} 组`} label="只卖专业版时回本" sub={`8 小时用满，每组贡献 ${yuan(pro.contribution)}；实际只送有人说话的部分、用 6 小时时 ${pro6.breakEvenGroups} 组`} />
             <Metric value={`${mix.breakEvenGroups} 组`} label="7 成纪要版 + 3 成专业版" sub={`加权每组贡献 ${yuan(mix.contribution)}；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
           </div>
-          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的模型成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {NOTES.fixedPerMonth} 元固定成本都算进去。付费率、档位比例、用量、固定成本都是假设，待访谈验证。</p>
+          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要 + 送 {NOTES.freeRealtimeMinutes} 分钟实时转写，合计 {yuan(notes.freeCostPerUser)}）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {NOTES.fixedPerMonth} 元固定成本都算进去。付费率、档位比例、用量、固定成本都是假设，待访谈验证。</p>
           <div className="mt-5 space-y-2">
             <Fold title="专业版的每个假设变了，回本组数怎么变">
               <table className="w-full text-sm">

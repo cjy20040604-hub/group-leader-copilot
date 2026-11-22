@@ -47,7 +47,7 @@ npm run typecheck  # tsc --noEmit
   - 延期申请 resolved=0 表示等组长回复；批准后改 DDL 并重建提醒
   - 老库由 `lib/db/client.ts` 启动时就地升级（加列、建表，不删数据）
 - `course_members(course_id, member_id, role)` — 小组成员按课程分开，角色按课算（同一个人可以在 A 课当组长、在 B 课当组员）。`lib/membership.ts` 提供 `roleIn / ledCourseIds / myCourseIds / courseRoster`；所有写操作按「你在这门课里的角色」鉴权（`canLead(courseId)`），页面只显示你所在的小组；整理纪要只和本组名单对人名，名字对得上别组的人时标「不在这个小组的名单里」不自动派；撞 DDL 时别组的任务只显示日期。老库启动时按原全局花名册补齐（`lib/db/client.ts`）
-- `course_plans(course_id, tier, payer_id, split, started_at, addon_seconds)` — 小组套餐：free / notes / pro / bundle，付款人可以是组里任何人或 AA，加时包记在 addon_seconds；`lib/plans.ts` 按 `lib/unit-economics.ts` 的 NOTES / PRO / ADDON 拦截：体验版每学期 3 次纪要，纪要版和多组包不含实时转写，专业版每组 8 小时，加时包每包 3 小时（/api/meetings/process、/confirm、/api/asr/live）。实时转写用完返回 402，会议室页面改成只在本机录音，散会后整理。实时转写上下文加了本组名单和本课任务、决议词
+- `course_plans(course_id, tier, payer_id, split, started_at, addon_seconds)` — 小组套餐：free / notes / pro / bundle，付款人可以是组里任何人或 AA，加时包记在 addon_seconds；`lib/plans.ts` 按 `lib/unit-economics.ts` 的 NOTES / PRO / ADDON 拦截：体验版每学期 3 次纪要、送 10 分钟实时转写，纪要版和多组包不含实时转写，专业版每组 8 小时，加时包每包 3 小时（/api/meetings/process、/confirm、/api/asr/live）。实时转写用完返回 402，会议室页面改成只在本机录音，散会后整理。实时转写上下文加了本组名单和本课任务、决议词
 - `scheduled_meetings(id, course_id, date, created_at)` — 首页「会议安排」：组长新建 / 删除（`/api/schedule`），确认纪要时按 next_meeting 自动加
 - `reminders(id, task_id, kind, fire_date, message, created_at)` — kind: `d3 | d1 | overdue`；按 (task_id, kind) 幂等
 - `usage_log(id, ts, model, input_tokens, output_tokens, audio_seconds, cost_cny, feature, meeting_id)`

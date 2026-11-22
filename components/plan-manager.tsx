@@ -35,7 +35,7 @@ export function PlanManager({ rows, canBundle, prices }: { rows: PlanRow[]; canB
   const priceOf = (t: PlanTier) => (t === 'pro' ? prices.pro : t === 'bundle' ? prices.bundle : prices.notes);
 
   function usage(r: PlanRow) {
-    if (r.tier === 'free') return `本学期纪要 ${r.meetingsUsed} / ${r.freeMeetings} 次，不含实时转写`;
+    if (r.tier === 'free') return `本学期纪要 ${r.meetingsUsed} / ${r.freeMeetings} 次，实时转写体验 ${r.recordMinutesUsed} / ${r.recordMinutesQuota} 分钟`;
     if (r.recordMinutesQuota === 0) return '纪要不限次，不含实时转写（可以加购）';
     const out = r.recordMinutesUsed >= r.recordMinutesQuota;
     return `纪要不限次，实时转写 ${r.recordMinutesUsed} / ${r.recordMinutesQuota} 分钟${r.addonMinutes ? `（含加时包 ${r.addonMinutes / 60} 小时）` : ''}${out ? '，用完了：照常录音，散会后整理' : ''}`;

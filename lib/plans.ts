@@ -8,6 +8,7 @@ import { NOTES, PRO, BUNDLE, ADDON } from '@/lib/unit-economics';
 export type Tier = 'free' | 'notes' | 'pro' | 'bundle';
 export const FREE_MEETINGS = NOTES.freeMeetingsPerSemester; // 体验版每学期几次纪要
 export const PRO_RECORD_SECONDS = PRO.recordedHours * 3600; // 专业版每组每学期实时转写额度
+export const FREE_RECORD_SECONDS = NOTES.freeRealtimeMinutes * 60; // 体验版每组每学期送的实时转写（先体验实时字幕再决定付不付）
 export const ADDON_SECONDS = ADDON.hours * 3600;            // 一个加时包多少秒
 export const PRICE = { notes: NOTES.pricePerSemester, pro: PRO.pricePerSemester, bundle: BUNDLE.pricePerSemester, addon: ADDON.price, addonHours: ADDON.hours };
 export const TIER_LABEL: Record<Tier, string> = { free: '体验版', notes: '纪要版', pro: '专业版', bundle: '纪要版（多组包）' };
@@ -31,9 +32,9 @@ export function recordSecondsUsed(courseId: string): number {
   return db.select().from(schema.usageLog).all().filter((l) => l.feature === 'asr' && l.meetingId && ids.has(l.meetingId)).reduce((a, l) => a + (l.audioSeconds ?? 0), 0);
 }
 
-// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时 + 加时包；其他档位只有加时包
+// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时、体验版送 10 分钟，再加加时包；纪要版和多组包只有加时包
 export function realtimeQuota(tier: Tier, addonSeconds: number): number {
-  return (tier === 'pro' ? PRO_RECORD_SECONDS : 0) + addonSeconds;
+  return (tier === 'pro' ? PRO_RECORD_SECONDS : tier === 'free' ? FREE_RECORD_SECONDS : 0) + addonSeconds;
 }
 
 // 纯函数，方便单测
@@ -46,6 +47,9 @@ export function canAddMeeting(tier: Tier, used: number): { ok: true } | { ok: fa
 export function canRecord(tier: Tier, usedSeconds: number, addSeconds: number, addonSeconds = 0): { ok: true } | { ok: false; reason: string } {
   const quota = realtimeQuota(tier, addonSeconds);
   if (usedSeconds + addSeconds <= quota) return { ok: true };
+  if (tier === 'free' && addonSeconds === 0) {
+    return { ok: false, reason: `体验版送的 ${FREE_RECORD_SECONDS / 60} 分钟实时转写用完了。会照常录在本机，散会后可以下载录音；开通专业版（${PRICE.pro} 元，含 ${PRO_RECORD_SECONDS / 3600} 小时实时转写）就能继续` };
+  }
   if (quota === 0) {
     return { ok: false, reason: `${TIER_LABEL[tier]}不含会议室实时转写。会照常录在本机，散会后可以下载录音；也可以粘贴腾讯会议 / 飞书文字稿、从钉钉导入，或加购实时转写 ${PRICE.addonHours} 小时 ${PRICE.addon} 元` };
   }
