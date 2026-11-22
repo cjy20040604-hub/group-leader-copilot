@@ -67,31 +67,31 @@ export function AskPanel({ courseId }: { courseId: string }) {
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {result && (
-        <Card className="p-4">
-          <div className="mb-2 flex items-center gap-2">
+        <Card className="p-6">
+          <div className="mb-3 flex items-center gap-2">
             {result.refused ? <Badge tone="yellow">证据不足 · 拒答</Badge> : <AiBadge />}
           </div>
-          <p className="text-sm leading-relaxed">{result.answer}</p>
+          <p className="max-w-3xl text-base leading-relaxed text-slate-900">{result.answer}</p>
           {result.refused && result.reason && <p className="mt-1 text-[11px] text-slate-400">为什么没答：{result.reason}</p>}
           {result.refused && (
             <div className="mt-3">
               <Button size="sm" variant="outline" onClick={addToAgenda} disabled={added}>
-                {added ? '✅ 已加入下次议程' : '➕ 把这个问题加到下次会议议程'}
+                {added ? '已加入下次议程' : '把这个问题加到下次会议议程'}
               </Button>
             </div>
           )}
           {result.citationRows.length > 0 && (
-            <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
-              <p className="text-xs font-medium text-slate-500">引用出处（点击跳转纪要并高亮原话）</p>
+            <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
+              <p className="text-xs text-slate-500">出处（点开跳到纪要并高亮原话）</p>
               {result.citationRows.map((c) => (
                 <Link key={c.id} href={`/app/meeting/${c.meetingId}?hl=${encodeURIComponent(c.evidence ?? '')}`} className="block">
-                  <div className="rounded-lg border border-slate-200 p-2.5 hover:border-brand-500">
+                  <div className="rounded-lg border border-slate-200 px-3 py-2.5 transition-colors hover:border-slate-400">
                     <div className="flex items-center gap-2">
                       <Badge tone="blue">[{c.meetingDate.slice(5).replace('-', '/')}·{TYPE_LABEL[c.type] ?? c.type}]</Badge>
                       {c.status === 'superseded' && <Badge tone="slate">已被推翻</Badge>}
                       <span className="text-[11px] text-slate-400">{c.id}</span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-700">{c.text}</p>
+                    <p className="mt-1.5 text-sm text-slate-700">{c.text}</p>
                   </div>
                 </Link>
               ))}

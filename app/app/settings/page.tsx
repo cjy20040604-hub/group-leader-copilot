@@ -1,7 +1,7 @@
 import { db, schema } from '@/lib/db/client';
 import { getDemoNowISO } from '@/lib/time';
 import { getCurrentUser } from '@/lib/auth';
-import { Card } from '@/components/ui';
+import { Card, PageHeader, SectionTitle, RiskDot } from '@/components/ui';
 import { TimeTravel, ResetDemo } from '@/components/time-travel';
 import { CourseManager } from '@/components/course-manager';
 import { RosterManager } from '@/components/roster-manager';
@@ -15,35 +15,35 @@ export default function SettingsPage() {
   const demoNow = getDemoNowISO();
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-bold">设置</h1>
+    <div className="space-y-12">
+      <PageHeader title="设置" lede="课程、花名册、提醒规则和演示数据。这里的规则全是确定性代码，不调模型。" />
 
       <section aria-label="课程与小组">
-        <h2 className="mb-2 text-sm font-semibold">📚 课程/小组（不限于演示的 3 门课；首页、纪要页、会议室的课程下拉里也能直接新建）</h2>
+        <SectionTitle>课程和小组</SectionTitle>
         <CourseManager courses={courses} isLeader={user.role === 'leader'} />
       </section>
 
       <section aria-label="花名册">
-        <h2 className="mb-2 text-sm font-semibold">👥 花名册（人名模糊匹配用，可加人 / 改名 / 重分配组长组员）</h2>
+        <SectionTitle>花名册</SectionTitle>
         <RosterManager members={members} currentUserId={user.id} isLeader={user.role === 'leader'} />
-        <p className="mt-1 text-xs text-slate-400">身份切换在顶部导航栏下拉框。组员在「任务与回顾」里一键更新自己的任务：做完了交组长确认、写进度、卡住了、申请延期，也能认领没人负责的任务（确定性权限代码，无账号体系）。改名后任务记忆与催办文案里的名字会同步更新。</p>
+        <p className="mt-2 text-xs text-slate-400">整理纪要时按这里的名字和昵称对上负责人。身份在顶栏右侧切换；改名后任务和催办文案里的名字会同步更新。</p>
       </section>
 
       <section aria-label="提醒与风险规则">
-        <h2 className="mb-2 text-sm font-semibold">⏰ 提醒规则 & 风险灯（全部确定性代码）</h2>
-        <Card className="p-4 text-xs leading-relaxed text-slate-600">
+        <SectionTitle>提醒规则和风险灯</SectionTitle>
+        <Card className="space-y-1 p-5 text-sm leading-relaxed text-slate-600">
           <p>提醒：D-3、D-1、过期第一天各生成一条站内通知 + 可复制催办文案，文案按触发那天写；改 DDL 会重建提醒。Demo 用页面每 60 秒轮询一次代替服务端定时任务，时间快进、确认纪要、改任务后立即补扫。</p>
           <p className="mt-1">催办模板：「@负责人 课程 的「任务」{`{due_text}`}截止，目前状态：{`{status}`}，需要帮忙吗？」</p>
-          <p className="mt-2">🔴 红：已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是 待审核/已完成；或组员标了「卡住了」且距 DDL ≤ 3 天</p>
-          <p>🟡 黄：距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领；或组员标了「卡住了」</p>
-          <p>🟢 绿：其他</p>
+          <p className="flex items-start gap-2 pt-2"><RiskDot level="red" className="mt-1.5" />红：已过 DDL 未完成；或距 DDL ≤ 1 天且状态不是待审核 / 已完成；或组员标了「卡住了」且距 DDL ≤ 3 天</p>
+          <p className="flex items-start gap-2"><RiskDot level="yellow" className="mt-1.5" />黄：距 DDL ≤ 3 天且 48 小时内没更新；或负责人待认领；或组员标了「卡住了」</p>
+          <p className="flex items-start gap-2"><RiskDot level="green" className="mt-1.5" />绿：其他</p>
         </Card>
       </section>
 
       <TimeTravel demoNow={demoNow} />
 
       <section aria-label="重置">
-        <h2 className="mb-2 text-sm font-semibold">♻️ 演示数据</h2>
+        <SectionTitle>演示数据</SectionTitle>
         <ResetDemo />
         <p className="mt-1 text-xs text-slate-400">和命令行 npm run seed 跑的是同一段代码：重建 SQLite 单文件数据库并重新生成种子。</p>
       </section>

@@ -28,7 +28,7 @@ export function ReminderReply({ reminderId, ownerName, done, awaiting, minDate, 
   }
 
   if (!ownerName) return <p className="text-sm text-slate-600">这个任务还没人认领。<a href="/app/tasks" className="text-brand-600 underline">去认领</a></p>;
-  if (done) return <p className="text-sm text-green-700">✅ 已经完成了，不用再回复。</p>;
+  if (done) return <p className="text-sm text-green-700">已经完成了，不用再回复。</p>;
   if (sent) return <p className="rounded-lg bg-green-50 p-3 text-sm text-green-800">已告诉组长：{sent}。<a href="/app/tasks" className="ml-1 underline">看我的全部待办</a></p>;
   return (
     <div className="space-y-2">
@@ -38,9 +38,9 @@ export function ReminderReply({ reminderId, ownerName, done, awaiting, minDate, 
           <p className="text-sm font-medium">{ownerName}，点一下告诉组长：</p>
           <div className="grid grid-cols-2 gap-2">
             <Button disabled={busy} onClick={() => reply({ type: 'progress', note: '收到提醒：在做，能按时交' })}>在做，能按时交</Button>
-            <Button disabled={busy} variant="outline" onClick={() => reply({ type: 'submit', note: '收到提醒：做完了' })}>✅ 做完了</Button>
-            <Button disabled={busy} variant="outline" onClick={() => setForm(form === 'block' ? '' : 'block')}>🆘 卡住了</Button>
-            <Button disabled={busy} variant="outline" onClick={() => setForm(form === 'extend' ? '' : 'extend')}>📅 要延期</Button>
+            <Button disabled={busy} variant="outline" onClick={() => reply({ type: 'submit', note: '收到提醒：做完了' })}>做完了</Button>
+            <Button disabled={busy} variant="outline" onClick={() => setForm(form === 'block' ? '' : 'block')}>卡住了</Button>
+            <Button disabled={busy} variant="outline" onClick={() => setForm(form === 'extend' ? '' : 'extend')}>要延期</Button>
           </div>
           {form === 'block' && (
             <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) void reply({ type: 'block', reason: text }); }}>

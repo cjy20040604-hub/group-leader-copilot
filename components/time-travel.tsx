@@ -24,7 +24,7 @@ export function TimeTravel({ demoNow }: { demoNow: string }) {
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold">🕐 时间快进（DEMO_NOW）</h2>
+      <h2 className="text-[15px] font-semibold text-slate-900">时间快进（DEMO_NOW）</h2>
       <p className="mt-1 text-xs text-slate-500">所有风险灯、DDL、提醒都基于这个虚拟时间。当前：{demoNow.replace('T', ' ')}</p>
       <div className="mt-2 flex gap-2">
         <Button size="sm" variant="outline" disabled={busy} onClick={() => act('shift', 1)}>+1 天</Button>
@@ -48,5 +48,5 @@ export function ResetDemo() {
     router.refresh();
   }
 
-  return <Button variant="danger" size="sm" disabled={busy} onClick={reset}>{busy ? '重置中…' : '♻️ 重置 Demo 数据'}</Button>;
+  return <Button variant="danger" size="sm" disabled={busy} onClick={reset}>{busy ? '重置中…' : '重置 Demo 数据'}</Button>;
 }

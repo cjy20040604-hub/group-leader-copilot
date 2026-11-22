@@ -20,7 +20,7 @@ export function BriefingButton({ courseId }: { courseId: string }) {
   return (
     <div>
       <Button size="sm" variant="outline" onClick={generate} disabled={loading}>
-        {loading ? '生成中…' : '📝 生成会前简报'}
+        {loading ? '生成中…' : '生成会前简报'}
       </Button>
       {text && (
         <Card className="mt-2 p-3">

@@ -17,14 +17,14 @@ export default async function ReminderReplyPage({ params }: { params: Promise<{ 
   const now = getDemoNow();
 
   return (
-    <main className="mx-auto max-w-md space-y-4 px-4 py-10">
-      <p className="text-sm font-bold text-brand-700">组长减负 · 进度回复</p>
+    <main className="mx-auto max-w-md space-y-5 px-4 py-12">
+      <p className="flex items-center gap-2 text-sm font-semibold text-slate-900"><span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-bold text-white" aria-hidden>减</span>组长减负<span className="font-normal text-slate-400">进度回复</span></p>
       {!reminder || !task ? (
         <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">这条提醒不存在了，可能任务已被删除。<Link href="/app/tasks" className="ml-1 text-brand-600 underline">看全部待办</Link></div>
       ) : (
-        <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
           <p className="text-xs text-slate-500">{course?.name} · 负责人：{owner?.name ?? '待认领'}</p>
-          <h1 className="text-lg font-bold">{task.title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">{task.title}</h1>
           <p className="text-sm text-slate-600">{task.status === 'done' ? '已完成' : dueText(task.dueDate, now)} · 现在是「{STATUS_LABEL[task.status as TaskStatus] ?? task.status}」</p>
           <p className="rounded-lg bg-slate-50 p-2 text-xs text-slate-500">提醒原文：{reminder.message}</p>
           <ReminderReply

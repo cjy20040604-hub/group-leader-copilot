@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx } from '@/components/ui';
+import { Button, Card, Badge, AiBadge, Input, Textarea, Select, cx, PageHeader } from '@/components/ui';
 import type { Draft, ValidatedAction } from '@/lib/pipeline';
 import { CoursePicker } from '@/components/course-picker';
 
@@ -156,28 +156,28 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">新建会议 · 处理流水线</h1>
+    <div className="space-y-6">
+      <PageHeader title="导入转写，整理纪要" lede="粘贴腾讯会议、飞书导出的文字稿，或从钉钉会议导入；AI 整理成决定、待办和待定，你确认后才保存。" />
 
       {/* 步骤条 */}
-      <ol className="flex flex-wrap gap-1 text-[11px]" aria-label="流水线步骤">
+      <ol className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs" aria-label="流水线步骤">
         {['1 输入', '2 预处理', '3 召回上下文', '4 结构化抽取', '5 校验', '6 人工确认', '7 落库', '8 建索引', '9 分发'].map((s, i) => {
           const active = phase === 'input' ? i === 0 : phase === 'processing' ? i <= 4 : phase === 'confirm' ? i <= 5 : true;
-          return <li key={s} className={cx('rounded-full px-2 py-1', active ? 'bg-brand-100 text-brand-700 font-medium' : 'bg-slate-100 text-slate-400')}>{s}</li>;
+          return <li key={s} className={cx('flex items-center gap-1', active ? 'font-medium text-slate-900' : 'text-slate-400')}>{i > 0 && <span className="px-1 text-slate-300" aria-hidden>/</span>}<span className={cx('tabular-nums', active && 'text-brand-600')}>{s.split(' ')[0]}</span>{s.split(' ')[1]}</li>;
         })}
       </ol>
 
       {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>}
       {live && phase !== 'input' && (
         <p className="rounded-lg bg-brand-50 p-2 text-xs text-brand-800">
-          🎙 来自会议室：实时转写 {live.lines} 句（{live.source === 'demo' ? '演示录音' : '麦克风'}，约 {Math.max(1, Math.round(live.seconds / 60))} 分钟）
+          来自会议室：实时转写 {live.lines} 句（{live.source === 'demo' ? '演示录音' : '麦克风'}，约 {Math.max(1, Math.round(live.seconds / 60))} 分钟）
           {live.hints > 0 ? `，会中提醒了 ${live.hints} 次「这事定过了」` : ''}。已自动开始整理，你只需要逐条确认。
         </p>
       )}
 
       {phase === 'input' && (
-        <Card className="space-y-3 p-4">
-          <div className="grid gap-3 md:grid-cols-3">
+        <Card className="space-y-5 p-5">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="text-xs text-slate-500">课程
               <div className="mt-1">
                 <CoursePicker courses={courses} value={courseId} onChange={setCourseId} canCreate={canCreateCourse} className="w-full"
@@ -199,7 +199,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
             </div>
             {duplicates.map((d) => (
               <p key={d.memoryId} className="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
-                ⚠️ 这个在 {d.meetingDate.slice(5).replace('-', '/')} 已经定了：{d.text}。还要重新讨论吗？
+                这个在 {d.meetingDate.slice(5).replace('-', '/')} 已经定了：{d.text}。还要重新讨论吗？
                 <span className="block text-[11px] text-yellow-700">向量相似度 {(d.similarity * 100).toFixed(0)}% · 对上的词：{d.matched || '—'}</span>
               </p>
             ))}
@@ -208,13 +208,13 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
             )}
           </div>
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <label className="text-xs text-slate-500">会议转写（粘贴腾讯会议 / 飞书妙记导出的文字稿）</label>
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={loadSample}>📋 粘贴示例转写</Button>
-                <Button size="sm" variant="ghost" onClick={() => setDingOpen(!dingOpen)}>📞 从钉钉会议导入</Button>
-                <label className="inline-flex cursor-pointer items-center rounded-lg px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100">
-                  🎤 上传音频
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={loadSample}>粘贴示例转写</Button>
+                <Button size="sm" variant="outline" onClick={() => setDingOpen(!dingOpen)}>从钉钉会议导入</Button>
+                <label className="inline-flex cursor-pointer items-center rounded-lg px-2.5 py-1 text-xs text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                  上传音频
                   <input type="file" accept="audio/*" className="hidden" onChange={(e) => e.target.files?.[0] && mockAsr(e.target.files[0])} />
                 </label>
               </div>
@@ -229,18 +229,18 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
                 </div>
               </div>
             )}
-            <Textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={12} className="mt-1 font-mono text-xs" placeholder="林晓：人到齐了，我们开始……" />
+            <Textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={12} className="mt-2 text-sm leading-relaxed" placeholder="林晓：人到齐了，我们开始……" />
             {asrNote && <p className="mt-1 text-xs text-yellow-700">{asrNote}</p>}
           </div>
-          <Button onClick={process} disabled={!transcript.trim()}>开始处理 →</Button>
+          <Button onClick={process} disabled={!transcript.trim()}>开始整理</Button>
         </Card>
       )}
 
       {phase === 'processing' && <Card className="p-8 text-center text-sm text-slate-500">正在整理…</Card>}
 
       {(phase === 'confirm' || phase === 'done') && draft && (
-        <Card className="space-y-2 p-4">
-          <p className="text-xs font-semibold text-slate-600">流水线耗时与花费</p>
+        <Card className="space-y-3 p-5">
+          <p className="text-[15px] font-semibold text-slate-900">流水线耗时与花费</p>
           <div className="grid gap-1 md:grid-cols-2">
             {draft.steps.map((s) => (
               <div key={s.name} className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1 text-[11px]">
@@ -257,11 +257,11 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
       )}
 
       {phase === 'confirm' && draft && (
-        <Card className="space-y-4 p-4">
+        <Card className="space-y-5 p-5">
           <div className="flex items-center gap-2"><AiBadge /><span className="text-xs text-slate-500">逐条勾选 / 修改，确认后才写入任务表与记忆库</span></div>
 
           <section>
-            <h2 className="mb-1 text-sm font-semibold">📝 会议标题</h2>
+            <h2 className="mb-1 text-[15px] font-semibold text-slate-900">会议标题</h2>
             <div className="flex items-center gap-2">
               <Input value={confirmTitle} onChange={(e) => setConfirmTitle(e.target.value)} className="text-xs" aria-label="会议标题" />
               {draft.titleSource === 'ai' && <AiBadge />}
@@ -273,13 +273,13 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
 
           {draft.extraction.repeated_topics.length > 0 && (
             <div className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">
-              {draft.extraction.repeated_topics.map((r) => <p key={r.memory_id}>⚠️ 重复讨论：「{r.topic}」在历史决议 {r.memory_id} 中已有结论</p>)}
+              {draft.extraction.repeated_topics.map((r) => <p key={r.memory_id}>重复讨论：「{r.topic}」在历史决议 {r.memory_id} 中已有结论</p>)}
             </div>
           )}
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">✅ 决议（{editDecisions.length}）</h2>
+              <h2 className="text-[15px] font-semibold text-slate-900">决议（{editDecisions.length}）</h2>
               <Button size="sm" variant="ghost" onClick={() => setEditDecisions((prev) => [...prev, { text: '', evidence: '', confidence: 'high', supersedes_memory_id: null, note: null, checked: true, manual: true }])}>+ 添加决议</Button>
             </div>
             {editDecisions.length === 0 && <p className="text-xs text-slate-400">无</p>}
@@ -317,7 +317,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">📌 待办（{editActions.length}）</h2>
+              <h2 className="text-[15px] font-semibold text-slate-900">待办（{editActions.length}）</h2>
               <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => [...prev, blankAction()])}>+ 添加待办</Button>
             </div>
             {editActions.length === 0 && <p className="text-xs text-slate-400">无</p>}
@@ -344,7 +344,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
 
           {draft.extraction.disagreements.length > 0 && (
             <section>
-              <h2 className="mb-1 text-sm font-semibold">⚡ 分歧（未达成一致）</h2>
+              <h2 className="mb-1 text-[15px] font-semibold text-slate-900">分歧（未达成一致）</h2>
               {draft.extraction.disagreements.map((d, i) => (
                 <p key={i} className="text-xs text-slate-600">{d.topic}：{d.positions.join(' / ')}</p>
               ))}
@@ -353,7 +353,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
 
           <section>
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">❓ 待定问题</h2>
+              <h2 className="text-[15px] font-semibold text-slate-900">待定问题</h2>
               <Button size="sm" variant="ghost" onClick={() => setEditQuestions((prev) => [...prev, ''])}>+ 添加待定问题</Button>
             </div>
             {editQuestions.map((q, i) => (
@@ -365,7 +365,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
             {editQuestions.length === 0 && <p className="text-xs text-slate-400">无</p>}
           </section>
 
-          {draft.extraction.next_meeting && <p className="text-xs text-slate-500">🗓 下次会议：{draft.extraction.next_meeting}</p>}
+          {draft.extraction.next_meeting && <p className="text-xs text-slate-500">下次会议：{draft.extraction.next_meeting}</p>}
 
           <Button onClick={confirm}>✔ 确认并落库（写入任务 + 记忆库 + 提醒）</Button>
         </Card>
@@ -373,10 +373,10 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
 
       {phase === 'done' && (
         <Card className="space-y-3 p-4">
-          <p className="text-sm font-semibold text-green-700">✅ 已落库：任务上看板、决议进记忆库、提醒规则已挂载</p>
+          <p className="text-sm font-semibold text-green-700">已落库：任务上看板、决议进记忆库、提醒规则已挂载</p>
           <Textarea readOnly value={groupMessage} rows={14} className="font-mono text-xs" aria-label="群消息文本" />
           <div className="flex gap-2">
-            <Button onClick={copyMessage}>{copied ? '✅ 已复制' : '📋 一键复制群消息'}</Button>
+            <Button onClick={copyMessage}>{copied ? '已复制' : '一键复制群消息'}</Button>
             <Link href={`/app/meeting/${meetingId}`} className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">查看纪要</Link>
             <Link href={`/app/c/${draft?.courseId}`} className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">去看板</Link>
           </div>

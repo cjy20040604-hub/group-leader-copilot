@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input, Select } from '@/components/ui';
+import { Button, Card, Input, Select, SectionTitle } from '@/components/ui';
 
 type CourseOpt = { id: string; name: string; color: string };
 type MemberOpt = { id: string; name: string };
@@ -42,13 +42,10 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
 
   return (
     <section aria-label="会议安排">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">🗓 会议安排</h2>
-        {isLeader && !open && <Button size="sm" variant="outline" onClick={() => setOpen(true)}>＋ 安排会议</Button>}
-      </div>
-      <Card className="space-y-2 p-3">
+      <SectionTitle aside={isLeader && !open && <Button size="sm" variant="outline" onClick={() => setOpen(true)}>＋ 安排会议</Button>}>会议安排</SectionTitle>
+      <Card className="divide-y divide-slate-100">
         {open && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 px-5 py-3">
             <Select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="text-xs" aria-label="会议课程">
               {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
@@ -57,11 +54,11 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
             <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>取消</Button>
           </div>
         )}
-        {items.length === 0 && !open && <p className="text-xs text-slate-400">还没有安排会议。确认纪要时约好的下次会会自动加进来。</p>}
+        {items.length === 0 && !open && <p className="px-5 py-4 text-sm text-slate-400">还没有安排会议。确认纪要时约好的下次会会自动加进来。</p>}
         {items.map((m) => {
           const c = courseOf(m.courseId);
           return (
-            <div key={m.id} className="flex items-center gap-2 text-sm">
+            <div key={m.id} className="flex items-center gap-3 px-5 py-3 text-sm">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: c?.color ?? '#64748b' }} aria-hidden />
               <span className="flex-1">{c?.name ?? m.courseId} · {m.date === today ? '今天' : md(m.date)}</span>
               <Link href={`/app/meeting/live?course=${m.courseId}`} className="text-xs text-brand-600 hover:underline">{m.date === today ? '进会议室' : '会前准备'}</Link>
@@ -69,7 +66,7 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
             </div>
           );
         })}
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="px-5 py-2 text-xs text-red-600">{error}</p>}
       </Card>
     </section>
   );

@@ -39,7 +39,7 @@ export function ReminderChip({ r, isLeader }: { r: ReminderView; isLeader: boole
   const [copied, setCopied] = useState(false);
   return (
     <p className="flex w-full flex-wrap items-center gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-      <span>🔔 {KIND[r.kind] ?? r.kind}</span>
+      <span>{KIND[r.kind] ?? r.kind}</span>
       {r.response
         ? <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700">✓ 已回复：{r.response}</span>
         : <span className="rounded-full bg-slate-100 px-2 py-0.5">未回复</span>}

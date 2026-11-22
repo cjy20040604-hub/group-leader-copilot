@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Badge, Input, Select, EmptyState, cx } from '@/components/ui';
+import { Button, Card, Badge, Input, Select, EmptyState, cx, RiskDot, PageHeader } from '@/components/ui';
 import { BriefingButton } from '@/components/briefing-button';
-import { RISK_LABEL, STATUS_LABEL, type TaskStatus } from '@/lib/risk';
+import { STATUS_LABEL, type TaskStatus } from '@/lib/risk';
 import type { ReviewTask, FeedItem, CarryItem } from '@/lib/review';
 import type { TaskAction } from '@/lib/task-flow';
 
@@ -102,15 +102,15 @@ function InlineForm({ placeholder, submitLabel, withDate, minDate, onSubmit, onC
 function TaskHead({ t, reminded, replyId }: { t: ReviewTask; reminded?: boolean; replyId?: string }) {
   return (
     <div className="flex flex-wrap items-start gap-2">
-      <span aria-label={`风险 ${t.risk}`}>{RISK_LABEL[t.risk]}</span>
+      <RiskDot level={t.risk} className="mt-1.5" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{t.title}</p>
+        <p className="text-[15px] font-medium text-slate-900">{t.title}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: t.courseColor }} aria-hidden />{t.courseName}</span>
           <span>{t.ownerName}</span>
           <span>{t.dueText}</span>
           <span>{STATUS_LABEL[t.status as TaskStatus] ?? t.status}</span>
-          {reminded && (replyId ? <Link href={`/r/${replyId}`}><Badge tone="red">🔔 有提醒 · 点这里回复</Badge></Link> : <Badge tone="red">🔔 有提醒</Badge>)}
+          {reminded && (replyId ? <Link href={`/r/${replyId}`}><Badge tone="red">有提醒 · 点这里回复</Badge></Link> : <Badge tone="red">有提醒</Badge>)}
         </p>
       </div>
     </div>
@@ -123,7 +123,7 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
   const [form, setForm] = useState<'' | 'progress' | 'block' | 'extend' | 'submit'>('');
   const leaderSaid = t.lastUpdate?.byLeader && ['review_return', 'extension_rejected', 'extension_approved', 'unblocked'].includes(t.lastUpdate.kind) ? t.lastUpdate : null;
   return (
-    <Card className={cx('p-3', t.risk === 'red' && 'border-red-200')}>
+    <Card className={cx('p-4', t.risk === 'red' && 'border-red-200')}>
       <TaskHead t={t} reminded={reminded} replyId={replyId} />
       {t.progressNote && <p className="mt-2 text-xs text-slate-600">我上次写的进度：「{t.progressNote}」</p>}
       {leaderSaid && (
@@ -133,23 +133,23 @@ function MyTaskCard({ t, today, reminded, replyId, act, busy }: { t: ReviewTask;
       )}
       {t.blocker && (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">
-          <span className="flex-1">🆘 卡住：{t.blocker}（组长已在「待我处理」里看到）</span>
+          <span className="flex-1">卡住：{t.blocker}（组长已在「待我处理」里看到）</span>
           <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act(t.id, { type: 'unblock' })}>已解决</Button>
         </div>
       )}
-      {t.pending && <p className="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">📅 已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
+      {t.pending && <p className="mt-2 rounded-lg bg-yellow-50 p-2 text-xs text-yellow-800">已申请延到 {md(t.pending.proposedDue)}，等组长回复</p>}
 
       {t.status === 'awaiting_review' ? (
         <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-          <span className="flex-1">✅ 已交给组长确认</span>
+          <span className="flex-1">已交给组长确认</span>
           <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => act(t.id, { type: 'start' })}>撤回继续改</Button>
         </div>
       ) : (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <Button size="sm" disabled={!!busy} onClick={() => setForm(form === 'submit' ? '' : 'submit')}>✅ 做完了</Button>
-          <Button size="sm" variant="outline" onClick={() => setForm(form === 'progress' ? '' : 'progress')}>✏️ 写进度</Button>
-          {!t.blocker && <Button size="sm" variant="outline" onClick={() => setForm(form === 'block' ? '' : 'block')}>🆘 卡住了</Button>}
-          {!t.pending && <Button size="sm" variant="outline" onClick={() => setForm(form === 'extend' ? '' : 'extend')}>📅 申请延期</Button>}
+          <Button size="sm" disabled={!!busy} onClick={() => setForm(form === 'submit' ? '' : 'submit')}>做完了</Button>
+          <Button size="sm" variant="outline" onClick={() => setForm(form === 'progress' ? '' : 'progress')}>写进度</Button>
+          {!t.blocker && <Button size="sm" variant="outline" onClick={() => setForm(form === 'block' ? '' : 'block')}>卡住了</Button>}
+          {!t.pending && <Button size="sm" variant="outline" onClick={() => setForm(form === 'extend' ? '' : 'extend')}>申请延期</Button>}
         </div>
       )}
       {form === 'submit' && <InlineForm placeholder="交了什么、放在哪（选填也行，直接点提交）" submitLabel="提交给组长确认" onCancel={() => setForm('')}
@@ -189,8 +189,8 @@ function InboxSection({ title, hint, items, children }: { title: string; hint: s
   if (items.length === 0) return null;
   return (
     <section aria-label={title} className="space-y-2">
-      <h3 className="text-sm font-semibold text-slate-700">{title}（{items.length}）<span className="ml-2 text-xs font-normal text-slate-400">{hint}</span></h3>
-      {items.map((t) => <Card key={t.id} className="p-3">{children(t)}</Card>)}
+      <h3 className="flex items-baseline gap-2 text-sm font-medium text-slate-900">{title}<span className="tabular-nums text-slate-400">{items.length}</span><span className="text-xs font-normal text-slate-400">{hint}</span></h3>
+      {items.map((t) => <Card key={t.id} className="p-4">{children(t)}</Card>)}
     </section>
   );
 }
@@ -231,9 +231,9 @@ function ExtensionActions({ t, act, busy }: { t: ReviewTask; act: ReturnType<typ
 
 function CourseReviewCard({ r }: { r: CourseReview }) {
   return (
-    <Card className="space-y-3 p-4">
+    <Card className="space-y-4 p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="h-3 w-3 rounded-full" style={{ background: r.course.color }} aria-hidden />
+        <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.course.color }} aria-hidden />
         <h3 className="font-medium">{r.course.name}</h3>
         <span className="text-xs text-slate-500">{r.lastMeeting ? `上次会 ${md(r.lastMeeting.date)} · 之后 ${r.updatesSince} 条更新` : '还没开过会'}</span>
       </div>
@@ -252,7 +252,7 @@ function CourseReviewCard({ r }: { r: CourseReview }) {
         )}
       </div>
       <div className="flex flex-wrap items-start gap-2">
-        <Link href={`/app/meeting/live?course=${r.course.id}`} className="rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700">🎙 进会议室，从这些开始</Link>
+        <Link href={`/app/meeting/live?course=${r.course.id}`} className="rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700">进会议室，从这些开始</Link>
         <BriefingButton courseId={r.course.id} />
       </div>
     </Card>
@@ -267,17 +267,14 @@ export function TaskReview(props: Props) {
   if (props.mode === 'member') {
     const { mine, doneMine, unclaimed, feed, user } = props;
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-bold">{user.name}，你的待办（{mine.length}）</h1>
-          <p className="mt-1 text-sm text-slate-500">做完、卡住、要延期，在这里点一下就行，组长那边会实时看到，不用再私聊问你。</p>
-        </div>
+      <div className="space-y-10">
+        <PageHeader title={`${user.name}，你的待办（${mine.length}）`} lede="做完、卡住、要延期，在这里点一下就行，组长那边会实时看到，不用再私聊问你。" />
         <section aria-label="我的待办" className="space-y-2">
           {mine.length === 0 ? <EmptyState title="手上没有未完成的任务" hint="下面有没人认领的，有空可以拿一个" /> :
             mine.map((t) => <MyTaskCard key={t.id} t={t} today={today} reminded={reminded.has(t.id)} replyId={props.reminderLinks?.[t.id]} act={act} busy={busy} />)}
         </section>
         <section aria-label="没人认领" className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-700">还没人认领（{unclaimed.length}）<span className="ml-2 text-xs font-normal text-slate-400">会上说了「那个谁」的事，谁有空谁拿</span></h2>
+          <h2 className="text-[15px] font-semibold text-slate-900">还没人认领（{unclaimed.length}）<span className="ml-2 text-xs font-normal text-slate-400">会上说了「那个谁」的事，谁有空谁拿</span></h2>
           {unclaimed.length === 0 ? <p className="text-xs text-slate-400">都有人负责了</p> : unclaimed.map((t) => (
             <Card key={t.id} className="flex flex-wrap items-center gap-2 p-3">
               <div className="min-w-0 flex-1"><TaskHead t={t} /></div>
@@ -287,13 +284,13 @@ export function TaskReview(props: Props) {
         </section>
         <div className="grid gap-6 md:grid-cols-2">
           <section aria-label="我做完的">
-            <h2 className="mb-2 text-sm font-semibold text-slate-700">我做完的（{doneMine.length}）</h2>
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-900">我做完的（{doneMine.length}）</h2>
             {doneMine.length === 0 ? <p className="text-xs text-slate-400">还没有</p> : (
-              <ul className="space-y-1">{doneMine.slice(0, 5).map((t) => <li key={t.id} className="text-xs text-slate-600">✅ {t.courseName} ·「{t.title}」</li>)}</ul>
+              <ul className="space-y-1">{doneMine.slice(0, 5).map((t) => <li key={t.id} className="text-xs text-slate-600">{t.courseName} ·「{t.title}」</li>)}</ul>
             )}
           </section>
           <section aria-label="我的任务动态">
-            <h2 className="mb-2 text-sm font-semibold text-slate-700">我的任务动态</h2>
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-900">我的任务动态</h2>
             <FeedList feed={feed} empty="还没有动态" />
           </section>
         </div>
@@ -304,15 +301,12 @@ export function TaskReview(props: Props) {
   const { inbox, feed, reviews, members, nudges } = props;
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '';
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold">任务与回顾</h1>
-        <p className="mt-1 text-sm text-slate-500">组员自己更新进度；这里只放需要你拍板的事，再帮你把下次会要接着推进的列出来。</p>
-      </div>
+    <div className="space-y-12">
+      <PageHeader title="任务与回顾" lede="组员自己更新进度。这里只放要你拍板的事，和下次会要接着推进的。" />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <h2 className="text-base font-semibold">待我处理（{inbox.total}）</h2>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <h2 className="text-[15px] font-semibold text-slate-900">待我处理 <span className="tabular-nums text-slate-400">{inbox.total}</span></h2>
           {inbox.total === 0 && <EmptyState title="没有要你处理的事" hint="组员都在按计划推进" />}
           <InboxSection title="等你确认完成" hint="点了「做完了」，等你确认" items={inbox.review}>{(t) => <ReviewActions t={t} act={act} busy={busy} />}</InboxSection>
           <InboxSection title="延期申请" hint="同意就自动改 DDL" items={inbox.extensions}>{(t) => <ExtensionActions t={t} act={act} busy={busy} />}</InboxSection>
@@ -345,15 +339,15 @@ export function TaskReview(props: Props) {
         </div>
 
         <aside aria-label="组员动态" className="space-y-2">
-          <h2 className="text-base font-semibold">组员动态</h2>
-          <Card className="p-3"><FeedList feed={feed.filter((f) => nameOf(f.actorId) !== props.user.name || f.kind !== 'created')} empty="组员还没有更新" /></Card>
+          <h2 className="text-[15px] font-semibold text-slate-900">组员动态</h2>
+          <Card className="p-4"><FeedList feed={feed.filter((f) => nameOf(f.actorId) !== props.user.name || f.kind !== 'created')} empty="组员还没有更新" /></Card>
         </aside>
       </div>
 
       <section aria-label="回顾" className="space-y-3">
         <div>
-          <h2 className="text-base font-semibold">带到下次会</h2>
-          <p className="text-xs text-slate-500">只列有遗留的课；规则自动汇总，不调模型。</p>
+          <h2 className="text-[15px] font-semibold text-slate-900">带到下次会</h2>
+          <p className="mt-1 text-xs text-slate-500">只列有遗留的课；规则自动汇总，不调模型。</p>
         </div>
         {reviews.some((r) => r.carry.length > 0) ? (
           <div className="grid gap-4 lg:grid-cols-2">
