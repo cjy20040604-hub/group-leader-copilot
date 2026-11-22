@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { KindTag } from '@/components/ui';
+import { MinutesShelf, type ShelfBook } from '@/components/minutes-shelf';
+import { db, schema } from '@/lib/db/client';
 import { computeEconomics, textCostPerMeeting, BASELINE, ASR_REALTIME } from '@/lib/unit-economics';
 
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
@@ -39,7 +40,30 @@ const jsonLd = {
   ],
 };
 
+export const dynamic = 'force-dynamic';
+
+// 书架上的书：演示数据库里真实的每场会（按课程、日期排），带它的决定 / 待办 / 待定和原话
+function loadShelf(): ShelfBook[] {
+  const courses = new Map(db.select().from(schema.courses).all().map((c) => [c.id, c]));
+  const items = db.select().from(schema.memoryItems).all();
+  const dateOf = new Map(items.map((m) => [m.id, m.meetingDate]));
+  const order = [...courses.keys()];
+  return db.select().from(schema.meetings).all()
+    .sort((a, b) => order.indexOf(a.courseId) - order.indexOf(b.courseId) || a.date.localeCompare(b.date))
+    .map((m) => {
+      const mine = items.filter((i) => i.meetingId === m.id);
+      const c = courses.get(m.courseId);
+      return {
+        id: m.id, courseName: c?.name ?? m.courseId, color: c?.color ?? '#64748b', date: m.date, title: m.title,
+        decisions: mine.filter((i) => i.type === 'decision').map((i) => ({ text: i.text, evidence: i.evidence, supersededOn: i.status === 'superseded' && i.supersededBy ? dateOf.get(i.supersededBy) ?? null : null })),
+        actions: mine.filter((i) => i.type === 'action').map((i) => ({ text: i.text, evidence: i.evidence })),
+        questions: mine.filter((i) => i.type === 'open_question').map((i) => i.text),
+      };
+    });
+}
+
 export default function LandingPage() {
+  const books = loadShelf();
   // 交付物里的成本数字直接从成本模型算，和成本看板同一份代码，不会说岔
   const base = computeEconomics(BASELINE);
   const rt = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
@@ -47,58 +71,40 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-paper">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <header className="border-b border-paper-line">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <p className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-slate-900">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-semibold text-white" aria-hidden>减</span>组长减负
-          </p>
-          <nav aria-label="落地页导航" className="flex items-center gap-5 text-sm">
-            <a href="#deliverables" className="hidden text-slate-500 hover:text-slate-900 sm:inline">交付物</a>
-            <a href="#pricing" className="hidden text-slate-500 hover:text-slate-900 sm:inline">定价</a>
-            <Link href="/app" className="rounded-lg bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-800">进入 Demo</Link>
-          </nav>
-        </div>
-      </header>
+      {/* 首屏：纪要书架。深色暖光是这个场景的灯光，只在首屏出现；往下回到纸面暖白 */}
+      <div className="relative overflow-hidden bg-[#1c1814] text-[#efe9de]" style={{ backgroundImage: 'radial-gradient(ellipse 60% 50% at 72% 0%, rgba(255, 196, 120, 0.10), transparent 70%)' }}>
+        <header>
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+            <p className="flex items-center gap-2 text-[15px] font-medium tracking-tight">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-600 text-[11px] font-semibold text-white" aria-hidden>减</span>组长减负
+            </p>
+            <nav aria-label="落地页导航" className="flex items-center gap-5 text-sm">
+              <a href="#deliverables" className="hidden text-[#b3aa9c] hover:text-[#efe9de] sm:inline">交付物</a>
+              <a href="#pricing" className="hidden text-[#b3aa9c] hover:text-[#efe9de] sm:inline">定价</a>
+              <Link href="/app" className="rounded-lg bg-[#efe9de] px-4 py-2 font-medium text-[#1c1814] hover:bg-white">进入 Demo</Link>
+            </nav>
+          </div>
+        </header>
+
+        <section className="mx-auto max-w-6xl px-4 pb-16 pt-12 md:pt-16" aria-label="纪要书架">
+          <div className="max-w-2xl">
+            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl lg:text-[52px]"><span className="block">会上说的话，</span><span className="block lg:whitespace-nowrap">散会就变成决定和任务</span></h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#b3aa9c]">
+              给小组作业的组长用：进会议室自动开录，散会自动出纪要，组员自己更新进度。每场会都留在书架上，下次想不起来就翻。
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/app" className="rounded-lg bg-brand-500 px-5 py-3 text-sm font-medium text-white hover:bg-brand-600">免费试用 Demo</Link>
+              <Link href="/app/cost" className="rounded-lg px-5 py-3 text-sm font-medium text-[#efe9de] ring-1 ring-inset ring-[#efe9de]/25 hover:bg-white/5">看成本与商业模式</Link>
+              <span className="text-xs text-[#8a8173]">不用注册，也不用 API Key</span>
+            </div>
+          </div>
+          <div className="mt-12">
+            <MinutesShelf books={books} />
+          </div>
+        </section>
+      </div>
 
       <main>
-        {/* 首屏：一句会上的原话，怎么变成确认过的决定和有人跟进的任务 */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr]">
-          <div>
-            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight text-slate-900 sm:text-4xl lg:text-[52px]"><span className="block">会上说的话，</span><span className="block lg:whitespace-nowrap">散会就变成决定和任务</span></h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
-              给小组作业的组长用：进会议室自动开录，散会自动出纪要，组员自己更新进度，下次开会遗留事项已经排好。
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/app" className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-medium text-white hover:bg-brand-700">免费试用 Demo</Link>
-              <Link href="/app/cost" className="rounded-lg px-5 py-3 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">看成本与商业模式</Link>
-            </div>
-            <p className="mt-4 text-xs text-slate-400">不用注册，也不用 API Key。</p>
-          </div>
-
-          <figure className="relative" aria-label="一句会上的话变成决定和任务的示意">
-            <div className="ruled overflow-hidden rounded-2xl border border-paper-line px-5 pb-4 pt-2">
-              <p className="text-xs leading-8 text-slate-400">11 月 13 日　数据库原理组会</p>
-              <p className="text-[15px] leading-8 text-slate-700"><span className="font-medium text-slate-900">浩然：</span>主键统一用自增 id，别搞什么学号当主键。</p>
-              <p className="text-[15px] leading-8 text-slate-700"><span className="font-medium text-slate-900">林晓：</span>好，那就定了，主键全部自增 id。思琪你下下周二之前把建表脚本写完。</p>
-            </div>
-            <div className="mx-auto h-8 w-px bg-paper-line" aria-hidden />
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
-              <div className="flex items-start gap-3">
-                <KindTag kind="decision" className="mt-0.5" />
-                <p className="text-[15px] text-slate-900">主键全部用自增 id</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <KindTag kind="action" className="mt-0.5" />
-                <div>
-                  <p className="text-[15px] text-slate-900">写建表脚本</p>
-                  <p className="mt-0.5 text-xs tabular-nums text-slate-500">思琪，11 月 24 日截止（「下下周二」由代码换算），前 3 天和前 1 天自动提醒</p>
-                </div>
-              </div>
-              <p className="border-t border-slate-100 pt-3 text-xs text-slate-400">AI 整理，组长确认后才生效</p>
-            </div>
-          </figure>
-        </section>
-
         <section className="border-t border-paper-line bg-white py-10" aria-label="痛点与解法">
           <p className="mx-auto max-w-6xl px-4 text-[17px] leading-relaxed text-slate-600">
             <span className="font-medium text-slate-900">组长的痛点</span>是会后没人整理纪要、下次没人记得定了啥、进度全靠组长追；<span className="font-medium text-slate-900">Demo 把这三处连成一条线</span>：会上自动转写，AI 整理成决定和待办、组长确认后生效，组员自己更新进度，下次开会前遗留自动排好，忘了就「问问上次」。
