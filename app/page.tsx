@@ -111,15 +111,19 @@ export default function LandingPage() {
         <section className="py-16" aria-label="痛点与解法">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">痛点与解法</h2>
-            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">纪要、旧决议、DDL 三件事都压在组长一个人身上；Demo 把它们连成一条线。</p>
+            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">纪要、旧决定、DDL 三件事都压在组长一个人身上；Demo 把它们连成一条线。</p>
             <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">组长的痛点</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">会后没人整理纪要，下次没人记得定了啥，进度全靠组长一个个追。</p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">开完会，组长的事才开始：纪要要自己整理，上次定了什么得翻聊天记录，谁还没交又得一个个私聊问。几门课一起推进、每门课组员还不一样，这些事全落在组长一个人身上。</p>
               </article>
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">Demo 怎么解决</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">会上自动转写，AI 整理成决定和待办、组长确认后生效；组员自己更新进度，DDL 前 3 天、前 1 天和过期当天自动提醒（组员点链接就能回）；下次开会前遗留自动排好，忘了就「问问上次」。</p>
+                <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
+                  <li><span className="font-medium text-slate-900">会后少整理：</span>会议自动转写，AI 整理决定和待办，组长确认后发布。</li>
+                  <li><span className="font-medium text-slate-900">平时少催问：</span>组员点链接回复进度；截止前 3 天、前 1 天和过期当天自动提醒，组长只看要拍板的事。</li>
+                  <li><span className="font-medium text-slate-900">会前少翻找：</span>遗留自动排进下次会；上次定了什么，「问问上次」带出处回答。</li>
+                </ul>
               </article>
             </div>
           </div>
@@ -128,23 +132,28 @@ export default function LandingPage() {
         <section id="deliverables" className="border-t border-paper-line py-16" aria-label="交付物一览">
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-medium tracking-tight text-slate-900">交付物一览</h2>
-            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">Demo、为什么是这个组合、成本与商业模式，以及我们怎么验证这些结论。</p>
+            <p className="mt-3 max-w-2xl text-[15px] text-slate-600">这个产品帮谁解决什么、为什么这样设计、怎么收费，以及哪些已经验证、哪些还要验证。</p>
             <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-paper-line bg-paper-line md:grid-cols-2">
               <article className="bg-paper-card p-7">
-                <h3 className="text-[15px] font-medium text-slate-900">Demo</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">一个 5 人小组、三门课的一周：会上自动开录和实时转写，会后组长确认纪要，组员自己更新进度，下次会前自动汇总遗留。</p>
+                <h3 className="text-[15px] font-medium text-slate-900">Demo：组长林晓的一周</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">林晓同时带三门课的小组作业。开完会，纪要自动出来，她只需要确认；组员点链接回复进度，不用她挨个问；有人同一周撞了两个 DDL，首页先提醒她问一句；下次开会前，遗留和上次定的事已经摆好。</p>
                 <Link href="/app" className={`mt-4 inline-block ${link}`}>进入 Demo</Link>
               </article>
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">为什么是这个组合</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">AI 只用在需要理解声音和语言的地方：转写、整理成决定和待办、按意思回忆旧决议。开录、认领、延期、提醒、风险灯都用规则，因为必须可预测、边际成本几乎为零。AI 产出要组长确认才生效。只做纪要没人执行，只做看板要手抄，全交给 Agent 不可控也越用越贵。</p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">转写和纪要，腾讯会议、钉钉已经能做。我们判断组长缺的是另外三件事：会后有人推进、下次还记得定过什么、几门课之间不串（待访谈验证）。所以：</p>
+                <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-600">
+                  <li><span className="font-medium text-slate-900">AI 只做要理解语言的事：</span>转写、整理决定和待办、按意思找旧决定。它出的是草稿，组长确认才算数。组长要的是省事，不是把拍板权交出去。</li>
+                  <li><span className="font-medium text-slate-900">推进交给规则：</span>认领、提醒、延期、风险灯都写在代码里，准时、可预期，几乎不花钱；组员点链接就能回，不用被私聊追。</li>
+                  <li><span className="font-medium text-slate-900">没选别的组合：</span>只做纪要没人执行，只做看板要组长手抄，全交给 Agent 组长不放心，成本也越用越高。</li>
+                </ul>
                 <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className={`mt-4 inline-block ${link}`}>和 5 种其他组合的对比</a>
               </article>
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">成本与商业模式</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{notes.modelCost.toFixed(2)}。</li>
-                  <li><span className="text-slate-900">定价</span>：计价单位是一门课的一支小组，纪要和实时转写分开卖。体验版免费（每学期 3 次纪要，送 10 分钟实时转写）；纪要版 ¥6.9 / 组 / 学期；专业版 ¥14.9，多 8 小时实时转写，用完照常录音、散会后整理，或加购 3 小时 ¥3.9；组长带多个组买多组包 ¥14.9；团体购入版每人每门课 ¥5 / ¥4 / ¥3。</li>
+                  <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 10 分钟实时转写），先试再买；带多个组的组长买多组包 ¥14.9；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
                   <li><span className="text-slate-900">商业模式</span>：只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时约 {mix.breakEvenGroups} 个付费组回本。</li>
                   <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；每支小组由组里任何一个人或 AA 付钱，拍板的仍是这个组的组长；规模化后老师按课团体购入。</li>
                 </ul>
@@ -155,17 +164,18 @@ export default function LandingPage() {
                 </div>
               </article>
               <article className="bg-paper-card p-7">
-                <h3 className="text-[15px] font-medium text-slate-900">怎么验证的</h3>
-                <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
+                <h3 className="text-[15px] font-medium text-slate-900">验证了什么，还要验证什么</h3>
+                <p className="mt-3 text-sm font-medium text-slate-900">已经验证：能跑通，账算得清</p>
+                <ul className="mt-1.5 space-y-1.5 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
-                  <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0</li>
-                  <li>124 个单元测试；每次模型调用都记账</li>
-                  <li>成功指标：北极星是每周确认的决定数</li>
+                  <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0；125 个单元测试，每次模型调用都记账</li>
                 </ul>
+                <p className="mt-3 text-sm font-medium text-slate-900">还没验证：组长买不买账</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">组长每周是不是真的少花时间、组员会不会回提醒、小组愿不愿意付 6.9 或 14.9 元，现在都是假设。下一步先访谈组长、组员和老师，再用试用数据看北极星「每周确认的决定数」和提醒回复率。</p>
                 <div className="mt-4 flex flex-wrap gap-4">
+                  <a href={`${REPO}/blob/main/docs/research/interview-targets.md`} className={link}>访谈计划</a>
                   <a href={`${REPO}/blob/main/docs/real-run-report.md`} className={link}>真实接口实测报告</a>
                   <Link href="/app/metrics" className={link}>成功指标</Link>
-                  <a href={`${REPO}/blob/main/docs/product-v2.md`} className={link}>产品流程与 AI 分工</a>
                   <a href={REPO} className={link}>GitHub 仓库</a>
                 </div>
               </article>
