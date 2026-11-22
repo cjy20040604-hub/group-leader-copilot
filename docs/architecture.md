@@ -46,6 +46,7 @@ npm run typecheck  # tsc --noEmit
   - kind: `created | claim | status | submit | progress | blocked | unblocked | extension_request | extension_approved | extension_rejected | review_pass | review_return`
   - 延期申请 resolved=0 表示等组长回复；批准后改 DDL 并重建提醒
   - 老库由 `lib/db/client.ts` 启动时就地升级（加列、建表，不删数据）
+- `scheduled_meetings(id, course_id, date, created_at)` — 首页「会议安排」：组长新建 / 删除（`/api/schedule`），确认纪要时按 next_meeting 自动加；「未来 7 天」的会从这里读
 - `reminders(id, task_id, kind, fire_date, message, created_at)` — kind: `d3 | d1 | overdue`；按 (task_id, kind) 幂等
 - `usage_log(id, ts, model, input_tokens, output_tokens, audio_seconds, cost_cny, feature, meeting_id)`
 - `settings(key, value)` — `demo_now`（默认 `2026-11-19T09:00:00`）、`current_user`、`auto_record`（会议室自动开录开关）、`live_draft`（会议室结束后待整理的转写，整理后清除）

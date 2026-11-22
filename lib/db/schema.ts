@@ -112,3 +112,11 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 });
+
+// 会议安排：组长手动安排，或确认纪要时按「下次会议」自动加一条（确定性代码）
+export const scheduledMeetings = sqliteTable('scheduled_meetings', {
+  id: text('id').primaryKey(),
+  courseId: text('course_id').notNull(),
+  date: text('date').notNull(),
+  createdAt: text('created_at').notNull(),
+});

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Card, Badge, cx } from '@/components/ui';
+import { Card, cx } from '@/components/ui';
 import type { AgendaDay, AgendaItem, MemberLoad } from '@/lib/multi-course';
 
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
@@ -16,37 +16,39 @@ function Item({ i }: { i: AgendaItem }) {
   );
 }
 
-// 未来 7 天：三门课的 DDL 和组会放在一张表里（确定性汇总）
+// 未来 7 天：三门课的 DDL 和组会放在一张表里（确定性汇总）；空的日子不占地方
 export function WeekBoard({ overdue, days, title }: { overdue: AgendaItem[]; days: AgendaDay[]; title: string }) {
+  const busy = days.filter((d) => d.items.length > 0);
   return (
     <section aria-label="未来 7 天">
       <h2 className="mb-2 text-sm font-semibold text-slate-700">{title}</h2>
-      <Card className="overflow-x-auto p-3">
-        <div className="grid min-w-[640px] grid-cols-8 gap-2">
-          <div className="rounded-lg bg-red-50 p-2">
-            <p className="mb-1 text-[11px] font-semibold text-red-700">已过期（{overdue.length}）</p>
+      <Card className="divide-y divide-slate-100 p-0">
+        {overdue.length > 0 && (
+          <div className="flex gap-3 bg-red-50 px-3 py-2">
+            <p className="w-20 shrink-0 text-[11px] font-semibold text-red-700">已过期</p>
             <ul className="space-y-1">{overdue.map((i, k) => <Item key={k} i={i} />)}</ul>
           </div>
-          {days.map((d) => (
-            <div key={d.date} className={cx('rounded-lg p-2', d.label.startsWith('今天') ? 'bg-brand-50' : 'bg-slate-50')}>
-              <p className="mb-1 text-[11px] font-semibold text-slate-600">{d.label}</p>
-              {d.items.length === 0 ? <p className="text-[11px] text-slate-300">—</p> : <ul className="space-y-1">{d.items.map((i, k) => <Item key={k} i={i} />)}</ul>}
-            </div>
-          ))}
-        </div>
+        )}
+        {busy.map((d) => (
+          <div key={d.date} className={cx('flex gap-3 px-3 py-2', d.label.startsWith('今天') && 'bg-brand-50')}>
+            <p className="w-20 shrink-0 text-[11px] font-semibold text-slate-600">{d.label}</p>
+            <ul className="space-y-1">{d.items.map((i, k) => <Item key={k} i={i} />)}</ul>
+          </div>
+        ))}
+        {overdue.length === 0 && busy.length === 0 && <p className="px-3 py-3 text-xs text-slate-400">未来 7 天没有 DDL，也没有安排会议。</p>}
       </Card>
     </section>
   );
 }
 
+// 只有有人跨课撞 DDL 时才出现
 export function MemberLoadPanel({ loads }: { loads: MemberLoad[] }) {
-  const busy = loads.filter((l) => l.items.length > 0);
   const hot = loads.filter((l) => l.overloaded);
+  if (hot.length === 0) return null;
   return (
     <section aria-label="组员这周的担子">
-      <h2 className="mb-2 text-sm font-semibold text-slate-700">👥 组员这周的担子（跨课一起看）</h2>
+      <h2 className="mb-2 text-sm font-semibold text-slate-700">👥 有人这周撞 DDL</h2>
       <Card className="space-y-2 p-3">
-        {hot.length === 0 && <p className="text-xs text-slate-500">没人这周跨课撞 DDL。</p>}
         {hot.map((l) => (
           <div key={l.memberId} className="rounded-lg bg-yellow-50 p-2 text-xs text-yellow-900">
             <p className="font-medium">⚠️ {l.name}：{l.reason}</p>
@@ -54,12 +56,6 @@ export function MemberLoadPanel({ loads }: { loads: MemberLoad[] }) {
             <p className="mt-1 text-[11px] text-yellow-700">建议问一句先做哪个，或者把其中一个 DDL 往后挪 → <Link href="/app/tasks" className="underline">任务与回顾</Link></p>
           </div>
         ))}
-        <div className="flex flex-wrap gap-1.5">
-          {busy.filter((l) => !l.overloaded).map((l) => (
-            <Badge key={l.memberId} tone="slate">{l.name} · {l.items.length} 件 · {l.courses} 门课</Badge>
-          ))}
-          {loads.filter((l) => l.items.length === 0).map((l) => <Badge key={l.memberId} tone="green">{l.name} · 这周没 DDL</Badge>)}
-        </div>
       </Card>
     </section>
   );

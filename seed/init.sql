@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS task_updates;
 DROP TABLE IF EXISTS reminders;
 DROP TABLE IF EXISTS metric_events;
 DROP TABLE IF EXISTS usage_log;
+DROP TABLE IF EXISTS scheduled_meetings;
 DROP TABLE IF EXISTS settings;
 
 CREATE TABLE courses (
@@ -114,6 +115,13 @@ CREATE TABLE usage_log (
   cost_cny REAL NOT NULL,
   feature TEXT NOT NULL,
   meeting_id TEXT
+);
+
+CREATE TABLE scheduled_meetings (
+  id TEXT PRIMARY KEY,
+  course_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  created_at TEXT NOT NULL
 );
 
 CREATE TABLE settings (

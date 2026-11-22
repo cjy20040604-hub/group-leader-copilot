@@ -127,6 +127,10 @@ export async function runSeed() {
     });
   }
 
+  // 历史会上分的任务早就做完了：演示里不再逐条摆出来，只把对应的记忆条目标成已完成，问答照样答得出「谁做的、做完没」
+  const HISTORICAL_DONE = ['mkt-1105-a1', 'mkt-1105-a2', 'mkt-1112-a1', 'mkt-1112-a2', 'db-1106-a1', 'db-1106-a2', 'startup-1107-a1', 'startup-1107-a2'];
+  for (const id of HISTORICAL_DONE) db.update(schema.memoryItems).set({ status: 'done' }).where(eq(schema.memoryItems.id, id)).run();
+
   for (const t of seedTasks) {
     db.insert(schema.tasks).values({
       id: t.id, courseId: t.course_id, meetingId: t.meeting_id, title: t.title, ownerId: t.owner_id,
@@ -138,7 +142,7 @@ export async function runSeed() {
     }
   }
 
-  // 任务动态：历史进度各记一条；完成的再记一条组长确认。另加思琪「卡住了 + 申请延期」，演示组员主动更新
+  // 任务动态：每个任务记一条进度；另加思琪「申请延期」，演示组员主动更新
   const minus1 = (iso: string) => toLocalISO(new Date(new Date(iso).getTime() - 60000));
   for (const t of seedTasks) {
     if (!t.owner_id || !t.progress_note || !t.last_update_at) continue;

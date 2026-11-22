@@ -237,14 +237,6 @@ function CourseReviewCard({ r }: { r: CourseReview }) {
         <h3 className="font-medium">{r.course.name}</h3>
         <span className="text-xs text-slate-500">{r.lastMeeting ? `上次会 ${md(r.lastMeeting.date)} · 之后 ${r.updatesSince} 条更新` : '还没开过会'}</span>
       </div>
-      <div className="grid grid-cols-4 gap-2 text-center">
-        {([['完成', r.doneSince.length, 'text-green-700'], ['进行中', r.inProgress.length, 'text-slate-700'], ['卡住', r.blocked.length, 'text-red-600'], ['待确认', r.awaiting.length, 'text-blue-700']] as const).map(([label, n, tone]) => (
-          <div key={label} className="rounded-lg bg-slate-50 py-2">
-            <p className={cx('text-lg font-semibold', tone)}>{n}</p>
-            <p className="text-[11px] text-slate-500">{label}</p>
-          </div>
-        ))}
-      </div>
       {r.doneSince.length > 0 && <p className="text-xs text-slate-600">上次会后做完：{r.doneSince.map((t) => `${t.ownerName}「${t.title}」`).join('、')}</p>}
       <div>
         <p className="mb-1 text-xs font-semibold text-slate-600">带到下次会（{r.carry.length}）</p>
@@ -360,12 +352,14 @@ export function TaskReview(props: Props) {
 
       <section aria-label="回顾" className="space-y-3">
         <div>
-          <h2 className="text-base font-semibold">回顾：上次会到现在</h2>
-          <p className="text-xs text-slate-500">「带到下次会」由规则自动汇总：卡住、过期、延期申请、没人认领、没动静、待确认、没拍板的问题。</p>
+          <h2 className="text-base font-semibold">带到下次会</h2>
+          <p className="text-xs text-slate-500">只列有遗留的课；规则自动汇总，不调模型。</p>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {reviews.map((r) => <CourseReviewCard key={r.course.id} r={r} />)}
-        </div>
+        {reviews.some((r) => r.carry.length > 0) ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {reviews.filter((r) => r.carry.length > 0).map((r) => <CourseReviewCard key={r.course.id} r={r} />)}
+          </div>
+        ) : <p className="text-xs text-slate-400">每门课都没有遗留，下次会可以直接推进新议题。</p>}
       </section>
     </div>
   );

@@ -31,6 +31,7 @@ function migrate(sqlite: Database.Database) {
     from_status TEXT, to_status TEXT, note TEXT, proposed_due TEXT, resolved INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_updates_task ON task_updates(task_id, created_at);`);
+  sqlite.exec('CREATE TABLE IF NOT EXISTS scheduled_meetings (id TEXT PRIMARY KEY, course_id TEXT NOT NULL, date TEXT NOT NULL, created_at TEXT NOT NULL);');
 }
 
 const globalForDb = globalThis as unknown as { __demoDb?: ReturnType<typeof createDb> };

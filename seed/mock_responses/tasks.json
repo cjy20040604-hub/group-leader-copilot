@@ -1,71 +1,5 @@
 [
   {
-    "id": "mkt-1105-a1",
-    "course_id": "mkt",
-    "meeting_id": "mkt-1105",
-    "title": "设计调研问卷",
-    "owner_id": "xiaoyu",
-    "due_date": "2026-11-10",
-    "status": "done",
-    "last_update_at": "2026-11-09T21:30:00",
-    "progress_note": "问卷定稿已发班级群和社团群"
-  },
-  {
-    "id": "mkt-1105-a2",
-    "course_id": "mkt",
-    "meeting_id": "mkt-1105",
-    "title": "收集竞品资料",
-    "owner_id": "ajie",
-    "due_date": "2026-11-09",
-    "status": "done",
-    "last_update_at": "2026-11-08T18:40:00",
-    "progress_note": "三个竞品案例的截图和链接已发群里"
-  },
-  {
-    "id": "mkt-1112-a1",
-    "course_id": "mkt",
-    "meeting_id": "mkt-1112",
-    "title": "整理访谈提纲",
-    "owner_id": "siqi",
-    "due_date": "2026-11-17",
-    "status": "done",
-    "last_update_at": "2026-11-18T14:20:00",
-    "progress_note": "访谈提纲已定稿发群"
-  },
-  {
-    "id": "mkt-1112-a2",
-    "course_id": "mkt",
-    "meeting_id": "mkt-1112",
-    "title": "汇总问卷数据",
-    "owner_id": "linxiao",
-    "due_date": "2026-11-18",
-    "status": "done",
-    "last_update_at": "2026-11-18T20:30:00",
-    "progress_note": "问卷数据汇总完成，交叉分析已发群"
-  },
-  {
-    "id": "db-1106-a1",
-    "course_id": "db",
-    "meeting_id": "db-1106",
-    "title": "画 ER 图初稿",
-    "owner_id": "haoran",
-    "due_date": "2026-11-13",
-    "status": "done",
-    "last_update_at": "2026-11-13T18:00:00",
-    "progress_note": "初稿迟交已收，完整版见 11/13 新任务"
-  },
-  {
-    "id": "db-1106-a2",
-    "course_id": "db",
-    "meeting_id": "db-1106",
-    "title": "写需求说明",
-    "owner_id": "ajie",
-    "due_date": "2026-11-11",
-    "status": "done",
-    "last_update_at": "2026-11-10T22:10:00",
-    "progress_note": "需求说明已交，逾期罚款规则答应这两天补上"
-  },
-  {
     "id": "db-1106-a3",
     "course_id": "db",
     "meeting_id": "db-1106",
@@ -97,38 +31,5 @@
     "status": "in_progress",
     "last_update_at": "2026-11-17T21:00:00",
     "progress_note": "先搭了脚本框架，字段等 ER 图定稿再填"
-  },
-  {
-    "id": "startup-1107-a1",
-    "course_id": "startup",
-    "meeting_id": "startup-1107",
-    "title": "写商业计划书初稿",
-    "owner_id": "ajie",
-    "due_date": "2026-11-12",
-    "status": "done",
-    "last_update_at": "2026-11-11T23:50:00",
-    "progress_note": "初稿已交，含两版盈利模式测算"
-  },
-  {
-    "id": "startup-1107-a2",
-    "course_id": "startup",
-    "meeting_id": "startup-1107",
-    "title": "做竞品分析",
-    "owner_id": "xiaoyu",
-    "due_date": "2026-11-12",
-    "status": "done",
-    "last_update_at": "2026-11-12T12:00:00",
-    "progress_note": "竞品对比表已发群里，老师反馈不错"
-  },
-  {
-    "id": "startup-1114-a1",
-    "course_id": "startup",
-    "meeting_id": "startup-1114",
-    "title": "订路演排练教室",
-    "owner_id": "linxiao",
-    "due_date": "2026-11-20",
-    "status": "awaiting_review",
-    "last_update_at": "2026-11-18T09:30:00",
-    "progress_note": "博学楼教室预约已提交，等团委审批"
   }
 ]

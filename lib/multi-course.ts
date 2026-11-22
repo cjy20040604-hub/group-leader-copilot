@@ -38,7 +38,7 @@ export function loadAgenda(now: Date, opts: { days?: number; ownerId?: string } 
   const courses = new Map(db.select().from(schema.courses).all().map((c) => [c.id, c]));
   const members = new Map(db.select().from(schema.members).all().map((m) => [m.id, m]));
   const tasks = db.select().from(schema.tasks).all().filter((t) => t.status !== 'done' && t.dueDate);
-  const meetings = db.select().from(schema.meetings).all();
+  const scheduled = db.select().from(schema.scheduledMeetings).all();
 
   const items: AgendaItem[] = [];
   for (const t of tasks) {
@@ -51,12 +51,11 @@ export function loadAgenda(now: Date, opts: { days?: number; ownerId?: string } 
       status: STATUS_LABEL[t.status as TaskStatus] ?? t.status, taskId: t.id,
     });
   }
-  // 每门课最近一次纪要里约的下次会
-  for (const c of courses.values()) {
-    const last = meetings.filter((m) => m.courseId === c.id && m.nextMeeting).sort((a, b) => b.date.localeCompare(a.date))[0];
-    if (last?.nextMeeting && last.nextMeeting >= today && last.nextMeeting <= end) {
-      items.push({ kind: 'meeting', date: last.nextMeeting, courseId: c.id, courseName: c.name, courseColor: c.color, title: `${c.name}组会`, ownerId: null, ownerName: '全组' });
-    }
+  // 「会议安排」里排了的会（组长手动安排，或确认纪要时按下次会议自动加）
+  for (const m of scheduled) {
+    const c = courses.get(m.courseId);
+    if (!c || m.date < today || m.date > end) continue;
+    items.push({ kind: 'meeting', date: m.date, courseId: c.id, courseName: c.name, courseColor: c.color, title: `${c.name}组会`, ownerId: null, ownerName: '全组' });
   }
 
   const overdue = items.filter((i) => i.date < today).sort((a, b) => a.date.localeCompare(b.date));

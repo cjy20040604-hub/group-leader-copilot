@@ -15,7 +15,7 @@ export default function MetricsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold">成功指标</h1>
-        <p className="mt-1 text-sm text-slate-500">怎么判断这个产品真的帮组长减了负：一个北极星，加上回复、自主更新、按时完成、拦下重复讨论，再用「待我处理积压」做护栏。全部从业务数据直接算，不调模型；目标值是假设 · 待验证。</p>
+        <p className="mt-1 text-sm text-slate-500">全部从业务数据直接算，不调模型；目标值是假设 · 待验证。</p>
       </div>
 
       <Card className="p-4">
@@ -40,7 +40,7 @@ export default function MetricsPage() {
 
       <div className="grid gap-3 md:grid-cols-2">
         {metrics.map((m) => (
-          <Card key={m.key} className="space-y-1.5 p-4">
+          <Card key={m.key} className="space-y-1.5 p-4" title={`为什么看它：${m.why}\n数据来源：${m.source}`}>
             <div className="flex items-center gap-2">
               <p className="flex-1 text-sm font-semibold">{m.name}</p>
               <Badge tone={STATUS[m.status].tone}>{STATUS[m.status].label}</Badge>
@@ -48,8 +48,6 @@ export default function MetricsPage() {
             <p className="text-2xl font-bold">{m.value}</p>
             <p className="text-xs text-slate-500">目标：{m.target}{m.detail ? ` · ${m.detail}` : ''}</p>
             <p className="text-xs text-slate-600">{m.definition}</p>
-            <p className="text-xs text-slate-500">为什么看它：{m.why}</p>
-            <p className="text-[11px] text-slate-400">数据来源：{m.source}</p>
           </Card>
         ))}
       </div>

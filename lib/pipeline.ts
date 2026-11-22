@@ -9,6 +9,7 @@ import { parseDueDate, inSemester } from '@/lib/dates';
 import { getDemoNow, toLocalISO, formatCN } from '@/lib/time';
 import { deriveTitle } from '@/lib/title';
 import { scanReminders } from '@/lib/reminders';
+import { addScheduled } from '@/lib/schedule';
 
 export interface PipelineStep {
   name: string;
@@ -268,9 +269,11 @@ export async function confirmMeeting(draft: Draft, edits?: { actions?: Validated
     });
   });
 
-  // 8 建索引（失败不影响已落库的纪要，可重建）；9 挂提醒
+  // 8 建索引（失败不影响已落库的纪要，可重建）；9 挂提醒；纪要里约了下次会就自动排进「会议安排」
   await indexMeeting(meetingId);
   scanReminders();
+  const nm = draft.extraction.next_meeting;
+  if (nm && nm > draft.date) addScheduled(draft.courseId, nm, nowISO);
 
   const course = db.select().from(schema.courses).where(eq(schema.courses.id, draft.courseId)).get();
   const groupMessage = buildGroupMessage({

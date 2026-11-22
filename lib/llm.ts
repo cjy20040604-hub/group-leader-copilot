@@ -248,7 +248,7 @@ function composeAnswer(question: string, items: Retrieved[], ctx: AnswerCtx): Ch
   const members = db.select().from(schema.members).all();
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '待认领';
   const ownerIntent = OWNER_INTENT.test(question);
-  const isDone = (r: Retrieved) => (r.type === 'action' ? tasks.get(r.id)?.status === 'done' : r.status === 'done');
+  const isDone = (r: Retrieved) => (r.type === 'action' ? (tasks.get(r.id)?.status ?? r.status) === 'done' : r.status === 'done');
 
   // 候选条目：问题里两字以上的关键词必须都能在这条记录里找到（原词或同义，见 lib/rag/match.ts）
   // 问「谁 / 什么时候」时待办加分，没做完的再加：「ER 图现在谁在画」该答完整版，而不是已交的初稿
