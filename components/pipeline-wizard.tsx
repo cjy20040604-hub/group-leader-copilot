@@ -17,7 +17,8 @@ export interface LiveDraft {
 
 interface Props {
   courses: { id: string; name: string }[];
-  members: { id: string; name: string }[];
+  rosters: Record<string, { id: string; name: string }[]>; // 每门课的小组名单：负责人下拉只列本组的人
+  people?: { id: string; name: string }[];
   defaultDate: string;
   live?: LiveDraft | null; // 会议室结束后带过来的转写：自动开始整理，组长只需确认
   canCreateCourse?: boolean;
@@ -25,7 +26,7 @@ interface Props {
 
 type Phase = 'input' | 'processing' | 'confirm' | 'done';
 
-export function PipelineWizard({ courses: initialCourses, members, defaultDate, live, canCreateCourse = false }: Props) {
+export function PipelineWizard({ courses: initialCourses, rosters, people, defaultDate, live, canCreateCourse = false }: Props) {
   const [courses, setCourses] = useState(initialCourses);
   const [phase, setPhase] = useState<Phase>(live ? 'processing' : 'input');
   const [courseId, setCourseId] = useState(live?.courseId ?? courses[0]?.id ?? '');
@@ -180,7 +181,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="text-xs text-slate-500">课程
               <div className="mt-1">
-                <CoursePicker courses={courses} value={courseId} onChange={setCourseId} canCreate={canCreateCourse} className="w-full"
+                <CoursePicker courses={courses} value={courseId} onChange={setCourseId} canCreate={canCreateCourse} people={people} className="w-full"
                   onCourseCreated={(c) => setCourses((prev) => [...prev, c])} />
               </div>
             </div>
@@ -328,7 +329,7 @@ export function PipelineWizard({ courses: initialCourses, members, defaultDate, 
                     <Input value={a.task} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, task: e.target.value } : x)))} className="text-xs" aria-label="任务内容" placeholder="要做什么" />
                     <Select value={a.ownerId ?? ''} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, ownerId: e.target.value || null } : x)))} className="text-xs" aria-label="负责人">
                       <option value="">待认领</option>
-                      {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      {(rosters[draft.courseId] ?? []).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </Select>
                     <Input type="date" value={a.dueDate ?? ''} onChange={(e) => setEditActions((prev) => prev.map((x, j) => (j === i ? { ...x, dueDate: e.target.value || null } : x)))} className="text-xs" aria-label="截止日期" />
                     <Button size="sm" variant="ghost" onClick={() => setEditActions((prev) => prev.filter((_, j) => j !== i))} aria-label="删除这条待办">✕</Button>

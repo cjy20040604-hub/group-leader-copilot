@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { recordTaskAction } from '@/lib/task-updates';
+import { roleIn } from '@/lib/membership';
 import { getDemoNowISO } from '@/lib/time';
 import type { TaskAction } from '@/lib/task-flow';
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   const action = body.action as TaskAction;
   if (!action?.type || !(action.type in LABEL)) return NextResponse.json({ error: '不支持的回复' }, { status: 400 });
 
-  const res = await recordTaskAction(task.id, { id: owner.id, role: owner.role as 'leader' | 'member' }, action);
+  const res = await recordTaskAction(task.id, { id: owner.id, role: roleIn(owner.id, task.courseId) ?? 'member' }, action);
   if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.code });
   const detail = action.type === 'request_extension' ? `${LABEL[action.type]}到 ${action.proposedDue}` : action.type === 'block' ? `${LABEL.block}：${action.reason}` : LABEL[action.type];
   db.update(schema.reminders).set({ respondedAt: getDemoNowISO(), response: detail }).where(eq(schema.reminders.id, reminder.id)).run();

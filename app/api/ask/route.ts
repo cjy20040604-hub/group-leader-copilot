@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { answerQuestion } from '@/lib/rag/answer';
+import { getCurrentUser } from '@/lib/auth';
+import { roleIn } from '@/lib/membership';
 
 export async function POST(req: NextRequest) {
   const { courseId, question } = await req.json();
   if (!courseId || !question?.trim()) return NextResponse.json({ error: '先选课程再提问' }, { status: 400 });
+  if (!roleIn(getCurrentUser().id, courseId)) return NextResponse.json({ error: '你不在这个小组，看不到它的记录' }, { status: 403 });
   const res = await answerQuestion(courseId, question.trim());
   // 出处只能来自本课程：记忆条目 + 原文分块（L2）
   const memoryRows = res.citations.length

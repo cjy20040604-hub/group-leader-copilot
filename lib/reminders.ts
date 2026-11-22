@@ -1,4 +1,5 @@
 import { db, schema } from '@/lib/db/client';
+import { ledCourseIds } from '@/lib/membership';
 import { eq, ne } from 'drizzle-orm';
 import { getDemoNow, dateOnly, toLocalISO } from '@/lib/time';
 import { dueText, nudgeMessage, STATUS_LABEL, type TaskStatus } from '@/lib/risk';
@@ -56,14 +57,15 @@ export function rebuildReminders(taskId: string) {
   return scanReminders();
 }
 
-// 页面上该显示的提醒：任务还没做完；组员只看自己的
+// 页面上该显示的提醒：任务还没做完；组长看自己当组长的小组，其他只看自己负责的
 export function visibleReminders(user: { id: string; role: string }) {
   const tasks = new Map(db.select().from(schema.tasks).all().map((t) => [t.id, t]));
+  const led = new Set(ledCourseIds(user.id));
   const severity: Record<string, number> = { overdue: 0, d1: 1, d3: 2 };
   return db.select().from(schema.reminders).all()
     .filter((r) => {
       const t = tasks.get(r.taskId);
-      return t && t.status !== 'done' && (user.role === 'leader' || t.ownerId === user.id);
+      return t && t.status !== 'done' && (led.has(t.courseId) || t.ownerId === user.id);
     })
     .sort((a, b) => b.fireDate.localeCompare(a.fireDate) || (severity[a.kind] ?? 9) - (severity[b.kind] ?? 9));
 }

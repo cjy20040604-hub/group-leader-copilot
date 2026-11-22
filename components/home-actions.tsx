@@ -18,15 +18,17 @@ async function send(url: string, method: string, body?: unknown) {
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8))}`;
 
 // 首页「会议安排」：组长自己新建、删除；确认纪要时约的下次会也会自动出现在这里
-export function ScheduleCard({ courses, items, today, isLeader }: {
+export function ScheduleCard({ courses, ledCourseIds, items, today }: {
   courses: CourseOpt[];
+  ledCourseIds: string[];
   items: { id: string; courseId: string; date: string }[];
   today: string;
-  isLeader: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
+  const ledCourses = courses.filter((c) => ledCourseIds.includes(c.id));
+  const isLeader = ledCourses.length > 0;
+  const [courseId, setCourseId] = useState(ledCourses[0]?.id ?? '');
   const [date, setDate] = useState(today);
   const [error, setError] = useState('');
   const courseOf = (id: string) => courses.find((c) => c.id === id);
@@ -47,7 +49,7 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
         {open && (
           <div className="flex flex-wrap items-center gap-2 px-5 py-3">
             <Select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="text-xs" aria-label="会议课程">
-              {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {ledCourses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
             <Input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} className="text-xs" aria-label="会议日期" />
             <Button size="sm" disabled={!courseId || !date} onClick={add}>安排</Button>
@@ -62,7 +64,7 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: c?.color ?? '#64748b' }} aria-hidden />
               <span className="flex-1">{c?.name ?? m.courseId} · {m.date === today ? '今天' : md(m.date)}</span>
               <Link href={`/app/meeting/live?course=${m.courseId}`} className="text-xs text-brand-600 hover:underline">{m.date === today ? '进会议室' : '会前准备'}</Link>
-              {isLeader && <button className="text-xs text-slate-400 hover:text-red-600" onClick={() => remove(m.id)} aria-label={`取消 ${c?.name} ${m.date} 的会`}>删除</button>}
+              {ledCourseIds.includes(m.courseId) && <button className="text-xs text-slate-400 hover:text-red-600" onClick={() => remove(m.id)} aria-label={`取消 ${c?.name} ${m.date} 的会`}>删除</button>}
             </div>
           );
         })}
@@ -73,7 +75,7 @@ export function ScheduleCard({ courses, items, today, isLeader }: {
 }
 
 // 首页「最紧急的事」旁边的新建任务（组长用）
-export function QuickNewTask({ courses, members }: { courses: CourseOpt[]; members: MemberOpt[] }) {
+export function QuickNewTask({ courses, rosters }: { courses: CourseOpt[]; rosters: Record<string, MemberOpt[]> }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
@@ -92,13 +94,13 @@ export function QuickNewTask({ courses, members }: { courses: CourseOpt[]; membe
   }
   return (
     <Card className="mt-2 flex w-full flex-wrap items-center gap-2 p-2">
-      <Select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="text-xs" aria-label="新任务课程">
+      <Select value={courseId} onChange={(e) => { setCourseId(e.target.value); setOwnerId(''); }} className="text-xs" aria-label="新任务课程">
         {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </Select>
       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="要做什么" className="min-w-40 flex-1 text-xs" aria-label="新任务内容" />
       <Select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} className="text-xs" aria-label="新任务负责人">
         <option value="">待认领</option>
-        {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        {(rosters[courseId] ?? []).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
       </Select>
       <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="text-xs" aria-label="新任务 DDL" />
       <Button size="sm" disabled={!title.trim()} onClick={add}>添加</Button>

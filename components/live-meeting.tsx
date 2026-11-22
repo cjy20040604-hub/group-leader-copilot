@@ -19,7 +19,8 @@ type Phase = 'idle' | 'countdown' | 'recording' | 'paused' | 'winding' | 'saving
 
 interface Props {
   courses: { id: string; name: string; color: string }[];
-  members: { id: string; name: string }[];
+  rosters: Record<string, { id: string; name: string }[]>; // 每门课的小组名单（不同课的组员可以不一样）
+  people?: { id: string; name: string }[];
   initialCourse: string;
   today: string;
   mock: boolean;
@@ -43,7 +44,7 @@ const MAX_LOCAL_SECONDS = 1800; // Mock 录音最多在页面里留 30 分钟有
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
 export function LiveMeeting(props: Props) {
-  const { members, mock, script, demoCourse } = props;
+  const { mock, script, demoCourse } = props;
   const [courses, setCourses] = useState(props.courses);
   const router = useRouter();
   const [courseId, setCourseId] = useState(props.initialCourse);
@@ -491,7 +492,7 @@ export function LiveMeeting(props: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-start gap-1 text-xs text-slate-500">
             <span className="pt-1.5">课程</span>
-            <CoursePicker courses={courses} value={courseId} onChange={setCourseId} disabled={live} canCreate={Boolean(props.canCreateCourse)} className="py-1 text-xs"
+            <CoursePicker courses={courses} value={courseId} onChange={setCourseId} disabled={live} canCreate={Boolean(props.canCreateCourse)} people={props.people} className="py-1 text-xs"
               onCourseCreated={(c) => setCourses((prev) => [...prev, { id: c.id, name: c.name, color: c.color ?? '#64748b' }])} />
           </div>
           <div role="radiogroup" aria-label="录音来源" className="flex rounded-lg bg-slate-100 p-0.5 text-xs">
@@ -577,7 +578,7 @@ export function LiveMeeting(props: Props) {
               <label className="text-xs text-slate-500">当前发言人
                 <Select value={speaker} onChange={(e) => setSpeaker(e.target.value)} className="ml-1 py-0.5 text-xs">
                   <option value="">不确定</option>
-                  {members.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+                  {(props.rosters[courseId] ?? []).map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
                 </Select>
               </label>
             )}

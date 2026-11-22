@@ -73,12 +73,17 @@ export function loadAgenda(now: Date, opts: { days?: number; ownerId?: string } 
 }
 
 // 组员这周的担子：未来 7 天（含已过期未完成）到期 ≥ 2 件、且跨 ≥ 2 门课 → 跨课撞车；≥ 3 件 → 太满
-export function memberLoads(now: Date): MemberLoad[] {
+// viewer：谁在看。只看 TA 当组长的小组里的人；这些人在别的小组的 DDL 也算进负载，但只显示日期，不显示是哪门课、什么任务（不同小组的组长互相看不到对方的任务）
+export function memberLoads(now: Date, viewer?: { ledCourseIds: string[]; myCourseIds: string[] }): MemberLoad[] {
   const { overdue, days } = loadAgenda(now);
   const ddl = [...overdue, ...days.flatMap((d) => d.items)].filter((i) => i.kind === 'ddl' && i.ownerId);
-  const members = db.select().from(schema.members).all();
+  const roster = db.select().from(schema.courseMembers).all();
+  const watched = viewer ? new Set(roster.filter((r) => viewer.ledCourseIds.includes(r.courseId)).map((r) => r.memberId)) : null;
+  const members = db.select().from(schema.members).all().filter((m) => !watched || watched.has(m.id));
+  const mine = viewer ? new Set(viewer.myCourseIds) : null;
+  const mask = (i: AgendaItem): AgendaItem => (!mine || mine.has(i.courseId) ? i : { ...i, courseName: '另一个小组', courseColor: '#94a3b8', title: '一个 DDL（不在你的小组，看不到内容）', taskId: undefined });
   return members.map((m) => {
-    const items = ddl.filter((i) => i.ownerId === m.id).sort((a, b) => a.date.localeCompare(b.date));
+    const items = ddl.filter((i) => i.ownerId === m.id).map(mask).sort((a, b) => a.date.localeCompare(b.date));
     const { courses, reason } = assessLoad(items);
     return { memberId: m.id, name: m.name, items, courses, overloaded: Boolean(reason), reason };
   }).sort((a, b) => Number(b.overloaded) - Number(a.overloaded) || b.items.length - a.items.length);

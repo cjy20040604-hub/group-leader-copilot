@@ -52,6 +52,11 @@ export async function runSeed() {
     { id: 'siqi', name: '思琪', role: 'member', aliasesJson: JSON.stringify(['琪琪', '思琪同学']) },
   ]).run();
 
+  // 小组成员按课程分开（产品支持每门课组员不同）；演示数据里三门课的转写都是这 5 个人在说话，所以三组都是全员，林晓三门都当组长
+  for (const c of ['mkt', 'db', 'startup']) {
+    db.insert(schema.courseMembers).values(['linxiao', 'ajie', 'xiaoyu', 'haoran', 'siqi'].map((m) => ({ courseId: c, memberId: m, role: m === 'linxiao' ? 'leader' : 'member' }))).run();
+  }
+
   const seedTasks = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'seed/mock_responses/tasks.json'), 'utf8')) as {
     id: string; course_id: string; meeting_id: string; title: string; owner_id: string | null;
     due_date: string | null; status: string; last_update_at: string | null; progress_note: string | null;

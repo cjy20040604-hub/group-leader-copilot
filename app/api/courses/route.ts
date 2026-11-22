@@ -6,7 +6,8 @@ import { getCurrentUser } from '@/lib/auth';
 const COLORS = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2'];
 
 export async function POST(req: NextRequest) {
-  if (getCurrentUser().role !== 'leader') return NextResponse.json({ error: '只有组长能新建课程/小组' }, { status: 403 });
+  // 谁都能新建小组：建的人就是这个组的组长（同一个人可以在别的课里只是组员）
+  const user = getCurrentUser();
   const body = await req.json();
   const name = String(body.name ?? '').trim();
   if (!name || name.length > 30) return NextResponse.json({ error: '名称必填，且不超过 30 字' }, { status: 400 });
@@ -15,5 +16,8 @@ export async function POST(req: NextRequest) {
   const id = `c-${Date.now()}`;
   const color = COLORS[all.length % COLORS.length];
   db.insert(schema.courses).values({ id, name, color }).run();
+  const people = new Set(db.select().from(schema.members).all().map((m) => m.id));
+  const memberIds: string[] = Array.isArray(body.memberIds) ? body.memberIds.filter((m: unknown) => typeof m === 'string' && people.has(m) && m !== user.id) : [];
+  db.insert(schema.courseMembers).values([{ courseId: id, memberId: user.id, role: 'leader' }, ...memberIds.map((m) => ({ courseId: id, memberId: m, role: 'member' }))]).run();
   return NextResponse.json({ ok: true, id, name, color });
 }

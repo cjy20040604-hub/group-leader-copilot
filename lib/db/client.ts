@@ -32,6 +32,12 @@ function migrate(sqlite: Database.Database) {
   );
   CREATE INDEX IF NOT EXISTS idx_updates_task ON task_updates(task_id, created_at);`);
   sqlite.exec('CREATE TABLE IF NOT EXISTS scheduled_meetings (id TEXT PRIMARY KEY, course_id TEXT NOT NULL, date TEXT NOT NULL, created_at TEXT NOT NULL);');
+  // v4：小组成员按课程分开。老库没有这张表时，按原来的全局花名册补齐（每门课都是全员，角色沿用原来的）
+  const hasCm = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='course_members'").get();
+  if (!hasCm) {
+    sqlite.exec("CREATE TABLE course_members (course_id TEXT NOT NULL, member_id TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'member', PRIMARY KEY (course_id, member_id));");
+    sqlite.exec('INSERT INTO course_members (course_id, member_id, role) SELECT c.id, m.id, m.role FROM courses c CROSS JOIN members m;');
+  }
 }
 
 const globalForDb = globalThis as unknown as { __demoDb?: ReturnType<typeof createDb> };

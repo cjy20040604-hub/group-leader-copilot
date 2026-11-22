@@ -10,6 +10,7 @@ import { getDemoNow, toLocalISO, formatCN } from '@/lib/time';
 import { deriveTitle } from '@/lib/title';
 import { scanReminders } from '@/lib/reminders';
 import { addScheduled } from '@/lib/schedule';
+import { courseRoster } from '@/lib/membership';
 
 export interface PipelineStep {
   name: string;
@@ -76,7 +77,7 @@ export function validSupersedeTarget(courseId: string, id: string | null | undef
 // 步骤 5：校验（确定性代码）——日期以规则为准，模型只是参考；人名猜的都标黄
 export function validateAction(
   a: Extraction['action_items'][number],
-  ctx: { meetingDate: string; roster: RosterMember[]; transcript: string },
+  ctx: { meetingDate: string; roster: RosterMember[]; transcript: string; outsiders?: RosterMember[] },
 ): ValidatedAction {
   const flags: string[] = [];
   const nameOf = (id: string) => ctx.roster.find((m) => m.id === id)?.name ?? id;
@@ -90,7 +91,15 @@ export function validateAction(
   const owner = matchOwnerDetailed(ownerRaw, ctx.roster);
   if (owner.how === 'contains' || owner.how === 'fuzzy') flags.push(`人名按「${ownerRaw}」猜的是 ${nameOf(owner.id!)}，请确认`);
   if (owner.how === 'ambiguous') flags.push(`「${ownerRaw}」可能是 ${owner.candidates.map(nameOf).join(' / ')}，请选`);
-  if (!owner.id) flags.push('owner 待认领');
+  if (!owner.id) {
+    // 名字对得上别的组的人，但不在本组名单：不自动派，提示组长先把 TA 加进本组
+    const outsider = ctx.outsiders?.length ? matchOwnerDetailed(ownerRaw, ctx.outsiders) : null;
+    if (outsider?.id && (outsider.how === 'exact' || outsider.how === 'alias')) {
+      const who = ctx.outsiders!.find((m) => m.id === outsider.id)?.name ?? ownerRaw;
+      flags.push(`${who} 不在这个小组的名单里，先在设置里把 TA 加进本组，或改派`);
+    }
+    flags.push('owner 待认领');
+  }
 
   const parsed = parseDueDate(a.due_raw, ctx.meetingDate);
   const modelDate = a.due_date && /^\d{4}-\d{2}-\d{2}$/.test(a.due_date) ? a.due_date : null;
@@ -136,8 +145,11 @@ export async function processMeeting(input: { courseId: string; date: string; tr
     searchMemory(input.courseId, query, { limit: 8, meetingId }), () => estimateTokens(query));
   const retrievedMemory = context.results.map((r) => `[${r.id}] [${r.meetingDate}] ${r.text}`).join('\n') || '（无历史记录）';
 
-  const members = db.select().from(schema.members).all();
-  const roster: RosterMember[] = members.map((m) => ({ id: m.id, name: m.name, aliases: JSON.parse(m.aliasesJson) }));
+  // 人名只和这门课的小组名单对（不同课的组员可以不一样）
+  const roster: RosterMember[] = courseRoster(input.courseId).map((m) => ({ id: m.id, name: m.name, aliases: m.aliases }));
+  const inCourse = new Set(roster.map((m) => m.id));
+  const outsiders: RosterMember[] = db.select().from(schema.members).all().filter((m) => !inCourse.has(m.id))
+    .map((m) => ({ id: m.id, name: m.name, aliases: JSON.parse(m.aliasesJson) }));
 
   // 抽取用清洗后的转写（截断也在这里生效）
   const { extraction, degraded, mode } = await mark('4 结构化抽取 · LLM', true, '输出议题/决议/待办/分歧/待定/下次会议', () =>
@@ -153,7 +165,7 @@ export async function processMeeting(input: { courseId: string; date: string; tr
   else if (mode === 'rules') steps.push({ name: '4b 规则抽取', ms: 0, detail: '规则抽取（关键词 + 花名册 + 日期）', ai: false });
 
   const actions = await mark('5 校验 · 代码', false, '日期按规则换算并和模型对账；人名匹配花名册，猜的标黄；低置信度标黄', () =>
-    extraction.action_items.map((a) => validateAction(a, { meetingDate: input.date, roster, transcript: input.transcript })));
+    extraction.action_items.map((a) => validateAction(a, { meetingDate: input.date, roster, transcript: input.transcript, outsiders })));
 
   // 5b 冲突检测：模型说推翻谁先验真；模型没说的，用向量 + 关键词找「同一件事」的现行决议，交给组长决定
   const decisionChecks = await mark('5b 冲突检测 · embedding', true, '新决议 × 本课程现行决议：同一件事 → 提示可能推翻（不调 LLM）', async () => {

@@ -3,7 +3,7 @@ import { isMock } from '@/lib/llm';
 import { PRICING, ASR_PRICES, ASR_PRICE_PER_SECOND, STANDARD_MEETING } from '@/config/pricing';
 import { EmptyState, cx } from '@/components/ui';
 import { UnitEconCalculator } from '@/components/unit-econ-calculator';
-import { computeEconomics, textCostPerMeeting, qaCost, BASELINE, SENSITIVITY, ASR_FILE, ASR_REALTIME } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, qaCost, BASELINE, BUNDLE, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent } from '@/lib/unit-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,14 +32,18 @@ export default function CostPage() {
   const base = computeEconomics(BASELINE);
   const rt = computeEconomics({ ...BASELINE, asrPerSecond: ASR_REALTIME });
   const price = BASELINE.pricePerSemester;
-  const infra = STANDARD_MEETING.infraPerSemester;
-  const groupCost = base.variableCost + infra; // 只算这个组自己：模型 + 10 小时录音 + 服务器摊销
+  const infra = INFRA_PER_GROUP;
+  const groupCost = base.variableCost + infra; // 只算这支小组自己：模型 + 3 小时录音 + 服务器摊销
   const margin = price - groupCost;
+  const bundle = computeEconomics(BUNDLE);
+  const bundleCost = bundle.variableCost + INFRA_PER_BUNDLE;
+  const oldFree = computeEconomics({ ...BASELINE, freeMeetingsPerSemester: 16 });
+  const campus = groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 3, groupSize: 5 });
 
-  // 「19.9 元里都是什么」：成本三段 + 剩下的毛利
+  // 「9.9 元里都是什么」：成本三段 + 剩下的毛利
   const anatomy = [
-    { label: '模型', note: '24 次会 + 200 次提问', value: base.modelCost, tone: 'bg-slate-700' },
-    { label: '录音转写', note: '10 小时，会后上传', value: base.asrCost, tone: 'bg-slate-500' },
+    { label: '模型', note: '8 次会 + 约 67 次提问', value: base.modelCost, tone: 'bg-slate-700' },
+    { label: '录音转写', note: '3 小时，会后上传', value: base.asrCost, tone: 'bg-slate-500' },
     { label: '服务器摊销', note: '每组每学期', value: infra, tone: 'bg-slate-300' },
     { label: '毛利', note: `${((margin / price) * 100).toFixed(0)}%`, value: margin, tone: 'bg-brand-600' },
   ];
@@ -69,8 +73,8 @@ export default function CostPage() {
       <header className="pt-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">成本与商业模式</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-          一个小组一学期的成本约 <Num>{yuan(groupCost)}</Num>，专业版定价 <Num>{price} 元</Num>；
-          算上免费用户和固定成本，<Num>{base.breakEvenGroups} 个付费组</Num>回本。
+          计价单位是一门课的一支小组（不同课的组员可以不一样）。一支小组一学期成本约 <Num>{yuan(groupCost)}</Num>，专业版定价 <Num>{price} 元</Num>；
+          算上免费小组和固定成本，<Num>{base.breakEvenGroups} 个付费组</Num>回本。
         </p>
       </header>
 
@@ -121,22 +125,29 @@ export default function CostPage() {
           </div>
         </Step>
 
-        <Step n={3} title="据此定价" note={`专业版的成本按一组一学期算：24 次会 + 200 次提问 + 10 小时录音 + 服务器摊销 ${infra} 元 ≈ ${yuan(groupCost)}。`}>
-          <div className="grid overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:grid-cols-3">
-            <Tier name="体验版" price="免费" lines={['每月 4 次纪要', '不开录音转写', '让小组先用起来']} />
+        <Step n={3} title="据此定价" note={`一支小组（一门课）一学期：8 次会 + 约 67 次提问 + 3 小时录音 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(groupCost)}。多组包按组长带 3 个组算：成本 ${yuan(bundleCost)}，毛利约 ${(((19.9 - bundleCost) / 19.9) * 100).toFixed(0)}%。`}>
+          <div className="grid overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+            <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', '不开录音转写']} />
             <Tier name="专业版" price={`${price} 元`} unit="每组每学期" featured
-              lines={[`一人购买，全组使用`, `可以 AA，5 人每人约 ${(price / 5).toFixed(2)} 元`, '含 10 小时录音转写']} />
-            <Tier name="团体购入版" price="5 / 4 / 3 元" unit="每人每学期" lines={['30–99 / 100–499 / 500 人以上', '学校、学院、社团统一开通', '管理者看板还没做']} />
+              lines={['组里任何人买，全组使用', `可以 AA，5 人每人约 ${(price / 5).toFixed(2)} 元`, '含 3 小时录音转写', `成本 ${yuan(groupCost)}，毛利约 ${((margin / price) * 100).toFixed(0)}%`]} />
+            <Tier name="多组包" price={`${BUNDLE.pricePerSemester} 元`} unit="每人每学期" lines={['你当组长的全部小组一起升级', '最多 4 个组，每组 3 小时录音', '给同时带几门课的组长']} />
+            <Tier name="团体购入版" price="5 / 4 / 3 元" unit="每人每门课" lines={['30–99 / 100–499 / 500 人以上', '老师给一门课的学生统一开通', '管理者看板还没做']} />
+          </div>
+          <div className="mt-4 max-w-3xl space-y-2 rounded-xl bg-amber-50/70 px-4 py-3 text-sm leading-relaxed text-slate-700 ring-1 ring-inset ring-amber-200">
+            <p className="font-medium text-slate-900">为什么按一门课的一支小组计价</p>
+            <p>同一个学生在不同课里组员不一样，有时在 A 课当组长、在 B 课只是组员。把一个组长的三门课当成「一个组」，付钱的人对不上，用量也被放大了 3 倍。</p>
+            <p>体验版额度也跟着改：一支小组一学期只开约 8 次会，旧方案「每月 4 次」等于一学期 16 次，单门课的小组根本用不完、不需要付费；如果沿用，每组贡献降到 {yuan(oldFree.contribution)}，要 {oldFree.breakEvenGroups} 组才回本。</p>
+            <p>团体购入按「人 × 门课」算：学校按人包下全部课程时，一个学生平均 3 门课就有 3 个小组，每人成本约 {yuan(campus)}（录音会后上传），3 元档只剩约 {(((3 - campus) / 3) * 100).toFixed(0)}% 毛利，实时转写会亏，所以全校包只开会后上传录音。</p>
           </div>
         </Step>
 
         <Step n={4} title="商业模式成立吗">
           <div className="grid gap-6 sm:grid-cols-3">
             <Metric value={yuan(base.contribution)} label="每个付费组的边际贡献" sub={`贡献率 ${(base.unitMargin * 100).toFixed(1)}%`} />
-            <Metric value={`${base.breakEvenGroups} 组`} label="回本需要的付费组" sub={`覆盖一学期 ${base.fixedPerSemester} 元固定成本`} accent />
+            <Metric value={`${base.breakEvenGroups} 组`} label="回本需要的付费组" sub={`覆盖一学期 ${base.fixedPerSemester} 元固定成本；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
             <Metric value={`${rt.breakEvenGroups} 组`} label="录音全走实时转写时" sub={`每组贡献降到 ${yuan(rt.contribution)}，实时转写只放进付费档、限量`} />
           </div>
-          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费用户的模型成本（每个付费组带 {BASELINE.freeToPaid} 个）、{(BASELINE.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {BASELINE.fixedPerMonth} 元固定成本都算进去。付费率、用量、固定成本都是假设，待访谈验证。</p>
+          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的模型成本（每个付费组带 {BASELINE.freeToPaid} 个体验版小组，每个每学期 {BASELINE.freeMeetingsPerSemester} 次纪要）、{(BASELINE.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {BASELINE.fixedPerMonth} 元固定成本都算进去。付费率、用量、固定成本都是假设，待访谈验证。</p>
           <div className="mt-5 space-y-2">
             <Fold title="每个假设变了，回本组数怎么变">
               <table className="w-full text-sm">
@@ -167,14 +178,16 @@ export default function CostPage() {
               <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate-600">
                 <li>组长确认决定，只处理例外：延期、没动静、没人认领。</li>
                 <li>组员认领任务，点提醒里的链接回复进度。</li>
+                <li>同一个人可以在 A 课当组长、在 B 课当组员，权限按课算。</li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-medium text-slate-900">谁付钱</h3>
               <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate-600">
-                <li>小组里任何一个人买，全组用；也可以 AA。</li>
-                <li>付钱的人和拍板的人分开，确认决定的仍是组长。</li>
-                <li>规模化以后，学校、学院、社团按人数团体购入。</li>
+                <li>每支小组单独付：组里任何一个人买，全组用；也可以 AA。</li>
+                <li>同时带几个组的组长，买多组包更划算。</li>
+                <li>付钱的人和拍板的人分开，确认决定的仍是这个组的组长。</li>
+                <li>规模化以后，老师按一门课的人数团体购入。</li>
               </ul>
             </div>
           </div>

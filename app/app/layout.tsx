@@ -4,6 +4,7 @@ import { getDemoNowISO } from '@/lib/time';
 import { isMock } from '@/lib/llm';
 import { TopNav } from '@/components/top-nav';
 import { visibleReminders } from '@/lib/reminders';
+import { ledCourseIds } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <TopNav
-        members={members.map((m) => ({ id: m.id, name: m.name, role: m.role }))}
+        members={members.map((m) => ({ id: m.id, name: m.name, role: ledCourseIds(m.id).length ? 'leader' : 'member' }))}
         currentUserId={user.id}
         demoNow={getDemoNowISO()}
         mock={isMock()}

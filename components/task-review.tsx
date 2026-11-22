@@ -20,7 +20,7 @@ type CourseReview = {
 };
 
 type Props = {
-  user: User; demoNow: string; members: Member[]; tasks: ReviewTask[];
+  user: User; demoNow: string; members: Member[]; tasks: ReviewTask[]; rosters?: Record<string, { id: string; name: string }[]>;
   nudges: Record<string, string>; reminderTaskIds: string[]; reminderLinks?: Record<string, string>;
 } & (
   | { mode: 'leader'; inbox: Inbox; feed: FeedItem[]; reviews: CourseReview[] }
@@ -332,7 +332,7 @@ export function TaskReview(props: Props) {
               <div className="min-w-0 flex-1"><TaskHead t={t} /></div>
               <Select value="" onChange={(e) => e.target.value && assign(t.id, e.target.value)} className="py-1 text-xs" aria-label={`指派「${t.title}」`}>
                 <option value="">指派给…</option>
-                {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                {(props.rosters?.[t.courseId] ?? members).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </Select>
             </div>
           )}</InboxSection>

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui';
 import { NewCourseForm } from '@/components/course-picker';
 
 // 首页「我的课程」末尾的新建卡片（只给组长看）
-export function NewCourseCard() {
+export function NewCourseCard({ people = [] }: { people?: { id: string; name: string }[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   if (!open) {
@@ -20,7 +20,7 @@ export function NewCourseCard() {
   return (
     <Card className="p-4">
       <p className="mb-2 text-sm font-medium">新建课程 / 小组</p>
-      <NewCourseForm onCancel={() => setOpen(false)} onCreated={(c) => { setOpen(false); router.push(`/app/c/${c.id}`); router.refresh(); }} />
+      <NewCourseForm people={people} onCancel={() => setOpen(false)} onCreated={(c) => { setOpen(false); router.push(`/app/c/${c.id}`); router.refresh(); }} />
     </Card>
   );
 }

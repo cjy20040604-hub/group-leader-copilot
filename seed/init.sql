@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS reminders;
 DROP TABLE IF EXISTS metric_events;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS scheduled_meetings;
+DROP TABLE IF EXISTS course_members;
 DROP TABLE IF EXISTS settings;
 
 CREATE TABLE courses (
@@ -115,6 +116,13 @@ CREATE TABLE usage_log (
   cost_cny REAL NOT NULL,
   feature TEXT NOT NULL,
   meeting_id TEXT
+);
+
+CREATE TABLE course_members (
+  course_id TEXT NOT NULL,
+  member_id TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member',
+  PRIMARY KEY (course_id, member_id)
 );
 
 CREATE TABLE scheduled_meetings (

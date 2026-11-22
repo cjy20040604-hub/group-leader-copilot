@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/auth';
+import { ledCourseIds } from '@/lib/membership';
 import { parseAliases } from '@/lib/roster';
 import { reindexMemoryItems } from '@/lib/rag/index';
 import { dueText, nudgeMessage, STATUS_LABEL, type TaskStatus } from '@/lib/risk';
@@ -37,11 +38,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const name = String(body.name ?? '').trim();
   if (!name || name.length > 20) return NextResponse.json({ error: '姓名必填，且不超过 20 字' }, { status: 400 });
-  const role = ROLES.includes(body.role) ? body.role : 'member';
   if (db.select().from(schema.members).all().some((m) => m.name === name)) return NextResponse.json({ error: '已有同名成员' }, { status: 400 });
   const aliases = parseAliases(String(body.aliases ?? '')).filter((a) => a !== name);
   const id = `u-${Date.now()}`;
-  db.insert(schema.members).values({ id, name, role, aliasesJson: JSON.stringify(aliases) }).run();
+  db.insert(schema.members).values({ id, name, role: 'member', aliasesJson: JSON.stringify(aliases) }).run();
+  // 加人时顺手放进你当组长的小组（只能放进自己当组长的组）
+  const led = new Set(ledCourseIds(getCurrentUser().id));
+  const courseIds: string[] = Array.isArray(body.courseIds) ? body.courseIds.filter((c: unknown) => typeof c === 'string' && led.has(c)) : [];
+  if (courseIds.length) db.insert(schema.courseMembers).values(courseIds.map((c) => ({ courseId: c, memberId: id, role: 'member' }))).run();
   return NextResponse.json({ ok: true, id });
 }
 
@@ -63,14 +67,7 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.aliases === 'string') {
     patch.aliasesJson = JSON.stringify(parseAliases(body.aliases).filter((a) => a !== (patch.name ?? member.name)));
   }
-  if (body.role !== undefined) {
-    if (!ROLES.includes(body.role)) return NextResponse.json({ error: '非法角色' }, { status: 400 });
-    if (body.role === 'member' && member.role === 'leader') {
-      const leaders = db.select().from(schema.members).all().filter((m) => m.role === 'leader').length;
-      if (leaders <= 1) return NextResponse.json({ error: '小组至少保留一名组长，先把别人设为组长再改 TA' }, { status: 400 });
-    }
-    patch.role = body.role;
-  }
+  // 角色按课程设置（/api/course-members），这里只改姓名和昵称
   if (!Object.keys(patch).length) return NextResponse.json({ error: '没有要改的字段' }, { status: 400 });
 
   db.update(schema.members).set(patch).where(eq(schema.members.id, member.id)).run();

@@ -5,6 +5,8 @@ import { db, schema } from '@/lib/db/client';
 import { Card, Badge, EmptyState } from '@/components/ui';
 import { TranscriptViewer } from '@/components/transcript-viewer';
 import { STATUS_LABEL, type TaskStatus } from '@/lib/risk';
+import { getCurrentUser } from '@/lib/auth';
+import { roleIn } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +19,9 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
   if (!meeting) notFound();
 
   const course = db.select().from(schema.courses).where(eq(schema.courses.id, meeting.courseId)).get();
+  if (!roleIn(getCurrentUser().id, meeting.courseId)) {
+    return <div className="mx-auto max-w-md py-16 text-center"><p className="text-lg font-semibold text-slate-900">你不在「{course?.name}」这个小组</p><p className="mt-2 text-sm text-slate-500">请这个小组的组长在设置里把你加进来。</p></div>;
+  }
   const mems = db.select().from(schema.memoryItems).where(eq(schema.memoryItems.meetingId, id)).all();
   const tasks = db.select().from(schema.tasks).where(eq(schema.tasks.meetingId, id)).all();
   const members = db.select().from(schema.members).all();

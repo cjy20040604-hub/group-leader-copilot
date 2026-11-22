@@ -120,3 +120,10 @@ export const scheduledMeetings = sqliteTable('scheduled_meetings', {
   date: text('date').notNull(),
   createdAt: text('created_at').notNull(),
 });
+
+// 课程（小组）成员：不同课的小组成员可以不一样；角色按课算（同一个人可以在 A 课当组长、在 B 课当组员）
+export const courseMembers = sqliteTable('course_members', {
+  courseId: text('course_id').notNull(),
+  memberId: text('member_id').notNull(),
+  role: text('role').notNull().default('member'), // leader | member
+});

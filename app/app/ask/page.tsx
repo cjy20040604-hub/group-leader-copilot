@@ -1,11 +1,14 @@
 import { db, schema } from '@/lib/db/client';
 import { CourseAsk } from '@/components/course-ask';
 import { PageHeader } from '@/components/ui';
+import { getCurrentUser } from '@/lib/auth';
+import { myCourseIds } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
 
 export default function AskPage() {
-  const courses = db.select().from(schema.courses).all();
+  const mine = myCourseIds(getCurrentUser().id);
+  const courses = db.select().from(schema.courses).all().filter((c) => mine.includes(c.id));
   return (
     <div className="space-y-6">
       <PageHeader title="问问上次" lede="先选课程再提问。每句回答都带出处；记录里没有就直说，课程之间不串。" />

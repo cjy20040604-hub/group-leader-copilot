@@ -1,5 +1,6 @@
 // 成功指标（确定性计算，不调 LLM）。目标值都是假设 · 待验证
 import { db, schema } from '@/lib/db/client';
+import { leaderPairs } from '@/lib/membership';
 import { dateOnly, toLocalISO } from '@/lib/time-utils';
 import { loadReviewTasks, leaderInbox } from '@/lib/review';
 
@@ -21,9 +22,15 @@ export function replyRate(reminders: { fireDate: string; respondedAt: string | n
 export function selfUpdateShare(
   updates: { taskId: string; actorId: string; kind: string }[],
   ownerOf: (taskId: string) => string | null,
-  leaderIds: Set<string>,
+  leaders: Set<string> | ((ownerId: string, taskId: string) => boolean),
 ) {
-  const rel = updates.filter((u) => PROGRESS_KINDS.has(u.kind) && !leaderIds.has(ownerOf(u.taskId) ?? '') && (ownerOf(u.taskId) || u.kind === 'claim'));
+  // 组长自己的任务不算；组长按课算时传函数（同一个人在 A 课是组长、在 B 课是组员）
+  const leaderOwned = (taskId: string) => {
+    const o = ownerOf(taskId);
+    if (!o) return false;
+    return typeof leaders === 'function' ? leaders(o, taskId) : leaders.has(o);
+  };
+  const rel = updates.filter((u) => PROGRESS_KINDS.has(u.kind) && !leaderOwned(u.taskId) && (ownerOf(u.taskId) || u.kind === 'claim'));
   const self = rel.filter((u) => u.actorId === ownerOf(u.taskId));
   return { total: rel.length, self: self.length, rate: rel.length ? self.length / rel.length : null };
 }
@@ -45,9 +52,10 @@ export function loadMetrics(now: Date) {
   const weekStart = shiftDate(today, -6);
   const courses = db.select().from(schema.courses).all();
   const members = db.select().from(schema.members).all();
-  const leaderIds = new Set(members.filter((m) => m.role === 'leader').map((m) => m.id));
+  const lp = leaderPairs();
   const tasks = db.select().from(schema.tasks).all();
   const owner = new Map(tasks.map((t) => [t.id, t.ownerId]));
+  const courseOfTask = new Map(tasks.map((t) => [t.id, t.courseId]));
   const decisions = db.select().from(schema.memoryItems).all().filter((m) => m.type === 'decision');
 
   // 北极星：每周被组长确认的决定数（按会议日期分周，最近 4 周）
@@ -65,7 +73,7 @@ export function loadMetrics(now: Date) {
   const activeCourses = courses.filter((c) => decisions.some((d) => d.courseId === c.id)).length || courses.length;
 
   const rr = replyRate(db.select().from(schema.reminders).all(), today);
-  const su = selfUpdateShare(db.select().from(schema.taskUpdates).all(), (id) => owner.get(id) ?? null, leaderIds);
+  const su = selfUpdateShare(db.select().from(schema.taskUpdates).all(), (id) => owner.get(id) ?? null, (ownerId, taskId) => lp.has(`${courseOfTask.get(taskId)}:${ownerId}`));
   const ot = onTimeRate(tasks);
   const dup = db.select().from(schema.metricEvents).all().filter((e) => e.kind === 'dup_blocked');
   const dupWeek = dup.filter((e) => dateOnly(e.createdAt) >= weekStart).length;

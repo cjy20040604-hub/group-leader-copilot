@@ -5,13 +5,18 @@ import { Card, PageHeader, SectionTitle, RiskDot } from '@/components/ui';
 import { TimeTravel, ResetDemo } from '@/components/time-travel';
 import { CourseManager } from '@/components/course-manager';
 import { RosterManager } from '@/components/roster-manager';
+import { myCourseIds, ledCourseIds } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
 
 export default function SettingsPage() {
   const members = db.select().from(schema.members).all();
-  const courses = db.select().from(schema.courses).all();
   const user = getCurrentUser();
+  const myIds = myCourseIds(user.id);
+  const ledIds = ledCourseIds(user.id);
+  const courses = db.select().from(schema.courses).all().filter((c) => myIds.includes(c.id));
+  const memberships: Record<string, Record<string, 'leader' | 'member'>> = {};
+  for (const r of db.select().from(schema.courseMembers).all()) (memberships[r.courseId] ??= {})[r.memberId] = r.role as 'leader' | 'member';
   const demoNow = getDemoNowISO();
 
   return (
@@ -20,13 +25,13 @@ export default function SettingsPage() {
 
       <section aria-label="课程与小组">
         <SectionTitle>课程和小组</SectionTitle>
-        <CourseManager courses={courses} isLeader={user.role === 'leader'} />
+        <CourseManager courses={courses} people={members.filter((m) => m.id !== user.id).map((m) => ({ id: m.id, name: m.name }))} />
       </section>
 
       <section aria-label="花名册">
         <SectionTitle>花名册</SectionTitle>
-        <RosterManager members={members} currentUserId={user.id} isLeader={user.role === 'leader'} />
-        <p className="mt-2 text-xs text-slate-400">整理纪要时按这里的名字和昵称对上负责人。身份在顶栏右侧切换；改名后任务和催办文案里的名字会同步更新。</p>
+        <RosterManager members={members} courses={courses} memberships={memberships} ledCourseIds={ledIds} currentUserId={user.id} />
+        <p className="mt-2 text-xs text-slate-400">每门课的小组成员可以不一样，角色也按课算：整理纪要时只和这门课的名单对人名，指派下拉框也只列本组的人。身份在顶栏右侧切换；改名后任务和催办文案里的名字会同步更新。</p>
       </section>
 
       <section aria-label="提醒与风险规则">

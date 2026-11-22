@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
+import { leaderPairs } from '@/lib/membership';
 import { hoursSince, formatCN, daysUntilDue } from '@/lib/time-utils';
 import { riskLevel, taskDueText, type RiskLevel, type TaskStatus } from '@/lib/risk';
 import { UPDATE_LABEL, type UpdateKind } from '@/lib/task-flow';
@@ -34,12 +35,12 @@ function lookups() {
   return {
     course: (id: string) => courses.find((c) => c.id === id),
     member: (id: string | null) => members.find((m) => m.id === id),
-    leaderIds: new Set(members.filter((m) => m.role === 'leader').map((m) => m.id)),
+    leaderPairs: leaderPairs(),
   };
 }
 
 export function loadReviewTasks(now: Date, opts: { courseId?: string } = {}): ReviewTask[] {
-  const { course, member, leaderIds } = lookups();
+  const { course, member, leaderPairs: lp } = lookups();
   const tasks = opts.courseId
     ? db.select().from(schema.tasks).where(eq(schema.tasks.courseId, opts.courseId)).all()
     : db.select().from(schema.tasks).all();
@@ -64,7 +65,7 @@ export function loadReviewTasks(now: Date, opts: { courseId?: string } = {}): Re
       pending: p && p.proposedDue ? { id: p.id, proposedDue: p.proposedDue, reason: p.note, createdAt: p.createdAt } : null,
       lastUpdate: lu ? {
         kind: lu.kind, label: UPDATE_LABEL[lu.kind as UpdateKind] ?? lu.kind, note: lu.note,
-        actorName: member(lu.actorId)?.name ?? lu.actorId, createdAt: lu.createdAt, byLeader: leaderIds.has(lu.actorId),
+        actorName: member(lu.actorId)?.name ?? lu.actorId, createdAt: lu.createdAt, byLeader: lp.has(`${t.courseId}:${lu.actorId}`),
       } : null,
     };
   });
@@ -86,13 +87,14 @@ export function leaderInbox(tasks: ReviewTask[]) {
   return { review, extensions, blocked, silent, unclaimed, total: review.length + extensions.length + blocked.length + silent.length + unclaimed.length };
 }
 
-export function loadFeed(opts: { limit?: number; actorId?: string; ownerId?: string; courseId?: string; since?: string } = {}): FeedItem[] {
+export function loadFeed(opts: { limit?: number; actorId?: string; ownerId?: string; courseId?: string; courseIds?: string[]; since?: string } = {}): FeedItem[] {
   const { course, member } = lookups();
   const tasks = new Map(db.select().from(schema.tasks).all().map((t) => [t.id, t]));
   return db.select().from(schema.taskUpdates).orderBy(desc(schema.taskUpdates.createdAt), desc(schema.taskUpdates.id)).all()
     .filter((u) => (!opts.actorId || u.actorId === opts.actorId)
       && (!opts.ownerId || tasks.get(u.taskId)?.ownerId === opts.ownerId)
       && (!opts.courseId || u.courseId === opts.courseId)
+      && (!opts.courseIds || opts.courseIds.includes(u.courseId))
       && (!opts.since || u.createdAt >= opts.since))
     .slice(0, opts.limit ?? 30)
     .map((u) => ({

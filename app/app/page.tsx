@@ -3,6 +3,7 @@ import { db, schema } from '@/lib/db/client';
 import { getCurrentUser } from '@/lib/auth';
 import { getDemoNow, toLocalISO, dateOnly, formatCN } from '@/lib/time';
 import { listScheduled } from '@/lib/schedule';
+import { myCourseIds, ledCourseIds, rosterByCourse } from '@/lib/membership';
 import { ScheduleCard, QuickNewTask, DeleteTaskButton } from '@/components/home-actions';
 import { visibleReminders } from '@/lib/reminders';
 import { riskLevel, dueText, STATUS_LABEL, type TaskStatus } from '@/lib/risk';
@@ -18,16 +19,20 @@ export const dynamic = 'force-dynamic';
 export default function DashboardPage() {
   const now = getDemoNow();
   const user = getCurrentUser();
-  const courses = db.select().from(schema.courses).all();
+  // 只看自己所在的小组；组长视图只覆盖自己当组长的小组（不同课的组员可以不一样）
+  const myIds = myCourseIds(user.id);
+  const ledIds = ledCourseIds(user.id);
+  const courses = db.select().from(schema.courses).all().filter((c) => myIds.includes(c.id));
   const members = db.select().from(schema.members).all();
-  const allTasks = db.select().from(schema.tasks).all();
+  const rosters = rosterByCourse();
+  const allTasks = db.select().from(schema.tasks).all().filter((t) => myIds.includes(t.courseId));
   const meetings = db.select().from(schema.meetings).all();
   const reminders = visibleReminders(user);
   const today = dateOnly(toLocalISO(now));
 
-  const visible = user.role === 'leader' ? allTasks : allTasks.filter((t) => t.ownerId === user.id);
+  const visible = allTasks.filter((t) => ledIds.includes(t.courseId) || t.ownerId === user.id);
   const open = visible.filter((t) => t.status !== 'done');
-  const inbox = user.role === 'leader' ? leaderInbox(loadReviewTasks(now)) : null;
+  const inbox = ledIds.length ? leaderInbox(loadReviewTasks(now).filter((t) => ledIds.includes(t.courseId))) : null;
   const ranked = open
     .map((t) => ({ ...t, risk: riskLevel({ dueDate: t.dueDate, status: t.status as TaskStatus, lastUpdateAt: t.lastUpdateAt, blocked: Boolean(t.blocker) }, now) }))
     .sort((a, b) => {
@@ -36,12 +41,13 @@ export default function DashboardPage() {
     });
   const top = ranked[0];
 
-  const scheduled = listScheduled(today);
-  const isLeader = user.role === 'leader';
+  const scheduled = listScheduled(today).filter((m) => myIds.includes(m.courseId));
+  const isLeader = ledIds.length > 0;
   const courseOpts = courses.map((c) => ({ id: c.id, name: c.name, color: c.color }));
+  const ledOpts = courseOpts.filter((c) => ledIds.includes(c.id));
 
   const topReminder = top ? reminders.find((r) => r.taskId === top.id) : undefined;
-  const loads = user.role === 'leader' ? memberLoads(now) : [];
+  const loads = isLeader ? memberLoads(now, { ledCourseIds: ledIds, myCourseIds: myIds }) : [];
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '待认领';
   const courseOf = (id: string) => courses.find((c) => c.id === id);
 
@@ -50,7 +56,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-10">
       <PageHeader title="本周我要盯的事"
-        lede={user.role === 'leader' ? `${user.name}，${courses.length} 门课并行。这一页只放要你出手的事。` : `${user.name}，这是你自己的任务。`} />
+        lede={isLeader ? `${user.name}，你在 ${courses.length} 个小组里，其中 ${ledIds.length} 个当组长。这一页只放要你出手的事。` : `${user.name}，这是你自己的任务。`} />
 
       {inbox && inbox.total > 0 && (
         <Link href="/app/tasks" className="group block">
@@ -78,7 +84,7 @@ export default function DashboardPage() {
       <section aria-label="最紧急的事">
         <SectionTitle aside={<>
           {ranked.length > 1 && <Link href="/app/tasks" className="text-xs text-slate-500 hover:text-slate-900">全部 {ranked.length} 件</Link>}
-          {isLeader && <QuickNewTask courses={courseOpts} members={members.map((m) => ({ id: m.id, name: m.name }))} />}
+          {isLeader && <QuickNewTask courses={ledOpts} rosters={rosters} />}
         </>}>最紧急的事</SectionTitle>
         {!top ? (
           <EmptyState title="没有未完成任务" hint="新建一个，或者开会让 AI 从纪要里抽" />
@@ -94,7 +100,7 @@ export default function DashboardPage() {
             </div>
             <Badge tone="blue">{courseOf(top.courseId)?.name}</Badge>
             <Link href={`/app/c/${top.courseId}`} className="text-xs text-slate-500 hover:text-slate-900">看板</Link>
-            {isLeader && <DeleteTaskButton id={top.id} title={top.title} />}
+            {ledIds.includes(top.courseId) && <DeleteTaskButton id={top.id} title={top.title} />}
             {topReminder && <ReminderChip isLeader={isLeader}
               r={{ id: topReminder.id, message: topReminder.message, kind: topReminder.kind, fireDate: topReminder.fireDate, respondedAt: topReminder.respondedAt, response: topReminder.response }} />}
           </Card>
@@ -103,7 +109,7 @@ export default function DashboardPage() {
 
       {isLeader && <MemberLoadPanel loads={loads} />}
 
-      <ScheduleCard courses={courseOpts} items={scheduled.map((m) => ({ id: m.id, courseId: m.courseId, date: m.date }))} today={today} isLeader={isLeader} />
+      <ScheduleCard courses={courseOpts} ledCourseIds={ledIds} items={scheduled.map((m) => ({ id: m.id, courseId: m.courseId, date: m.date }))} today={today} />
 
       <section aria-label="课程入口">
         <SectionTitle>我的课程</SectionTitle>
@@ -135,7 +141,7 @@ export default function DashboardPage() {
               </Link>
             );
           })}
-          {user.role === 'leader' && <NewCourseCard />}
+          <NewCourseCard people={members.filter((m) => m.id !== user.id).map((m) => ({ id: m.id, name: m.name }))} />
         </div>
       </section>
     </div>

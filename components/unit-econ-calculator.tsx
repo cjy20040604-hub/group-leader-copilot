@@ -11,7 +11,8 @@ const FIELDS: { key: keyof EconInputs; label: string; step: number; min: number;
   { key: 'qaPerSemester', label: '每组每学期问答', step: 10, min: 0, suffix: '次' },
   { key: 'recordedHours', label: '每组每学期录音转写', step: 1, min: 0, suffix: '小时' },
   { key: 'pricePerSemester', label: '专业版定价', step: 1, min: 0, suffix: '元/组/学期' },
-  { key: 'freeToPaid', label: '体验版用户 : 付费组', step: 1, min: 0, suffix: ': 1' },
+  { key: 'freeToPaid', label: '体验版小组 : 付费组', step: 1, min: 0, suffix: ': 1' },
+  { key: 'freeMeetingsPerSemester', label: '体验版额度', step: 1, min: 0, suffix: '次/学期' },
   { key: 'fixedPerMonth', label: '固定成本', step: 10, min: 0, suffix: '元/月' },
 ];
 
@@ -48,7 +49,7 @@ export function UnitEconCalculator() {
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {[
           ['每组变动成本', yuan(r.variableCost), `模型 ${yuan(r.modelCost)} + 转写 ${yuan(r.asrCost)}`],
-          ['每个体验版用户', yuan(r.freeCostPerUser), '每学期模型成本'],
+          ['每个体验版小组', yuan(r.freeCostPerUser), '每学期模型成本'],
           ['每组边际贡献', yuan(r.contribution), `净收入 ${yuan(r.netRevenue)}（扣通道费 ${pct(v.paymentFeeRate)}）`],
           ['单组贡献率', pct(r.unitMargin), '不含固定成本'],
           ['盈亏平衡', Number.isFinite(r.breakEvenGroups) ? `${r.breakEvenGroups} 组` : '亏损', `固定成本 ${yuan(r.fixedPerSemester, 0)}/学期`],
@@ -61,7 +62,7 @@ export function UnitEconCalculator() {
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-slate-400">单价是百炼原价（见上表）；会议次数、时长、问答、录音、体验版用户比例、固定成本、通道费都是假设 · 待验证。体验版按每月 {v.freeMeetingsPerMonth} 次纪要、只用文字稿算。</p>
+      <p className="text-[11px] text-slate-400">单价是百炼原价（见上表）；会议次数、时长、问答、录音、体验版小组比例、固定成本、通道费都是假设 · 待验证。体验版按每学期 {v.freeMeetingsPerSemester} 次纪要、只用文字稿算。</p>
     </Card>
   );
 }
