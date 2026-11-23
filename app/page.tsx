@@ -171,7 +171,7 @@ export default function LandingPage() {
                 <p className="mt-3 text-sm font-medium text-slate-900">已经验证：能跑通，账算得清</p>
                 <ul className="mt-1.5 space-y-1.5 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
-                  <li>RAG 评估 23 题（含跨课程提问）：没有串台，该拒答的都拒答了；题目不多，只能说明没有明显问题。另有 127 个单元测试，每次模型调用都记账</li>
+                  <li>RAG 评估 23 题（含跨课程提问）：没有串台，该拒答的都拒答了；题目不多，只能说明没有明显问题。另有 128 个单元测试，每次模型调用都记账</li>
                 </ul>
                 <p className="mt-3 text-sm font-medium text-slate-900">还没验证：组长买不买账</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-600">组长每周是不是真的少花时间、组员会不会回提醒、小组愿不愿意付 6.9 或 14.9 元，现在都是假设。下一步先访谈组长、组员和老师，再用试用数据看北极星「每周确认的决定数」和提醒回复率。</p>

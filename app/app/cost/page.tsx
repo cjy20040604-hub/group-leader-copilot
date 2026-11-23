@@ -44,7 +44,7 @@ export default function CostPage() {
   const bundleCost = bundle.variableCost + INFRA_PER_BUNDLE;
   const oldFree = computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 });
   const campus = groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 3, groupSize: 5 });
-  // 回本只说明服务器不亏：再算养活一个人要多少付费组、多少门课的团体购入，以及付费转化的底线
+  // 付费转化的底线
   // 服务器按阿里云 ECS 真实价：活动价回本很容易；再看不同规模下单月利润可能是多少
   const mixList = blendedBreakEven(MIX.map((m) => ({ ...m, inputs: { ...m.inputs, fixedPerMonth: ECS_LIST_YEARLY / 12 } })));
   const campusCourse = campusCourseContribution();
@@ -87,7 +87,7 @@ export default function CostPage() {
     { step: '检索、「这事定过了」', model: env('EMBEDDING_MODEL', 'text-embedding-v4'), price: `${emb.input} 元`, unit: '每百万 tokens' },
     { step: '会议室实时转写', model: env('ASR_MODEL', 'qwen3-asr-flash'), price: `${ASR_PRICES['qwen3-asr-flash'].perSecond} 元`, unit: '每秒' },
     { step: '上传录音转写', model: 'paraformer-v2', price: `${ASR_PRICE_PER_SECOND} 元`, unit: '每秒' },
-    { step: '服务器', model: 'ECS 经济型 e 实例 2 核 2G', price: `${ECS_YEARLY} 元`, unit: '每年（活动价，续费同价）' },
+    { step: '服务器', model: 'ECS 经济型 e 实例 2 核 2G', price: `${ECS_YEARLY} 元`, unit: '每年（2026-11-22 查的活动价，以控制台为准）' },
   ];
 
   return (
@@ -167,7 +167,7 @@ export default function CostPage() {
             <p>大部分小组用腾讯会议、钉钉开会，本来就有文字稿，只需要纪要。纪要版成本 {yuan(notesCost)}，卖 {NOTES.pricePerSemester} 元，不让他们为用不上的转写付钱。</p>
             <p>在教室面对面开会的小组才要实时转写：一学期 8 次会、每次 1 小时就是 8 小时，实时转写成本 {yuan(pro.asrCost)}，所以专业版 {PRO.pricePerSemester} 元。同样 8 小时卖 9.9 元要 {pro99.breakEvenGroups} 组才回本。</p>
             <p>额度用完会议不中断：照常录音，散会后用录音文件识别整理（每小时 {yuan(asrFileHour)}，不另收费，只是没有实时字幕和撞车提示）；还想要实时转写就买加时包。</p>
-            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次纪要，比一支小组一学期开的约 8 次会少；另送 {NOTES.freeRealtimeMinutes} 分钟实时转写（每位组长一次），让没付费的组也体验一次实时字幕，每组成本 {yuan(NOTES.freeRealtimeMinutes * 60 * ASR_REALTIME, 3)}，混合回本因此从 {mix0.breakEvenGroups} 组变成 {mix.breakEvenGroups} 组；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
+            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次纪要，比一支小组一学期开的约 8 次会少；另送 {NOTES.freeRealtimeMinutes} 分钟实时转写（每位组长一次），让没付费的组也体验一次实时字幕，每组成本 {yuan(NOTES.freeRealtimeMinutes * 60 * ASR_REALTIME, 3)}，7:3 混合每组贡献因此从 {yuan(mix0.contribution)} 降到 {yuan(mix.contribution)}；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
           </div>
         </Step>
 
