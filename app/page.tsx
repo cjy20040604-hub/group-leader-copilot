@@ -200,7 +200,7 @@ export default function LandingPage() {
                 <h3 className="text-sm text-slate-500">体验版</h3>
                 <p className="mt-2 text-3xl font-medium tracking-tight text-slate-900">¥0</p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>送 5 分钟会议室实时转写，先体验实时字幕（每位组长一次）</li>
+                  <li>按小组算，每组每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>送 5 分钟会议室实时转写，先体验实时字幕（每位组长一次）</li>
                 </ul>
               </article>
               <article className="relative border-t border-paper-line bg-brand-50/50 p-7 sm:border-l sm:border-t-0">
