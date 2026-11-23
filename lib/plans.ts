@@ -4,11 +4,12 @@
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
 import { NOTES, PRO, BUNDLE, ADDON } from '@/lib/unit-economics';
+import { ledCourseIds } from '@/lib/membership';
 
 export type Tier = 'free' | 'notes' | 'pro' | 'bundle';
 export const FREE_MEETINGS = NOTES.freeMeetingsPerSemester; // 体验版每学期几次纪要
 export const PRO_RECORD_SECONDS = PRO.recordedHours * 3600; // 专业版每组每学期实时转写额度
-export const FREE_RECORD_SECONDS = NOTES.freeRealtimeMinutes * 60; // 体验版每组每学期送的实时转写（先体验实时字幕再决定付不付）
+export const FREE_RECORD_SECONDS = NOTES.freeRealtimeMinutes * 60; // 体验版送的实时转写：每位组长一学期一次，他带的几个体验版小组共用（先体验实时字幕再决定付不付）
 export const ADDON_SECONDS = ADDON.hours * 3600;            // 一个加时包多少秒
 export const PRICE = { notes: NOTES.pricePerSemester, pro: PRO.pricePerSemester, bundle: BUNDLE.pricePerSemester, addon: ADDON.price, addonHours: ADDON.hours };
 export const TIER_LABEL: Record<Tier, string> = { free: '体验版', notes: '纪要版', pro: '专业版', bundle: '纪要版（多组包）' };
@@ -26,13 +27,25 @@ export function meetingsUsed(courseId: string): number {
   return db.select().from(schema.meetings).where(eq(schema.meetings.courseId, courseId)).all().length;
 }
 
-// 这门课本学期已用的实时转写秒数（按 usage_log 里挂在这门课会议上的 ASR 记录）
+// 这门课本学期已用的实时转写秒数：挂在这门课会议上的 ASR 记录，加上会议室开过、但还没确认成纪要的场次
+// （会议室每场开录时记一条 live_course:<场次> → 课程；确认后会议 id 就是场次 id，用集合去重不会重复算）
 export function recordSecondsUsed(courseId: string): number {
   const ids = new Set(db.select().from(schema.meetings).where(eq(schema.meetings.courseId, courseId)).all().map((m) => m.id));
+  for (const r of db.select().from(schema.settings).all()) if (r.key.startsWith('live_course:') && r.value === courseId) ids.add(r.key.slice('live_course:'.length));
   return db.select().from(schema.usageLog).all().filter((l) => l.feature === 'asr' && l.meetingId && ids.has(l.meetingId)).reduce((a, l) => a + (l.audioSeconds ?? 0), 0);
 }
 
-// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时、体验版送 10 分钟，再加加时包；纪要版和多组包只有加时包
+// 算额度时用的「已用秒数」：体验版按组长算（他当组长的体验版小组加起来），付费档按这支小组算
+// 免费送的是单价最贵的实时转写，每个小组都送一次的话，转化率一低每卖一单都亏（见 docs/cost-model.md 3.5 节）
+export function realtimeUsedForQuota(courseId: string): number {
+  const p = getPlan(courseId);
+  if (p.tier !== 'free') return recordSecondsUsed(courseId);
+  const leader = db.select().from(schema.courseMembers).all().find((r) => r.courseId === courseId && r.role === 'leader')?.memberId;
+  const freeCourses = leader ? ledCourseIds(leader).filter((c) => getPlan(c).tier === 'free') : [courseId];
+  return (freeCourses.includes(courseId) ? freeCourses : [...freeCourses, courseId]).reduce((a, c) => a + recordSecondsUsed(c), 0);
+}
+
+// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时、体验版送 5 分钟（每位组长一次），再加加时包；纪要版和多组包只有加时包
 export function realtimeQuota(tier: Tier, addonSeconds: number): number {
   return (tier === 'pro' ? PRO_RECORD_SECONDS : tier === 'free' ? FREE_RECORD_SECONDS : 0) + addonSeconds;
 }
@@ -48,7 +61,7 @@ export function canRecord(tier: Tier, usedSeconds: number, addSeconds: number, a
   const quota = realtimeQuota(tier, addonSeconds);
   if (usedSeconds + addSeconds <= quota) return { ok: true };
   if (tier === 'free' && addonSeconds === 0) {
-    return { ok: false, reason: `体验版送的 ${FREE_RECORD_SECONDS / 60} 分钟实时转写用完了。会照常录在本机，散会后可以下载录音；开通专业版（${PRICE.pro} 元，含 ${PRO_RECORD_SECONDS / 3600} 小时实时转写）就能继续` };
+    return { ok: false, reason: `体验版送的 ${FREE_RECORD_SECONDS / 60} 分钟实时转写（每位组长一次，带的几个体验版小组共用）用完了。会照常录在本机，散会后可以下载录音；开通专业版（${PRICE.pro} 元，含 ${PRO_RECORD_SECONDS / 3600} 小时实时转写）就能继续` };
   }
   if (quota === 0) {
     return { ok: false, reason: `${TIER_LABEL[tier]}不含会议室实时转写。会照常录在本机，散会后可以下载录音；也可以粘贴腾讯会议 / 飞书文字稿、从钉钉导入，或加购实时转写 ${PRICE.addonHours} 小时 ${PRICE.addon} 元` };
@@ -73,7 +86,7 @@ export function addAddon(courseId: string) {
 export function quotaNote(courseId: string): string {
   const p = getPlan(courseId);
   const quota = realtimeQuota(p.tier, p.addonSeconds);
-  const leftMin = Math.max(0, Math.round((quota - recordSecondsUsed(courseId)) / 60));
+  const leftMin = Math.max(0, Math.round((quota - realtimeUsedForQuota(courseId)) / 60));
   const rt = quota > 0 ? `实时转写还剩 ${leftMin} 分钟` : '不含实时转写';
   if (p.tier === 'free') {
     const left = Math.max(0, FREE_MEETINGS - meetingsUsed(courseId));

@@ -16,9 +16,9 @@ describe('小组套餐额度（和成本模型同一份数字）', () => {
   it('纪要版、专业版、多组包纪要都不限次', () => {
     for (const t of ['notes', 'pro', 'bundle'] as const) assert.equal(canAddMeeting(t, 50).ok, true);
   });
-  it('实时转写：专业版 8 小时，体验版送 10 分钟；纪要版、多组包只有加时包', () => {
-    assert.equal(FREE_RECORD_SECONDS, 600);
-    assert.equal(realtimeQuota('free', 0), 600);
+  it('实时转写：专业版 8 小时，体验版送 5 分钟；纪要版、多组包只有加时包', () => {
+    assert.equal(FREE_RECORD_SECONDS, 300);
+    assert.equal(realtimeQuota('free', 0), 300);
     assert.equal(PRO_RECORD_SECONDS, 8 * 3600);
     assert.equal(ADDON_SECONDS, 3 * 3600);
     assert.equal(realtimeQuota('pro', 0), 8 * 3600);
@@ -33,12 +33,12 @@ describe('小组套餐额度（和成本模型同一份数字）', () => {
     assert.ok(!r.ok && r.reason.includes('散会后') && r.reason.includes('3.9'));
     assert.equal(canRecord('pro', 8 * 3600 - 10, 30, ADDON_SECONDS).ok, true);
   });
-  it('纪要版不含实时转写，买了加时包就能用；体验版 10 分钟用完就拦', () => {
+  it('纪要版不含实时转写，买了加时包就能用；体验版 5 分钟用完就拦', () => {
     assert.equal(canRecord('notes', 0, 10).ok, false);
     assert.equal(canRecord('free', 0, 10).ok, true);
-    const f = canRecord('free', 590, 20);
+    const f = canRecord('free', 290, 20);
     assert.equal(f.ok, false);
-    assert.ok(!f.ok && f.reason.includes('10 分钟') && f.reason.includes('14.9'));
+    assert.ok(!f.ok && f.reason.includes('5 分钟') && f.reason.includes('14.9'));
     assert.equal(canRecord('notes', 0, 10, ADDON_SECONDS).ok, true);
   });
 });

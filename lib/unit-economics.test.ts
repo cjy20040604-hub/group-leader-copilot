@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeEconomics, textCostPerMeeting, qaCost, marginAtScale, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics, NOTES, PRO, BUNDLE, MIX, ADDON, ASR_FILE, ASR_REALTIME } from './unit-economics';
+import { computeEconomics, textCostPerMeeting, qaCost, marginAtScale, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics, breakEvenConversion, unitsForIncome, NOTES, PRO, BUNDLE, MIX, ADDON, ASR_FILE, ASR_REALTIME } from './unit-economics';
 
 const near = (a: number, b: number, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
 
@@ -10,36 +10,36 @@ describe('unit economics', () => {
     near(qaCost(), 0.0032);
   });
 
-  it('体验版每组送 10 分钟实时转写：每个体验版小组成本 = 3 次纪要 0.1944 + 实时转写 0.132', () => {
-    near(computeEconomics(NOTES).freeCostPerUser, 3 * 0.0648 + 600 * ASR_REALTIME);
-    near(600 * ASR_REALTIME, 0.132);
+  it('体验版送 5 分钟实时转写：每个体验版小组成本 = 3 次纪要 0.1944 + 实时转写 0.066（按每组都用满算）', () => {
+    near(computeEconomics(NOTES).freeCostPerUser, 3 * 0.0648 + 300 * ASR_REALTIME);
+    near(300 * ASR_REALTIME, 0.066);
   });
 
-  it('纪要版（一门课一支小组：8 次会、67 次问答、不含录音，6.9 元）：贡献约 4.82，83 个付费组回本', () => {
+  it('纪要版（一门课一支小组：8 次会、67 次问答、不含录音，6.9 元）：贡献约 5.08，79 个付费组回本', () => {
     const r = computeEconomics(NOTES);
     near(r.modelCost, 8 * 0.0648 + 67 * 0.0032);
     near(r.asrCost, 0);
     near(r.variableCost, 0.7328);
-    near(r.contribution, 6.9 * 0.994 - 0.7328 - 4 * (3 * 0.0648 + 0.132));
-    assert.equal(r.breakEvenGroups, 83);
+    near(r.contribution, 6.9 * 0.994 - 0.7328 - 4 * (3 * 0.0648 + 0.066));
+    assert.equal(r.breakEvenGroups, 79);
   });
 
-  it('专业版（纪要版 + 8 小时会议室实时转写 qwen3-asr-flash，14.9 元）：转写 6.336 元，63 个付费组回本', () => {
+  it('专业版（纪要版 + 8 小时会议室实时转写 qwen3-asr-flash，14.9 元）：转写 6.336 元，60 个付费组回本', () => {
     const r = computeEconomics(PRO);
     near(r.asrCost, 8 * 3600 * ASR_REALTIME);
     near(r.asrCost, 6.336);
     near(r.variableCost, 7.0688);
-    assert.equal(r.breakEvenGroups, 63);
+    assert.equal(r.breakEvenGroups, 60);
   });
 
-  it('专业版实际只用 6 小时（只送有人说话的部分）：50 组回本', () => {
-    assert.equal(computeEconomics({ ...PRO, recordedHours: 6 }).breakEvenGroups, 50);
+  it('专业版实际只用 6 小时（只送有人说话的部分）：49 组回本', () => {
+    assert.equal(computeEconomics({ ...PRO, recordedHours: 6 }).breakEvenGroups, 49);
   });
 
-  it('7 成纪要版 + 3 成专业版：加权贡献约 5.31，76 个付费组回本', () => {
+  it('7 成纪要版 + 3 成专业版：加权贡献约 5.57，72 个付费组回本', () => {
     const r = blendedBreakEven(MIX);
     near(r.contribution, 0.7 * computeEconomics(NOTES).contribution + 0.3 * computeEconomics(PRO).contribution);
-    assert.equal(r.breakEvenGroups, 76);
+    assert.equal(r.breakEvenGroups, 72);
   });
 
   it('加时包 3 小时 3.9 元：成本 2.376，扣通道费后毛利约 38.5%', () => {
@@ -48,18 +48,33 @@ describe('unit economics', () => {
     near(a.margin, (3.9 * 0.994 - 2.376) / 3.9);
   });
 
-  it('专业版同样给 8 小时却只卖 9.9 元：要 273 组才回本（所以不降价）', () => {
-    assert.equal(computeEconomics({ ...PRO, pricePerSemester: 9.9 }).breakEvenGroups, 273);
+  it('专业版同样给 8 小时却只卖 9.9 元：要 232 组才回本（所以不降价）', () => {
+    assert.equal(computeEconomics({ ...PRO, pricePerSemester: 9.9 }).breakEvenGroups, 232);
   });
 
-  it('体验版沿用旧额度「每月 4 次」（约 16 次/学期）：专业版回本从 63 升到 131 组', () => {
-    assert.equal(computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 }).breakEvenGroups, 131);
+  it('体验版沿用旧额度「每月 4 次」（约 16 次/学期）：专业版回本从 60 升到 121 组', () => {
+    assert.equal(computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 }).breakEvenGroups, 121);
   });
 
-  it('多组包（组长带 3 个组都开纪要版，14.9 元，配 12 个体验版小组）：变动成本 2.1952，46 个包回本', () => {
+  it('多组包（组长带 3 个组都开纪要版，14.9 元，配 12 个体验版小组）：变动成本 2.1952，43 个包回本', () => {
     const r = computeEconomics(BUNDLE);
     near(r.variableCost, 2.1952);
-    assert.equal(r.breakEvenGroups, 46);
+    assert.equal(r.breakEvenGroups, 43);
+  });
+
+  it('付费转化底线：纪要版一个付费组最多背约 23.5 个体验版小组（转化率约 4.1%），低于就每单亏；送 10 分钟时这条线约 5.1%', () => {
+    const b = breakEvenConversion(NOTES);
+    near(b.maxFreePerPaid, (6.9 * 0.994 - 0.7328) / (3 * 0.0648 + 0.066));
+    assert.ok(b.minConversion > 0.04 && b.minConversion < 0.041);
+    assert.ok(breakEvenConversion({ ...NOTES, freeRealtimeMinutes: 10 }).minConversion > 0.05);
+    assert.equal(computeEconomics({ ...NOTES, freeToPaid: 9 }).breakEvenGroups, 106);
+    assert.equal(computeEconomics({ ...NOTES, freeToPaid: 19 }).breakEvenGroups, 340);
+  });
+
+  it('回本只覆盖服务器：要让创始人一学期赚 4 万，7:3 混合要约 7,255 个付费组；团体购入按 60 人一门课约 159 门课', () => {
+    assert.equal(unitsForIncome(blendedBreakEven(MIX).contribution, 400), 7255);
+    const perCourse = 60 * (5 - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 }));
+    assert.equal(unitsForIncome(perCourse, 400), 159);
   });
 
   it('贡献为负时盈亏平衡为无穷大', () => {

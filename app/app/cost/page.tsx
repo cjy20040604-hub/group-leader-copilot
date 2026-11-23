@@ -3,7 +3,7 @@ import { isMock } from '@/lib/llm';
 import { PRICING, ASR_PRICES, ASR_PRICE_PER_SECOND, STANDARD_MEETING } from '@/config/pricing';
 import { EmptyState, cx } from '@/components/ui';
 import { UnitEconCalculator } from '@/components/unit-econ-calculator';
-import { computeEconomics, textCostPerMeeting, qaCost, NOTES, PRO, BUNDLE, ADDON, MIX, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, qaCost, NOTES, PRO, BUNDLE, ADDON, MIX, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics, breakEvenConversion, unitsForIncome, FOUNDER_TARGET_PER_SEMESTER } from '@/lib/unit-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +44,12 @@ export default function CostPage() {
   const bundleCost = bundle.variableCost + INFRA_PER_BUNDLE;
   const oldFree = computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 });
   const campus = groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 3, groupSize: 5 });
+  // 回本只说明服务器不亏：再算养活一个人要多少付费组、多少门课的团体购入，以及付费转化的底线
+  const founderGroups = unitsForIncome(mix.contribution, notes.fixedPerSemester);
+  const campusCourse = 60 * (5 - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 }));
+  const founderCourses = unitsForIncome(campusCourse, notes.fixedPerSemester);
+  const conv = breakEvenConversion(NOTES);
+  const conv10 = breakEvenConversion({ ...NOTES, freeRealtimeMinutes: 10 });
   const pct = (part: number, whole: number) => `${((part / whole) * 100).toFixed(0)}%`;
 
   // 「定价里都是什么」：两条按同一比例尺画，纪要版那条短一截，差的就是实时转写
@@ -138,7 +144,7 @@ export default function CostPage() {
           </div>
         </Step>
 
-        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。`}>
+        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。服务器摊销 ${infra.toFixed(2)} 元是一个组的份额，只用来看单组毛利（多组包按 3 个组算 ${INFRA_PER_BUNDLE} 元）；下面算回本时不用它，固定成本按每月 ${NOTES.fixedPerMonth} 元单列，两处不重复计算。`}>
           <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4">
               <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', `送 ${NOTES.freeRealtimeMinutes} 分钟实时转写，先体验实时字幕`]} />
@@ -158,7 +164,7 @@ export default function CostPage() {
             <p>大部分小组用腾讯会议、钉钉开会，本来就有文字稿，只需要纪要。纪要版成本 {yuan(notesCost)}，卖 {NOTES.pricePerSemester} 元，不让他们为用不上的转写付钱。</p>
             <p>在教室面对面开会的小组才要实时转写：一学期 8 次会、每次 1 小时就是 8 小时，实时转写成本 {yuan(pro.asrCost)}，所以专业版 {PRO.pricePerSemester} 元。同样 8 小时卖 9.9 元要 {pro99.breakEvenGroups} 组才回本。</p>
             <p>额度用完会议不中断：照常录音，散会后用录音文件识别整理（每小时 {yuan(asrFileHour)}，不另收费，只是没有实时字幕和撞车提示）；还想要实时转写就买加时包。</p>
-            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次纪要，比一支小组一学期开的约 8 次会少；另送 {NOTES.freeRealtimeMinutes} 分钟实时转写，让没付费的组也体验一次实时字幕，每组成本 {yuan(NOTES.freeRealtimeMinutes * 60 * ASR_REALTIME, 3)}，混合回本因此从 {mix0.breakEvenGroups} 组变成 {mix.breakEvenGroups} 组；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
+            <p>计价单位是一门课的一支小组：同一个学生在不同课里组员不一样，付钱的人也不一样。体验版每学期 3 次纪要，比一支小组一学期开的约 8 次会少；另送 {NOTES.freeRealtimeMinutes} 分钟实时转写（每位组长一次），让没付费的组也体验一次实时字幕，每组成本 {yuan(NOTES.freeRealtimeMinutes * 60 * ASR_REALTIME, 3)}，混合回本因此从 {mix0.breakEvenGroups} 组变成 {mix.breakEvenGroups} 组；沿用旧额度「每月 4 次」，专业版要 {oldFree.breakEvenGroups} 组才回本。团体购入时一个学生平均 3 个小组，每人成本约 {yuan(campus)}（录音散会后上传），实时转写会亏，所以全校包不含实时转写。</p>
           </div>
         </Step>
 
@@ -169,6 +175,11 @@ export default function CostPage() {
             <Metric value={`${mix.breakEvenGroups} 组`} label="7 成纪要版 + 3 成专业版" sub={`加权每组贡献 ${yuan(mix.contribution)}；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
           </div>
           <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要 + 送 {NOTES.freeRealtimeMinutes} 分钟实时转写，合计 {yuan(notes.freeCostPerUser)}）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {NOTES.fixedPerMonth} 元固定成本都算进去。付费率、档位比例、用量、固定成本都是假设，待访谈验证。</p>
+          <div className="mt-4 max-w-3xl space-y-2 rounded-xl bg-amber-50/70 px-4 py-3 text-sm leading-relaxed text-slate-700 ring-1 ring-inset ring-amber-200">
+            <p className="font-medium text-slate-900">回本只说明服务器不亏，不说明这门生意养得活人</p>
+            <p>{mix.breakEvenGroups} 组只覆盖每学期 {notes.fixedPerSemester} 元服务器费，没算创始人的时间和获客成本。按 7:3 混合每组贡献 {yuan(mix.contribution)}，要让创始人一学期赚 {(FOUNDER_TARGET_PER_SEMESTER / 10000).toFixed(0)} 万（假设月入 1 万），需要约 {founderGroups.toLocaleString()} 个付费组；按 20% 转化，要覆盖约 {(founderGroups * 5 / 10000).toFixed(1)} 万个小组。所以 C 端小组付费是获客入口，养活团队要靠团体购入：一门 60 人的课收 300 元，扣成本约 {yuan(campusCourse, 0)}，约 {founderCourses} 门课就够。</p>
+            <p>最脆的假设是付费转化率：纪要版低于约 {(conv.minConversion * 100).toFixed(1)}% 时每卖一单都在亏；原来送 10 分钟时这条线约 {(conv10.minConversion * 100).toFixed(1)}%，所以降到 {NOTES.freeRealtimeMinutes} 分钟。这 {NOTES.freeRealtimeMinutes} 分钟按组长送一次，他带的几个体验版小组共用，不按小组送；这里仍按每个体验版小组都用满算，是偏保守的上限。</p>
+          </div>
           <div className="mt-5 space-y-2">
             <Fold title="专业版的每个假设变了，回本组数怎么变">
               <table className="w-full text-sm">
@@ -198,18 +209,17 @@ export default function CostPage() {
               <h3 className="text-sm font-medium text-slate-900">谁使用</h3>
               <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate-600">
                 <li>组长确认决定，只处理例外：延期、没动静、没人认领。</li>
-                <li>组员认领任务，点提醒里的链接回复进度。</li>
+                <li>组员认领任务，点提醒里的链接回复进度。他们得到的是：不用被私聊追着问，同一周撞了两个 DDL 能提前跟组长商量。</li>
                 <li>同一个人可以在 A 课当组长、在 B 课当组员，权限按课算。</li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-medium text-slate-900">谁付钱</h3>
               <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-slate-600">
-                <li>每支小组单独付：组里任何一个人买，全组用；也可以 AA。</li>
-                <li>线上开会、有文字稿的组买纪要版；在教室开会、要实时转写的组买专业版，不够再加时。</li>
-                <li>同时带几个组的组长，买多组包更划算。</li>
-                <li>付钱的人和拍板的人分开，确认决定的仍是这个组的组长。</li>
-                <li>规模化以后，老师按一门课的人数团体购入。</li>
+                <li><span className="font-medium text-slate-900">主要是组长。</span>痛最直接，拍板最快。像林晓这样同时带三门课的，买多组包一次开通全部小组。</li>
+                <li>组里别人买或 AA 只是可选：向 5 个人各收一块多，收钱的麻烦比钱本身还大，所以不当主路径。</li>
+                <li>线上开会的组买纪要版；在教室开会、要实时字幕的组买专业版。</li>
+                <li><span className="font-medium text-slate-900">老师按课团体购入是收入大头，但有矛盾。</span>老师想看贡献度、防搭便车，这恰好是组员最抵触的。我们的设想（待验证）：只给老师看小组层面的过程数据（按时完成率、提醒回复率），不做逐人打分；给老师看哪些数据，小组事先知道。高校采购周期长、获客贵，管理者看板也还没做。</li>
               </ul>
             </div>
           </div>

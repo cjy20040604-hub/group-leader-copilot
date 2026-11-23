@@ -13,7 +13,7 @@ export interface EconInputs {
   pricePerSemester: number;    // 定价（每组每学期）
   freeToPaid: number;          // 每 1 个付费组带着几个体验版小组（体验版也会产生模型成本）
   freeMeetingsPerSemester: number; // 体验版每学期几次纪要（一支小组一学期只开约 8 次会，额度必须小于它，否则没人需要付费）
-  freeRealtimeMinutes: number; // 体验版每组每学期送几分钟会议室实时转写（让没付费的组也体验一次实时字幕），按满额用完、实时转写价算
+  freeRealtimeMinutes: number; // 体验版送几分钟会议室实时转写（产品里每位组长一学期一次；这里按每个体验版小组都用满算，偏保守）
   semesterMonths: number;      // 一学期几个月
   fixedPerMonth: number;       // 服务器、数据库、域名等固定成本（元/月）
   paymentFeeRate: number;      // 支付通道费率
@@ -34,7 +34,7 @@ export const NOTES: EconInputs = {
   pricePerSemester: 6.9,
   freeToPaid: 4,
   freeMeetingsPerSemester: 3,
-  freeRealtimeMinutes: 10,
+  freeRealtimeMinutes: 5,
   semesterMonths: 4,
   fixedPerMonth: 100,
   paymentFeeRate: 0.006,
@@ -152,10 +152,12 @@ export const SENSITIVITY: { factor: string; rows: SensitivityRow[] }[] = [
     { label: '0 : 1', value: '0', patch: { freeToPaid: 0 } },
     { label: '4 : 1（基线，20% 付费）', value: '4', patch: {} },
     { label: '9 : 1（10% 付费）', value: '9', patch: { freeToPaid: 9 } },
+    { label: '19 : 1（5% 付费）', value: '19', patch: { freeToPaid: 19 } },
   ] },
   { factor: '体验版额度', rows: [
-    { label: '每学期 3 次纪要 + 10 分钟实时转写（基线）', value: '3', patch: {} },
+    { label: '每学期 3 次纪要 + 5 分钟实时转写（基线）', value: '3', patch: {} },
     { label: '不送实时转写', value: '3-0', patch: { freeRealtimeMinutes: 0 } },
+    { label: '送 10 分钟实时转写', value: '3-10', patch: { freeRealtimeMinutes: 10 } },
     { label: '送 30 分钟实时转写', value: '3-30', patch: { freeRealtimeMinutes: 30 } },
     { label: '每月 4 次（旧方案，约 16 次/学期）', value: '16', patch: { freeMeetingsPerSemester: 16 } },
   ] },
@@ -170,6 +172,19 @@ export const SENSITIVITY: { factor: string; rows: SensitivityRow[] }[] = [
     { label: '300', value: '300', patch: { fixedPerMonth: 300 } },
   ] },
 ];
+
+// 付费转化的底线：一个付费组最多能背几个体验版小组还不亏，换算成付费转化率（低于它每卖一单都在亏）
+export function breakEvenConversion(i: EconInputs): { maxFreePerPaid: number; minConversion: number } {
+  const r = computeEconomics({ ...i, freeToPaid: 0 });
+  const maxFreePerPaid = r.freeCostPerUser > 0 ? (r.netRevenue - r.variableCost) / r.freeCostPerUser : Infinity;
+  return { maxFreePerPaid, minConversion: 1 / (1 + maxFreePerPaid) };
+}
+
+// 回本只说明服务器不亏。要养活人，还得问：一学期要赚多少，需要多少个付费组（或多少门课的团体购入）
+export const FOUNDER_TARGET_PER_SEMESTER = 40000; // 假设：创始人每月 1 万元，一学期 4 个月
+export function unitsForIncome(contributionPerUnit: number, fixedPerSemester: number, target = FOUNDER_TARGET_PER_SEMESTER): number {
+  return contributionPerUnit > 0 ? Math.ceil((target + fixedPerSemester) / contributionPerUnit - 1e-9) : Infinity;
+}
 
 // 团体购入版：机构按人数买。一个学生在 k 门课里各有一个小组时，每人成本 = k × 每组成本 ÷ 每组人数
 // 每组成本口径：8 次会（文字处理 + 每次 1 小时录音）+ 约 67 次问答 + 摊销 2/3 元

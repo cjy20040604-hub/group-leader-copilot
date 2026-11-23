@@ -6,7 +6,7 @@ import { TimeTravel, ResetDemo } from '@/components/time-travel';
 import { CourseManager } from '@/components/course-manager';
 import { RosterManager } from '@/components/roster-manager';
 import { myCourseIds, ledCourseIds } from '@/lib/membership';
-import { getPlan, meetingsUsed, recordSecondsUsed, realtimeQuota, FREE_MEETINGS, PRO_RECORD_SECONDS, PRICE, TIER_LABEL } from '@/lib/plans';
+import { getPlan, meetingsUsed, realtimeUsedForQuota, realtimeQuota, FREE_MEETINGS, PRO_RECORD_SECONDS, PRICE, TIER_LABEL } from '@/lib/plans';
 import { PlanManager, type PlanRow } from '@/components/plan-manager';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,7 @@ export default function SettingsPage() {
       courseId: c.id, courseName: c.name, color: c.color, tier: p.tier, tierLabel: TIER_LABEL[p.tier],
       payerName: nameOf(p.payerId), split: p.split, groupSize: Object.keys(memberships[c.id] ?? {}).length || 1,
       meetingsUsed: meetingsUsed(c.id), freeMeetings: FREE_MEETINGS,
-      recordMinutesUsed: Math.round(recordSecondsUsed(c.id) / 60), recordMinutesQuota: realtimeQuota(p.tier, p.addonSeconds) / 60, addonMinutes: p.addonSeconds / 60,
+      recordMinutesUsed: Math.round(realtimeUsedForQuota(c.id) / 60), recordMinutesQuota: realtimeQuota(p.tier, p.addonSeconds) / 60, addonMinutes: p.addonSeconds / 60,
       isLeader: ledIds.includes(c.id),
     };
   });

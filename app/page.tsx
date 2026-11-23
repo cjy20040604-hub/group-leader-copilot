@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MinutesShelf, type ShelfBook } from '@/components/minutes-shelf';
 import { db, schema } from '@/lib/db/client';
-import { computeEconomics, textCostPerMeeting, blendedBreakEven, NOTES, PRO, MIX, ASR_REALTIME } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, blendedBreakEven, unitsForIncome, groupPurchaseCostPerStudent, NOTES, PRO, MIX, ASR_REALTIME, ASR_FILE } from '@/lib/unit-economics';
 
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
@@ -12,9 +12,9 @@ const FAQS = [
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责把话整理出来。人名由代码去花名册里对，日期由代码换算和检查，拿不准的标黄，组长确认后才保存。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。每句回答都要带 [日期·类型] 出处；意思对不上、关键词也没命中时，直接回答「记录里没找到」。' },
   { q: '三门课的决定会串吗？', a: '不会。每门课只在自己的记录里找；被新决定推翻的旧决定，默认不拿来回答。' },
-  { q: '一学期要花多少钱？', a: '按一门课的一支小组算。先用体验版：免费，每学期 3 次纪要，送 10 分钟会议室实时转写。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 14.9 元的多组包，全部小组都开纪要版。' },
+  { q: '一学期要花多少钱？', a: '按一门课的一支小组算。先用体验版：免费，每学期 3 次纪要，送 5 分钟会议室实时转写（每位组长一次）。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 14.9 元的多组包，全部小组都开纪要版。' },
   { q: '实时转写的时长用完了怎么办？', a: '会议照常开、照常录音，散会后用录音文件识别整理，不另收费，只是没有实时字幕和撞车提示。还想要实时转写，可以加购 3 小时 3.9 元的加时包，哪个档位都能买。' },
-  { q: '必须组长来买吗？', a: '不用。按小组计价，组里谁买都行，也可以 AA；付钱的人和拍板的人分开，确认决定的仍是这个组的组长。老师可以按一门课的人数走团体购入版。' },
+  { q: '谁来买？必须组长买吗？', a: '主要是组长买：痛最直接，拍板最快；同时带几门课的组长买多组包，一次开通全部小组。组里别人买或者 AA 也可以，只是选项，向 5 个人各收一块多钱，麻烦比钱本身还大。老师可以按一门课的人数走团体购入版。' },
   { q: '三门课的组员不一样怎么办？', a: '每门课单独建小组，成员和角色按课设置：同一个人可以在 A 课当组长、在 B 课当组员。整理纪要时只和这门课的名单对人名，别的组的人不会被派任务；组长只看到自己小组的任务，组员在别的组的 DDL 只显示日期，不显示内容。' },
 ];
 
@@ -71,6 +71,7 @@ export default function LandingPage() {
   const notes = computeEconomics(NOTES);
   const pro = computeEconomics(PRO);
   const mix = blendedBreakEven(MIX);
+  const founderCourses = unitsForIncome(60 * (5 - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 })), notes.fixedPerSemester);
   const link = 'text-sm text-brand-600 hover:text-brand-700 hover:underline';
   return (
     <div className="min-h-screen bg-paper">
@@ -141,21 +142,22 @@ export default function LandingPage() {
               </article>
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">为什么是这个组合</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">转写和纪要，腾讯会议、钉钉已经能做。我们判断组长缺的是另外三件事：会后有人推进、下次还记得定过什么、几门课之间不串（待访谈验证）。所以：</p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">转写和纪要，腾讯会议、钉钉已经能做。真正的对手是「会议软件加一张共享表格」，我们多做的是表格做不到的两件事：</p>
                 <ul className="mt-2 space-y-2 text-sm leading-relaxed text-slate-600">
-                  <li><span className="font-medium text-slate-900">AI 只做要理解语言的事：</span>转写、整理决定和待办、按意思找旧决定。它出的是草稿，组长确认才算数。组长要的是省事，不是把拍板权交出去。</li>
-                  <li><span className="font-medium text-slate-900">推进交给规则：</span>认领、提醒、延期、风险灯都写在代码里，准时、可预期，几乎不花钱；组员点链接就能回，不用被私聊追。</li>
-                  <li><span className="font-medium text-slate-900">没选别的组合：</span>只做纪要没人执行，只做看板要组长手抄，全交给 Agent 组长不放心，成本也越用越高。</li>
+                  <li><span className="font-medium text-slate-900">跨课撞 DDL 提前提醒：</span>几门课的 DDL 放在一起看，同一个组员一周撞了两个，首页先提醒组长问一句。一张表格只看得到一门课。</li>
+                  <li><span className="font-medium text-slate-900">旧决定被推翻就不再当结论：</span>新决定取代旧的以后，问答和会前简报不再引用旧的。表格里的旧结论会一直留着。</li>
                 </ul>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">分工上，AI 只做要理解语言的事（转写、整理决定和待办、按意思找旧决定），出的是草稿，组长确认才算数；认领、提醒、延期、风险灯交给规则，准时、可预期，几乎不花钱。</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600"><span className="font-medium text-slate-900">提醒怎么送到组员手里：</span>组长把带回复链接的催办复制到微信群，组员点开就能回，不用登录；页面上也会弹站内和浏览器通知。个人微信群没有机器人接口，下一步接钉钉 / 企业微信群机器人。</p>
                 <a href={`${REPO}/blob/main/docs/why-this-combo.md`} className={`mt-4 inline-block ${link}`}>和 5 种其他组合的对比</a>
               </article>
               <article className="bg-paper-card p-7">
                 <h3 className="text-[15px] font-medium text-slate-900">成本与商业模式</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{notes.modelCost.toFixed(2)}。</li>
-                  <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 10 分钟实时转写），先试再买；带多个组的组长买多组包 ¥14.9；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
+                  <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 5 分钟实时转写），先试再买；带多个组的组长买多组包 ¥14.9；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
                   <li><span className="text-slate-900">商业模式</span>：只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时约 {mix.breakEvenGroups} 个付费组回本。</li>
-                  <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；每支小组由组里任何一个人或 AA 付钱，拍板的仍是这个组的组长；规模化后老师按课团体购入。</li>
+                  <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；主要由组长付钱，AA 只是选项。回本的 {mix.breakEvenGroups} 组只覆盖服务器，养活团队要靠老师按课团体购入（约 {founderCourses} 门 60 人的课）。</li>
                 </ul>
                 <p className="mt-2 text-xs text-slate-400">付费率、固定成本、用量是假设，敏感度见成本看板。</p>
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -168,10 +170,15 @@ export default function LandingPage() {
                 <p className="mt-3 text-sm font-medium text-slate-900">已经验证：能跑通，账算得清</p>
                 <ul className="mt-1.5 space-y-1.5 text-sm leading-relaxed text-slate-600">
                   <li>真实百炼接口跑过一遍：抽取、问答、实时转写都跑通，演示会议文字处理实测约 ¥0.012</li>
-                  <li>RAG 评估 23 题（含跨课程提问）：应拒答全部拒答，串台 0；125 个单元测试，每次模型调用都记账</li>
+                  <li>RAG 评估 23 题（含跨课程提问）：没有串台，该拒答的都拒答了；题目不多，只能说明没有明显问题。另有 127 个单元测试，每次模型调用都记账</li>
                 </ul>
                 <p className="mt-3 text-sm font-medium text-slate-900">还没验证：组长买不买账</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-600">组长每周是不是真的少花时间、组员会不会回提醒、小组愿不愿意付 6.9 或 14.9 元，现在都是假设。下一步先访谈组长、组员和老师，再用试用数据看北极星「每周确认的决定数」和提醒回复率。</p>
+                <p className="mt-3 text-sm font-medium text-slate-900">已知局限</p>
+                <ul className="mt-1.5 space-y-1.5 text-sm leading-relaxed text-slate-600">
+                  <li>为了用免费额度，现在部署在 Render（海外）：国内访问不够稳，录音和转写也会经过境外服务器。后续为了稳定和合规，换到阿里云内地 ECS（要先备案），录音存 OSS，模型继续用百炼。</li>
+                  <li>线下一台设备录音还分不清谁在说话，现在靠组长手动选发言人。</li>
+                </ul>
                 <div className="mt-4 flex flex-wrap gap-4">
                   <a href={`${REPO}/blob/main/docs/research/interview-targets.md`} className={link}>访谈计划</a>
                   <a href={`${REPO}/blob/main/docs/real-run-report.md`} className={link}>真实接口实测报告</a>
@@ -192,7 +199,7 @@ export default function LandingPage() {
                 <h3 className="text-sm text-slate-500">体验版</h3>
                 <p className="mt-2 text-3xl font-medium tracking-tight text-slate-900">¥0</p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>送 10 分钟会议室实时转写，先体验实时字幕</li>
+                  <li>1 个小组</li><li>每学期 3 次纪要（粘贴文字稿或钉钉导入）</li><li>送 5 分钟会议室实时转写，先体验实时字幕（每位组长一次）</li>
                 </ul>
               </article>
               <article className="relative border-t border-paper-line bg-brand-50/50 p-7 sm:border-l sm:border-t-0">
