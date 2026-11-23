@@ -5,13 +5,13 @@ import { setPlan, addAddon, getPlan } from '@/lib/plans';
 import { getDemoNowISO } from '@/lib/time';
 
 // 开通 / 改档 / 加购（演示，不扣款）。付款人可以是组里任何人，也可以 AA；确认决定、审批延期仍是组长的事
-// 档位：纪要版（只管纪要）/ 专业版（多 8 小时实时转写）/ 多组包（组长带的全部小组都开纪要版）；加时包哪档都能买
+// 档位：纪要版（只管纪要）/ 专业版（多 8 小时实时转写）/ 多组包（组长带的全部小组一起开，每组含 2 小时实时转写）；加时包哪档都能买
 export async function POST(req: NextRequest) {
   const user = getCurrentUser();
   const body = await req.json().catch(() => ({}));
   const now = getDemoNowISO();
 
-  // 多组包：一个人当组长的全部小组一起开纪要版（最多 4 个）；已经是专业版的组保持专业版
+  // 多组包：一个人当组长的全部小组一起开（最多 4 个，每组含 2 小时实时转写）；已经是专业版的组保持专业版
   if (body.bundle) {
     const led = ledCourseIds(user.id);
     if (led.length < 2) return NextResponse.json({ error: '多组包给同时带两个以上小组的组长' }, { status: 400 });

@@ -147,7 +147,7 @@ export default function CostPage() {
           </div>
         </Step>
 
-        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。服务器摊销 ${infra.toFixed(2)} 元是一个组的份额，只用来看单组毛利（多组包按 3 个组算 ${INFRA_PER_BUNDLE} 元）；这 0.67 元是给上量后加配置预留的；下面算回本时不用它，服务器按 ECS 每月 ${NOTES.fixedPerMonth.toFixed(2)} 元单列，两处不重复计算。`}>
+        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组、每组 2 小时实时转写算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。服务器摊销 ${infra.toFixed(2)} 元是一个组的份额，只用来看单组毛利（多组包按 3 个组算 ${INFRA_PER_BUNDLE} 元）；这 0.67 元是给上量后加配置预留的；下面算回本时不用它，服务器按 ECS 每月 ${NOTES.fixedPerMonth.toFixed(2)} 元单列，两处不重复计算。`}>
           <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4">
               <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', `送 ${NOTES.freeRealtimeMinutes} 分钟实时转写，先体验实时字幕`]} />
@@ -155,7 +155,7 @@ export default function CostPage() {
                 lines={['纪要不限次：导入文字稿、钉钉会议', '问答、提醒、会前简报、任务', `可以 AA，5 人每人约 ${(NOTES.pricePerSemester / 5).toFixed(2)} 元`, `成本 ${yuan(notesCost)}，毛利约 ${pct(NOTES.pricePerSemester - notesCost, NOTES.pricePerSemester)}`]} />
               <Tier name="专业版" price={`${PRO.pricePerSemester} 元`} unit="每组每学期"
                 lines={['纪要版全部，纪要不限次', '含 8 小时会议室实时转写', `AA 每人约 ${(PRO.pricePerSemester / 5).toFixed(2)} 元`, `成本 ${yuan(proCost)}，毛利约 ${pct(PRO.pricePerSemester - proCost, PRO.pricePerSemester)}`]} />
-              <Tier name="多组包" price={`${BUNDLE.pricePerSemester} 元`} unit="每人每学期" lines={['你当组长的小组都开纪要版', '最多 4 个组', '给同时带几门课的组长']} />
+              <Tier name="多组包" price={`${BUNDLE.pricePerSemester} 元`} unit="每人每学期" lines={['你当组长的小组一起开通，最多 4 个', '纪要不限次，每组含 2 小时实时转写', `带 3 个组成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}`]} />
             </div>
             <div className="grid gap-x-6 gap-y-2 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:grid-cols-2">
               <p><span className="font-medium text-slate-900">加时包 {ADDON.hours} 小时 {ADDON.price} 元</span>：实时转写不够时加，哪档都能买；按满额用完算，毛利约 {(addon.margin * 100).toFixed(1)}%。</p>

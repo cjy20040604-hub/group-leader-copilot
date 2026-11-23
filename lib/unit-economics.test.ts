@@ -59,9 +59,11 @@ describe('unit economics', () => {
     assert.equal(computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 }).breakEvenGroups, 10);
   });
 
-  it('多组包（组长带 3 个组都开纪要版，14.9 元，配 12 个体验版小组）：变动成本 2.1952，4 个包回本', () => {
+  it('多组包（组长带 3 个组，19.9 元，每组 2 小时实时转写，配 12 个体验版小组）：变动成本 2.1952 + 4.752，每包贡献约 9.71，4 个包回本', () => {
     const r = computeEconomics(BUNDLE);
-    near(r.variableCost, 2.1952);
+    near(r.asrCost, 6 * 3600 * ASR_REALTIME);
+    near(r.variableCost, 2.1952 + 4.752);
+    near(r.contribution, 19.9 * 0.994 - 6.9472 - 12 * (3 * 0.0648 + 0.066));
     assert.equal(r.breakEvenGroups, 4);
   });
 

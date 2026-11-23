@@ -3,16 +3,17 @@
 // 实时转写额度用完不拦会：照常录音，散会后用录音文件识别整理，或者加购时长
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db/client';
-import { NOTES, PRO, BUNDLE, ADDON } from '@/lib/unit-economics';
+import { NOTES, PRO, BUNDLE, ADDON, BUNDLE_HOURS_PER_GROUP } from '@/lib/unit-economics';
 import { ledCourseIds } from '@/lib/membership';
 
 export type Tier = 'free' | 'notes' | 'pro' | 'bundle';
 export const FREE_MEETINGS = NOTES.freeMeetingsPerSemester; // 体验版每学期几次纪要
 export const PRO_RECORD_SECONDS = PRO.recordedHours * 3600; // 专业版每组每学期实时转写额度
 export const FREE_RECORD_SECONDS = NOTES.freeRealtimeMinutes * 60; // 体验版送的实时转写：每位组长一学期一次，他带的几个体验版小组共用（先体验实时字幕再决定付不付）
+export const BUNDLE_RECORD_SECONDS = BUNDLE_HOURS_PER_GROUP * 3600; // 多组包里每个小组的实时转写额度
 export const ADDON_SECONDS = ADDON.hours * 3600;            // 一个加时包多少秒
-export const PRICE = { notes: NOTES.pricePerSemester, pro: PRO.pricePerSemester, bundle: BUNDLE.pricePerSemester, addon: ADDON.price, addonHours: ADDON.hours };
-export const TIER_LABEL: Record<Tier, string> = { free: '体验版', notes: '纪要版', pro: '专业版', bundle: '纪要版（多组包）' };
+export const PRICE = { notes: NOTES.pricePerSemester, pro: PRO.pricePerSemester, bundle: BUNDLE.pricePerSemester, bundleHours: BUNDLE_HOURS_PER_GROUP, addon: ADDON.price, addonHours: ADDON.hours };
+export const TIER_LABEL: Record<Tier, string> = { free: '体验版', notes: '纪要版', pro: '专业版', bundle: '多组包' };
 
 export interface Plan { courseId: string; tier: Tier; payerId: string | null; split: 'single' | 'aa'; startedAt: string | null; addonSeconds: number }
 
@@ -45,9 +46,10 @@ export function realtimeUsedForQuota(courseId: string): number {
   return (freeCourses.includes(courseId) ? freeCourses : [...freeCourses, courseId]).reduce((a, c) => a + recordSecondsUsed(c), 0);
 }
 
-// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时、体验版送 5 分钟（每位组长一次），再加加时包；纪要版和多组包只有加时包
+// 这个档位本学期一共能用多少秒实时转写：专业版 8 小时、多组包每组 2 小时、体验版送 5 分钟（每位组长一次），再加加时包；纪要版只有加时包
 export function realtimeQuota(tier: Tier, addonSeconds: number): number {
-  return (tier === 'pro' ? PRO_RECORD_SECONDS : tier === 'free' ? FREE_RECORD_SECONDS : 0) + addonSeconds;
+  const base = { pro: PRO_RECORD_SECONDS, bundle: BUNDLE_RECORD_SECONDS, free: FREE_RECORD_SECONDS, notes: 0 }[tier];
+  return base + addonSeconds;
 }
 
 // 纯函数，方便单测

@@ -12,7 +12,7 @@ const FAQS = [
   { q: 'AI 会不会把任务分错人、记错 DDL？', a: 'AI 只负责把话整理出来。人名由代码去花名册里对，日期由代码换算和检查，拿不准的标黄，组长确认后才保存。' },
   { q: '问它上次定了什么，它会编吗？', a: '不会。每句回答都要带 [日期·类型] 出处；意思对不上、关键词也没命中时，直接回答「记录里没找到」。' },
   { q: '三门课的决定会串吗？', a: '不会。每门课只在自己的记录里找；被新决定推翻的旧决定，默认不拿来回答。' },
-  { q: '一学期要花多少钱？', a: '按一门课的一支小组算。先用体验版：免费，每学期 3 次纪要，送 5 分钟会议室实时转写（每位组长一次）。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 14.9 元的多组包，全部小组都开纪要版。' },
+  { q: '一学期要花多少钱？', a: '按一门课的一支小组算。先用体验版：免费，每学期 3 次纪要，送 5 分钟会议室实时转写（每位组长一次）。线上开会、有文字稿的组买纪要版 6.9 元/学期，纪要不限次；在教室开会、要实时转写的组买专业版 14.9 元，含 8 小时实时转写。组里谁买都行，也可以 AA；同时带几个组的组长可以买 19.9 元的多组包，自己当组长的小组一起开通，纪要不限次，每组还含 2 小时会议室实时转写。' },
   { q: '实时转写的时长用完了怎么办？', a: '会议照常开、照常录音，散会后用录音文件识别整理，不另收费，只是没有实时字幕和撞车提示。还想要实时转写，可以加购 3 小时 3.9 元的加时包，哪个档位都能买。' },
   { q: '谁来买？必须组长买吗？', a: '主要是组长买：痛最直接，拍板最快；同时带几门课的组长买多组包，一次开通全部小组。组里别人买或者 AA 也可以，只是选项，向 5 个人各收一块多钱，麻烦比钱本身还大。老师可以按一门课的人数走团体购入版。' },
   { q: '三门课的组员不一样怎么办？', a: '每门课单独建小组，成员和角色按课设置：同一个人可以在 A 课当组长、在 B 课当组员。整理纪要时只和这门课的名单对人名，别的组的人不会被派任务；组长只看到自己小组的任务，组员在别的组的 DDL 只显示日期，不显示内容。' },
@@ -31,7 +31,7 @@ const jsonLd = {
         { '@type': 'Offer', name: '体验版', price: '0', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '纪要版（一门课的一支小组，每学期，纪要不限次，可 AA）', price: '6.9', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '专业版（纪要版 + 8 小时会议室实时转写，每组每学期）', price: '14.9', priceCurrency: 'CNY' },
-        { '@type': 'Offer', name: '多组包（组长带的全部小组都开纪要版，每人每学期）', price: '14.9', priceCurrency: 'CNY' },
+        { '@type': 'Offer', name: '多组包（组长带的全部小组一起开通，每组含 2 小时实时转写，每人每学期）', price: '19.9', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '实时转写加时包（3 小时）', price: '3.9', priceCurrency: 'CNY' },
         { '@type': 'Offer', name: '团体购入版（每人每门课，30–99 人档）', price: '5', priceCurrency: 'CNY' },
       ],
@@ -156,7 +156,7 @@ export default function LandingPage() {
                 <h3 className="text-[15px] font-medium text-slate-900">成本与商业模式</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{notes.modelCost.toFixed(2)}。</li>
-                  <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 5 分钟实时转写），先试再买；带多个组的组长买多组包 ¥14.9；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
+                  <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 5 分钟实时转写），先试再买；带多个组的组长买多组包 ¥19.9（每组含 2 小时实时转写）；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
                   <li><span className="text-slate-900">商业模式</span>：服务器用阿里云 ECS 经济型 e 实例（{ECS_YEARLY} 元/年），只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时 {mix.breakEvenGroups} 个付费组就回本。</li>
                   <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；主要由组长付钱，AA 只是选项。服务器按阿里云 ECS {ECS_YEARLY} 元/年算，回本不难；单月利润可能为：1,000 个付费组约 ¥{Math.round(profit1000).toLocaleString()}，50 门 60 人课的团体购入约 ¥{Math.round(profit50Courses).toLocaleString()}，所以利润主要靠老师按课团体购入。</li>
                 </ul>
@@ -220,9 +220,9 @@ export default function LandingPage() {
               </article>
               <article className="border-t border-paper-line p-7 sm:border-l lg:border-t-0">
                 <h3 className="text-sm text-slate-500">多组包</h3>
-                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥14.9<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 学期</span></p>
+                <p className="mt-2 text-3xl font-medium tabular-nums tracking-tight text-slate-900">¥19.9<span className="ml-1 text-sm font-normal text-slate-500">/ 人 / 学期</span></p>
                 <ul className="mt-5 space-y-2 text-sm text-slate-600">
-                  <li>你当组长的小组都开纪要版（最多 4 个）</li><li>给同时带几门课的组长</li><li>某个组要实时转写，单独升专业版或加时</li>
+                  <li>你当组长的小组一起开通（最多 4 个），纪要不限次</li><li>每组含 2 小时会议室实时转写，不够再加时</li><li>带三门课的组长，比每组单买划算</li>
                 </ul>
               </article>
             </div>

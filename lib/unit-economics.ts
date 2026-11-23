@@ -58,12 +58,16 @@ export function addonEconomics(a: { hours: number; price: number } = ADDON, asrP
   return { cost, net, contribution: net - cost, margin: (net - cost) / a.price };
 }
 
-// 多组包：一个人当组长的全部小组（最多 4 个）一起开纪要版；按带 3 个组算，不含录音（要录音就给那个组加时长或单独升专业版）
+// 多组包（2026-11-23 修订）：一个人当组长的全部小组（最多 4 个）一起开，纪要不限次，每组含 2 小时会议室实时转写，19.9 元。
+// 原来是 14.9 元只开纪要版、不含实时转写：只有三个组都当组长才比单买纪要版划算，要实时转写还得另买，太鸡肋。
+// 按带 3 个组算：24 次会、200 次问答、3 × 2 = 6 小时实时转写（按用满算）
+export const BUNDLE_HOURS_PER_GROUP = 2;
 export const BUNDLE: EconInputs = {
   ...NOTES,
   meetingsPerSemester: 24,
   qaPerSemester: 200,
-  pricePerSemester: 14.9,
+  recordedHours: 3 * BUNDLE_HOURS_PER_GROUP,
+  pricePerSemester: 19.9,
   freeToPaid: 12, // 3 个组 × 每组带 4 个体验版小组，和单组口径一致
 };
 

@@ -13,7 +13,7 @@ export interface PlanRow {
   recordMinutesUsed: number; recordMinutesQuota: number; addonMinutes: number;
   isLeader: boolean;
 }
-export interface Prices { notes: number; pro: number; bundle: number; addon: number; addonHours: number; proHours: number }
+export interface Prices { notes: number; pro: number; bundle: number; bundleHours: number; addon: number; addonHours: number; proHours: number }
 
 // 套餐与付款（演示，不接支付、不扣款）：付钱的人可以是组里任何人，也可以 AA；确认决定的仍是组长
 // 纪要版只管纪要；专业版多 8 小时会议室实时转写；加时包哪档都能买；实时转写用完照常录音、散会后整理
@@ -65,7 +65,7 @@ export function PlanManager({ rows, canBundle, prices }: { rows: PlanRow[]; canB
                   </label>
                 </>
               )}
-              {(r.tier === 'notes' || r.tier === 'bundle') && (
+              {r.tier === 'notes' && (
                 <Button size="sm" variant="outline" disabled={!!busy} onClick={() => call({ courseId: r.courseId, tier: 'pro', split: r.split }, `${r.courseId}-p`)}>升专业版（含 {prices.proHours} 小时实时转写）</Button>
               )}
               {r.tier !== 'free' && (
@@ -82,7 +82,7 @@ export function PlanManager({ rows, canBundle, prices }: { rows: PlanRow[]; canB
         );
       })}
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-        {canBundle && <Button size="sm" variant="outline" disabled={!!busy} onClick={() => call({ bundle: true }, 'bundle')}>多组包：我当组长的小组都开纪要版（{prices.bundle} 元）</Button>}
+        {canBundle && <Button size="sm" variant="outline" disabled={!!busy} onClick={() => call({ bundle: true }, 'bundle')}>多组包：我当组长的小组都开通（{prices.bundle} 元，每组含 {prices.bundleHours} 小时实时转写）</Button>}
         <p className="text-xs text-slate-400">演示：不接支付、不扣款。付款的人只决定用不用，确认决定、审批延期仍是这个组的组长。</p>
       </div>
       {error && <p className="px-5 pb-4 text-xs text-red-600">{error}</p>}
