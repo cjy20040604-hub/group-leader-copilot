@@ -94,7 +94,7 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-6xl px-4 pb-16 pt-12 md:pt-16" aria-label="纪要书架">
           <div className="max-w-2xl">
-            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl lg:text-[52px]"><span className="block">会上说定的事，</span><span className="block lg:whitespace-nowrap">会后接着推进。</span></h1>
+            <h1 className="text-[32px] font-medium leading-[1.15] tracking-tight sm:text-4xl sm:leading-[1.2] lg:text-[52px] lg:leading-[1.22]"><span className="block">会上说定的事，</span><span className="block lg:whitespace-nowrap">会后接着推进。</span></h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-cream-200">
               会议自动转写，AI 整理决定和待办，由您确认后发布。组员更新自己的进度，系统按截止时间提醒。多门课的组会统一收进书架，上次定了什么，随时翻得到。
             </p>
