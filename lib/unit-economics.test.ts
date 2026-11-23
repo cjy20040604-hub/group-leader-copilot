@@ -88,6 +88,12 @@ describe('unit economics', () => {
     assert.deepEqual([10, 50].map((k) => Math.round(monthlyProfit(campusCourseContribution(), k))), [631, 3186]);
   });
 
+  it('多组包顶格 4 个组（32 次会、8 小时实时转写、16 个体验版小组）：每包贡献约 6.35 元，6 个包回本', () => {
+    const r = computeEconomics({ ...BUNDLE, meetingsPerSemester: 32, qaPerSemester: 800 / 3, recordedHours: 8, freeToPaid: 16 });
+    near(r.contribution, 6.3513, 1e-4);
+    assert.equal(r.breakEvenGroups, 6);
+  });
+
   it('贡献为负时盈亏平衡为无穷大', () => {
     assert.equal(computeEconomics({ ...PRO, pricePerSemester: 1.5 }).breakEvenGroups, Infinity);
   });

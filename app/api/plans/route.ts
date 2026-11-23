@@ -14,9 +14,10 @@ export async function POST(req: NextRequest) {
   // 多组包：一个人当组长的全部小组一起开（最多 4 个，每组含 2 小时实时转写）；已经是专业版的组保持专业版
   if (body.bundle) {
     const led = ledCourseIds(user.id);
-    if (led.length < 2) return NextResponse.json({ error: '多组包给同时带两个以上小组的组长' }, { status: 400 });
-    if (led.length > 4) return NextResponse.json({ error: '多组包最多覆盖 4 个小组' }, { status: 400 });
-    for (const c of led) if (getPlan(c).tier !== 'pro') setPlan({ courseId: c, tier: 'bundle', payerId: user.id, split: 'single', startedAt: now });
+    if (led.length < 2) return NextResponse.json({ error: '多组包给同时带 2–4 个小组的组长' }, { status: 400 });
+    if (led.length > 4) return NextResponse.json({ error: '多组包给同时带 2–4 个小组的组长；你带的组超过 4 个' }, { status: 400 });
+    // 已经付过费的组（纪要版 / 专业版，可能是别人付的或 AA）保持原样，不重复收费、不改付款人；只把体验版的组并进多组包
+    for (const c of led) if (getPlan(c).tier === 'free' || getPlan(c).tier === 'bundle') setPlan({ courseId: c, tier: 'bundle', payerId: user.id, split: 'single', startedAt: now });
     return NextResponse.json({ ok: true, courses: led.length });
   }
 
