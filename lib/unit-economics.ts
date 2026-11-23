@@ -15,9 +15,16 @@ export interface EconInputs {
   freeMeetingsPerSemester: number; // 体验版每学期几次纪要（一支小组一学期只开约 8 次会，额度必须小于它，否则没人需要付费）
   freeRealtimeMinutes: number; // 体验版送几分钟会议室实时转写（产品里每位组长一学期一次；这里按每个体验版小组都用满算，偏保守）
   semesterMonths: number;      // 一学期几个月
-  fixedPerMonth: number;       // 服务器、数据库、域名等固定成本（元/月）
+  fixedPerMonth: number;       // 固定成本（元/月）：服务器。基线是阿里云 ECS 经济型 e 实例 99 元/年
   paymentFeeRate: number;      // 支付通道费率
 }
+
+// 服务器：阿里云 ECS 经济型 e 实例（2 核 2G、3M 固定带宽、40G ESSD Entry），2026-11-22 查的活动价 99 元/年、续费同价、每人限 1 台。
+// 负载：单个 Node 进程 + SQLite 文件，抽取 / 问答 / 转写 / embedding 都走百炼 API，服务器只做 HTTP 和不超过 20 秒的音频段转发，
+// 2 核 2G 够演示和早期几百个小组（待压测）。同配置不用活动价、按目录价年付 906.24 元（约 75.5 元/月），作为敏感度对照
+// 域名、存录音的 OSS 没有核实到报价，没算进来
+export const ECS_YEARLY = 99;
+export const ECS_LIST_YEARLY = 906.24;
 
 export const ASR_FILE = ASR_PRICE_PER_SECOND;                       // paraformer-v2，已核对
 export const ASR_REALTIME = ASR_PRICES['qwen3-asr-flash'].perSecond; // 会议室实际用的模型，2026-11-21 官方文档 + 控制台核实
@@ -36,7 +43,7 @@ export const NOTES: EconInputs = {
   freeMeetingsPerSemester: 3,
   freeRealtimeMinutes: 5,
   semesterMonths: 4,
-  fixedPerMonth: 100,
+  fixedPerMonth: ECS_YEARLY / 12,
   paymentFeeRate: 0.006,
 };
 
@@ -166,10 +173,10 @@ export const SENSITIVITY: { factor: string; rows: SensitivityRow[] }[] = [
     { label: '14.9 元（基线）', value: '14.9', patch: {} },
     { label: '9.9 元（同样 8 小时）', value: '9.9', patch: { pricePerSemester: 9.9 } },
   ] },
-  { factor: '固定成本（元/月）', rows: [
-    { label: '50', value: '50', patch: { fixedPerMonth: 50 } },
-    { label: '100（基线）', value: '100', patch: {} },
-    { label: '300', value: '300', patch: { fixedPerMonth: 300 } },
+  { factor: '服务器（元/月）', rows: [
+    { label: '8.25：ECS 经济型 e 实例 99 元/年（基线）', value: 'ecs', patch: {} },
+    { label: '75.52：同配置目录价年付 906.24 元', value: 'list', patch: { fixedPerMonth: ECS_LIST_YEARLY / 12 } },
+    { label: '100：原来的假设', value: '100', patch: { fixedPerMonth: 100 } },
   ] },
 ];
 
@@ -180,10 +187,13 @@ export function breakEvenConversion(i: EconInputs): { maxFreePerPaid: number; mi
   return { maxFreePerPaid, minConversion: 1 / (1 + maxFreePerPaid) };
 }
 
-// 回本只说明服务器不亏。要养活人，还得问：一学期要赚多少，需要多少个付费组（或多少门课的团体购入）
-export const FOUNDER_TARGET_PER_SEMESTER = 40000; // 假设：创始人每月 1 万元，一学期 4 个月
-export function unitsForIncome(contributionPerUnit: number, fixedPerSemester: number, target = FOUNDER_TARGET_PER_SEMESTER): number {
-  return contributionPerUnit > 0 ? Math.ceil((target + fixedPerSemester) / contributionPerUnit - 1e-9) : Infinity;
+// 单月利润：units 个付费单位（小组或团体购入的课），每个一学期贡献 contributionPerUnit，摊到一学期的每个月，再扣当月服务器费
+export function monthlyProfit(contributionPerUnit: number, units: number, fixedPerMonth = NOTES.fixedPerMonth, semesterMonths = NOTES.semesterMonths): number {
+  return (units * contributionPerUnit) / semesterMonths - fixedPerMonth;
+}
+// 团体购入一门课（按人数收费）一学期的贡献：人数 × (每人单价 − 每人成本)，成本按录音散会后上传
+export function campusCourseContribution(students = 60, pricePerStudent = 5): number {
+  return students * (pricePerStudent - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 }));
 }
 
 // 团体购入版：机构按人数买。一个学生在 k 门课里各有一个小组时，每人成本 = k × 每组成本 ÷ 每组人数

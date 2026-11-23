@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MinutesShelf, type ShelfBook } from '@/components/minutes-shelf';
 import { db, schema } from '@/lib/db/client';
-import { computeEconomics, textCostPerMeeting, blendedBreakEven, unitsForIncome, groupPurchaseCostPerStudent, NOTES, PRO, MIX, ASR_REALTIME, ASR_FILE } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, blendedBreakEven, monthlyProfit, campusCourseContribution, ECS_YEARLY, NOTES, PRO, MIX, ASR_REALTIME } from '@/lib/unit-economics';
 
 const REPO = 'https://github.com/cjy20040604-hub/group-leader-copilot';
 
@@ -71,7 +71,8 @@ export default function LandingPage() {
   const notes = computeEconomics(NOTES);
   const pro = computeEconomics(PRO);
   const mix = blendedBreakEven(MIX);
-  const founderCourses = unitsForIncome(60 * (5 - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 })), notes.fixedPerSemester);
+  const profit1000 = monthlyProfit(mix.contribution, 1000);
+  const profit50Courses = monthlyProfit(campusCourseContribution(), 50);
   const link = 'text-sm text-brand-600 hover:text-brand-700 hover:underline';
   return (
     <div className="min-h-screen bg-paper">
@@ -156,10 +157,10 @@ export default function LandingPage() {
                 <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                   <li><span className="text-slate-900">单次服务成本</span>（阿里云百炼原价）：1 小时组会文字处理约 ¥{textCostPerMeeting(1).toFixed(3)}；贵的是转写，实时转写 1 小时约 ¥{(3600 * ASR_REALTIME).toFixed(2)}。一支小组（一门课）一学期模型成本约 ¥{notes.modelCost.toFixed(2)}。</li>
                   <li><span className="text-slate-900">定价跟着用法走</span>：按一门课的一支小组收费，因为不同课组员不一样，掏钱的人也不一样。线上开会、本来就有文字稿的组只要纪要，买纪要版 ¥6.9 / 学期；在教室开会、要实时字幕的组买专业版 ¥14.9（含 8 小时，用完照常录音、散会后整理，或 ¥3.9 加 3 小时）。体验版免费（3 次纪要 + 5 分钟实时转写），先试再买；带多个组的组长买多组包 ¥14.9；老师按课团体购入，每人每门课 ¥5 / ¥4 / ¥3。</li>
-                  <li><span className="text-slate-900">商业模式</span>：只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时约 {mix.breakEvenGroups} 个付费组回本。</li>
-                  <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；主要由组长付钱，AA 只是选项。回本的 {mix.breakEvenGroups} 组只覆盖服务器，养活团队要靠老师按课团体购入（约 {founderCourses} 门 60 人的课）。</li>
+                  <li><span className="text-slate-900">商业模式</span>：服务器用阿里云 ECS 经济型 e 实例（{ECS_YEARLY} 元/年），只卖纪要版 {notes.breakEvenGroups} 组回本，只卖专业版 {pro.breakEvenGroups} 组；7 成纪要版、3 成专业版时 {mix.breakEvenGroups} 个付费组就回本。</li>
+                  <li><span className="text-slate-900">谁使用，谁付钱</span>：组长和组员使用，角色按课算；主要由组长付钱，AA 只是选项。服务器按阿里云 ECS {ECS_YEARLY} 元/年算，回本不难；单月利润可能为：1,000 个付费组约 ¥{Math.round(profit1000).toLocaleString()}，50 门 60 人课的团体购入约 ¥{Math.round(profit50Courses).toLocaleString()}，所以利润主要靠老师按课团体购入。</li>
                 </ul>
-                <p className="mt-2 text-xs text-slate-400">付费率、固定成本、用量是假设，敏感度见成本看板。</p>
+                <p className="mt-2 text-xs text-slate-400">付费率、用量是假设；ECS 价格是 2026-11-22 查的活动价，以控制台为准；敏感度见成本看板。</p>
                 <div className="mt-4 flex flex-wrap gap-4">
                   <Link href="/app/cost" className={link}>成本看板（含计算器）</Link>
                   <a href={`${REPO}/blob/main/docs/cost-model.md`} className={link}>成本与商业模式测算</a>

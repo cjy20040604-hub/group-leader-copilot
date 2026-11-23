@@ -3,7 +3,7 @@ import { isMock } from '@/lib/llm';
 import { PRICING, ASR_PRICES, ASR_PRICE_PER_SECOND, STANDARD_MEETING } from '@/config/pricing';
 import { EmptyState, cx } from '@/components/ui';
 import { UnitEconCalculator } from '@/components/unit-econ-calculator';
-import { computeEconomics, textCostPerMeeting, qaCost, NOTES, PRO, BUNDLE, ADDON, MIX, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics, breakEvenConversion, unitsForIncome, FOUNDER_TARGET_PER_SEMESTER } from '@/lib/unit-economics';
+import { computeEconomics, textCostPerMeeting, qaCost, NOTES, PRO, BUNDLE, ADDON, MIX, SENSITIVITY, ASR_FILE, ASR_REALTIME, INFRA_PER_GROUP, INFRA_PER_BUNDLE, groupPurchaseCostPerStudent, blendedBreakEven, addonEconomics, breakEvenConversion, monthlyProfit, campusCourseContribution, ECS_YEARLY, ECS_LIST_YEARLY } from '@/lib/unit-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,9 +45,11 @@ export default function CostPage() {
   const oldFree = computeEconomics({ ...PRO, freeMeetingsPerSemester: 16 });
   const campus = groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 3, groupSize: 5 });
   // 回本只说明服务器不亏：再算养活一个人要多少付费组、多少门课的团体购入，以及付费转化的底线
-  const founderGroups = unitsForIncome(mix.contribution, notes.fixedPerSemester);
-  const campusCourse = 60 * (5 - groupPurchaseCostPerStudent({ asrPerSecond: ASR_FILE, coursesPerStudent: 1, groupSize: 5 }));
-  const founderCourses = unitsForIncome(campusCourse, notes.fixedPerSemester);
+  // 服务器按阿里云 ECS 真实价：活动价回本很容易；再看不同规模下单月利润可能是多少
+  const mixList = blendedBreakEven(MIX.map((m) => ({ ...m, inputs: { ...m.inputs, fixedPerMonth: ECS_LIST_YEARLY / 12 } })));
+  const campusCourse = campusCourseContribution();
+  const profitGroups = [100, 500, 1000].map((n) => ({ n, v: monthlyProfit(mix.contribution, n) }));
+  const profitCourses = [10, 50].map((n) => ({ n, v: monthlyProfit(campusCourse, n) }));
   const conv = breakEvenConversion(NOTES);
   const conv10 = breakEvenConversion({ ...NOTES, freeRealtimeMinutes: 10 });
   const pct = (part: number, whole: number) => `${((part / whole) * 100).toFixed(0)}%`;
@@ -85,6 +87,7 @@ export default function CostPage() {
     { step: '检索、「这事定过了」', model: env('EMBEDDING_MODEL', 'text-embedding-v4'), price: `${emb.input} 元`, unit: '每百万 tokens' },
     { step: '会议室实时转写', model: env('ASR_MODEL', 'qwen3-asr-flash'), price: `${ASR_PRICES['qwen3-asr-flash'].perSecond} 元`, unit: '每秒' },
     { step: '上传录音转写', model: 'paraformer-v2', price: `${ASR_PRICE_PER_SECOND} 元`, unit: '每秒' },
+    { step: '服务器', model: 'ECS 经济型 e 实例 2 核 2G', price: `${ECS_YEARLY} 元`, unit: '每年（活动价，续费同价）' },
   ];
 
   return (
@@ -93,7 +96,7 @@ export default function CostPage() {
       <header className="pt-2">
         <h1 className="text-3xl font-medium tracking-tight text-slate-900">成本与商业模式</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-          计价单位是一门课的一支小组。纪要和实时转写分开卖：纪要版 <Num>{NOTES.pricePerSemester} 元</Num>，成本约 <Num>{yuan(notesCost)}</Num>；专业版 <Num>{PRO.pricePerSemester} 元</Num>，多 8 小时实时转写，成本约 <Num>{yuan(proCost)}</Num>。7 成纪要版、3 成专业版时，<Num>{mix.breakEvenGroups} 个付费组</Num>回本。
+          计价单位是一门课的一支小组。纪要和实时转写分开卖：纪要版 <Num>{NOTES.pricePerSemester} 元</Num>，成本约 <Num>{yuan(notesCost)}</Num>；专业版 <Num>{PRO.pricePerSemester} 元</Num>，多 8 小时实时转写，成本约 <Num>{yuan(proCost)}</Num>。7 成纪要版、3 成专业版时，<Num>{mix.breakEvenGroups} 个付费组</Num>就能盖住服务器（阿里云 ECS {ECS_YEARLY} 元/年）。
         </p>
       </header>
 
@@ -144,7 +147,7 @@ export default function CostPage() {
           </div>
         </Step>
 
-        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。服务器摊销 ${infra.toFixed(2)} 元是一个组的份额，只用来看单组毛利（多组包按 3 个组算 ${INFRA_PER_BUNDLE} 元）；下面算回本时不用它，固定成本按每月 ${NOTES.fixedPerMonth} 元单列，两处不重复计算。`}>
+        <Step n={3} title="据此定价" note={`纪要版：8 次会 + 约 67 次提问 + 服务器摊销 ${infra.toFixed(2)} 元 ≈ ${yuan(notesCost)}；专业版再加 8 小时实时转写 ${yuan(pro.asrCost)} ≈ ${yuan(proCost)}。多组包按组长带 3 个组都开纪要版算：成本 ${yuan(bundleCost)}，毛利约 ${pct(BUNDLE.pricePerSemester - bundleCost, BUNDLE.pricePerSemester)}。服务器摊销 ${infra.toFixed(2)} 元是一个组的份额，只用来看单组毛利（多组包按 3 个组算 ${INFRA_PER_BUNDLE} 元）；这 0.67 元是给上量后加配置预留的；下面算回本时不用它，服务器按 ECS 每月 ${NOTES.fixedPerMonth.toFixed(2)} 元单列，两处不重复计算。`}>
           <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4">
               <Tier name="体验版" price="免费" lines={['1 个小组', '每学期 3 次纪要', `送 ${NOTES.freeRealtimeMinutes} 分钟实时转写，先体验实时字幕`]} />
@@ -174,10 +177,11 @@ export default function CostPage() {
             <Metric value={`${pro.breakEvenGroups} 组`} label="只卖专业版时回本" sub={`8 小时用满，每组贡献 ${yuan(pro.contribution)}；实际只送有人说话的部分、用 6 小时时 ${pro6.breakEvenGroups} 组`} />
             <Metric value={`${mix.breakEvenGroups} 组`} label="7 成纪要版 + 3 成专业版" sub={`加权每组贡献 ${yuan(mix.contribution)}；全买多组包时 ${bundle.breakEvenGroups} 个包`} accent />
           </div>
-          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要 + 送 {NOTES.freeRealtimeMinutes} 分钟实时转写，合计 {yuan(notes.freeCostPerUser)}）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、每月 {NOTES.fixedPerMonth} 元固定成本都算进去。付费率、档位比例、用量、固定成本都是假设，待访谈验证。</p>
+          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-slate-500">把免费小组的成本（每个付费组带 {NOTES.freeToPaid} 个体验版小组，每个每学期 {NOTES.freeMeetingsPerSemester} 次纪要 + 送 {NOTES.freeRealtimeMinutes} 分钟实时转写，合计 {yuan(notes.freeCostPerUser)}）、{(NOTES.paymentFeeRate * 100).toFixed(1)}% 支付手续费、服务器（阿里云 ECS 经济型 e 实例 {ECS_YEARLY} 元/年，每月约 {NOTES.fixedPerMonth.toFixed(2)} 元）都算进去。付费率、档位比例、用量都是假设，待访谈验证；ECS 价格是 2026-11-22 查的活动价，以控制台为准。</p>
           <div className="mt-4 max-w-3xl space-y-2 rounded-xl bg-amber-50/70 px-4 py-3 text-sm leading-relaxed text-slate-700 ring-1 ring-inset ring-amber-200">
-            <p className="font-medium text-slate-900">回本只说明服务器不亏，不说明这门生意养得活人</p>
-            <p>{mix.breakEvenGroups} 组只覆盖每学期 {notes.fixedPerSemester} 元服务器费，没算创始人的时间和获客成本。按 7:3 混合每组贡献 {yuan(mix.contribution)}，要让创始人一学期赚 {(FOUNDER_TARGET_PER_SEMESTER / 10000).toFixed(0)} 万（假设月入 1 万），需要约 {founderGroups.toLocaleString()} 个付费组；按 20% 转化，要覆盖约 {(founderGroups * 5 / 10000).toFixed(1)} 万个小组。所以 C 端小组付费是获客入口，养活团队要靠团体购入：一门 60 人的课收 300 元，扣成本约 {yuan(campusCourse, 0)}，约 {founderCourses} 门课就够。</p>
+            <p className="font-medium text-slate-900">服务器按阿里云 ECS 真实价格算：回本不难，难的是规模</p>
+            <p>服务器只跑一个 Node 进程和 SQLite 文件，模型都走百炼接口，所以一台 ECS 经济型 e 实例（2 核 2G、3M 带宽）就够演示和早期几百个小组（待压测）。活动价 {ECS_YEARLY} 元/年、续费同价，每月约 {NOTES.fixedPerMonth.toFixed(2)} 元，7:3 混合 {mix.breakEvenGroups} 个付费组就回本；不用活动价、按目录价年付 {ECS_LIST_YEARLY} 元，也只要 {mixList.breakEvenGroups} 组。域名和存录音的 OSS 没有核实到报价，没算进来。</p>
+            <p>单月利润可能为：小组付费 {profitGroups.map((x) => `${x.n.toLocaleString()} 组约 ¥${Math.round(x.v).toLocaleString()}`).join('、')}；团体购入 {profitCourses.map((x) => `${x.n} 门 60 人的课约 ¥${Math.round(x.v).toLocaleString()}`).join('、')}（一门课一学期扣成本约赚 {yuan(campusCourse, 0)}）。小组付费的钱不多，主要用来获客；利润主要靠老师按课团体购入。</p>
             <p>最脆的假设是付费转化率：纪要版低于约 {(conv.minConversion * 100).toFixed(1)}% 时每卖一单都在亏；原来送 10 分钟时这条线约 {(conv10.minConversion * 100).toFixed(1)}%，所以降到 {NOTES.freeRealtimeMinutes} 分钟。这 {NOTES.freeRealtimeMinutes} 分钟按组长送一次，他带的几个体验版小组共用，不按小组送；这里仍按每个体验版小组都用满算，是偏保守的上限。</p>
           </div>
           <div className="mt-5 space-y-2">

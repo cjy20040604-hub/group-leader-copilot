@@ -14,7 +14,7 @@ const FIELDS: { key: keyof EconInputs; label: string; step: number; min: number;
   { key: 'freeToPaid', label: '体验版小组 : 付费组', step: 1, min: 0, suffix: ': 1' },
   { key: 'freeMeetingsPerSemester', label: '体验版纪要', step: 1, min: 0, suffix: '次/学期' },
   { key: 'freeRealtimeMinutes', label: '体验版送实时转写', step: 5, min: 0, suffix: '分钟/学期' },
-  { key: 'fixedPerMonth', label: '固定成本', step: 10, min: 0, suffix: '元/月' },
+  { key: 'fixedPerMonth', label: '服务器', step: 1, min: 0, suffix: '元/月' },
 ];
 
 const yuan = (n: number, d = 2) => (Number.isFinite(n) ? `¥${n.toFixed(d)}` : '—');
@@ -52,8 +52,8 @@ export function UnitEconCalculator() {
           ['每组变动成本', yuan(r.variableCost), `模型 ${yuan(r.modelCost)} + 转写 ${yuan(r.asrCost)}`],
           ['每个体验版小组', yuan(r.freeCostPerUser), '每学期成本（纪要 + 送的实时转写）'],
           ['每组边际贡献', yuan(r.contribution), `净收入 ${yuan(r.netRevenue)}（扣通道费 ${pct(v.paymentFeeRate)}）`],
-          ['单组贡献率', pct(r.unitMargin), '不含固定成本'],
-          ['盈亏平衡', Number.isFinite(r.breakEvenGroups) ? `${r.breakEvenGroups} 组` : '亏损', `固定成本 ${yuan(r.fixedPerSemester, 0)}/学期`],
+          ['单组贡献率', pct(r.unitMargin), '不含服务器费用'],
+          ['盈亏平衡', Number.isFinite(r.breakEvenGroups) ? `${r.breakEvenGroups} 组` : '亏损', `服务器 ${yuan(r.fixedPerSemester, 0)}/学期`],
           ['500 组时整体毛利', pct(marginAtScale(v, 500)), `200 组时 ${pct(marginAtScale(v, 200))}`],
         ].map(([title, value, hint]) => (
           <div key={title} className="rounded-lg bg-slate-50 p-2">
@@ -63,7 +63,7 @@ export function UnitEconCalculator() {
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-slate-400">单价是百炼原价（见上表）；会议次数、时长、问答、录音、体验版小组比例、固定成本、通道费都是假设 · 待验证。体验版按每学期 {v.freeMeetingsPerSemester} 次纪要、送 {v.freeRealtimeMinutes} 分钟实时转写（按实时转写价、用满算）。</p>
+      <p className="text-[11px] text-slate-400">单价是百炼原价（见上表）；会议次数、时长、问答、录音、体验版小组比例、通道费都是假设 · 待验证；服务器默认按阿里云 ECS 经济型 e 实例 99 元/年（每月 8.25 元）。体验版按每学期 {v.freeMeetingsPerSemester} 次纪要、送 {v.freeRealtimeMinutes} 分钟实时转写（按实时转写价、用满算）。</p>
     </Card>
   );
 }
